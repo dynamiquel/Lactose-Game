@@ -23,7 +23,7 @@ jobs:
         # and a bug prevents errors to bubble and show up in the logs
         shell: cmd
         run:  |
-            copy ..\..\..\Source\LactoseGame\Private\Services\Identity\Protos\*.proto Plugins\Turbolink\Tools\ProtoInput
+            copy ..\..\..\Source\LactoseGame\Private\Services\Identity\Protos\*.proto ProtoInput
             for %%i in (ProtoInput\*.proto) do (generate_code.cmd %%i ProtoOutput)
 
       - name: Upload artifacts
