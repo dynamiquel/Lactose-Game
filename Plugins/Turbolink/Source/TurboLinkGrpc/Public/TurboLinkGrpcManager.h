@@ -10,7 +10,7 @@
 class UGrpcService;
 class GrpcContext;
 
-UCLASS(ClassGroup=TurboLink, meta = (DisplayName = " TurboLink gRPC Manager"))
+UCLASS(ClassGroup=TurboLink, meta = (DisplayName = "TurboLink gRPC Manager"))
 class TURBOLINKGRPC_API UTurboLinkGrpcManager : public UGameInstanceSubsystem, public FTickableGameObject
 {
 	GENERATED_BODY()
@@ -25,17 +25,23 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual TStatId GetStatId() const override 	{ return GetStatID(); }
 
-	void* GetNextTag(TSharedPtr<GrpcContext> Context);
+	void* GetNextTag(const TSharedPtr<GrpcContext>& Context);
 	void RemoveTag(void* Tag);
 
 	FGrpcContextHandle GetNextContextHandle();
 public:
 	class Private;
-	Private* const d=nullptr;
+	const TUniquePtr<ThisClass::Private> ThisPrivate;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = TurboLink)
 	UGrpcService* MakeService(const FString& ServiceName);
+
+	template<typename TService> requires std::derived_from<TService, UGrpcService>
+	TService* MakeService()
+	{
+		return Cast<TService>(MakeService(TService::StaticClass()->GetName()));
+	}
 
 	UFUNCTION(BlueprintCallable, Category = TurboLink)
 	void ReleaseService(UGrpcService* Service);
@@ -44,14 +50,15 @@ public:
 	EGrpcServiceState GetServiceState(UGrpcService* Service);
 
 protected:
-	UPROPERTY()
-	TMap<FString, UGrpcService*> WorkingService;
+	UPROPERTY(Transient)
+	TMap<FString, TObjectPtr<UGrpcService>> WorkingServices;
 
-	UPROPERTY()
-	TSet<UGrpcService*> ShutingDownService;
+	UPROPERTY(Transient)
+	TSet<TObjectPtr<UGrpcService>> ShuttingDownServices;
 
 private:
-	TMap<FString, UClass*> ServiceClassMap;
+	UPROPERTY(Transient)
+	TMap<FString, TObjectPtr<UClass>> ServiceClassMap;
 
 	TMap<void*, TSharedPtr<GrpcContext>> GrpcContextMap;
 	uint64_t NextTag = 0;
@@ -59,7 +66,7 @@ private:
 	uint32 NextContextHandle = 0;
 
 	bool bIsInitialized = false;
-	bool bIsShutdowning = false;
+	bool bIsShuttingDown = false;
 
 public:
 	UTurboLinkGrpcManager();

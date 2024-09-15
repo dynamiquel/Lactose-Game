@@ -5,12 +5,12 @@
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 
-UTurboLinkGrpcManager* UTurboLinkGrpcUtilities::GetTurboLinkGrpcManager(UObject* WorldContextObject)
+UTurboLinkGrpcManager* UTurboLinkGrpcUtilities::GetTurboLinkGrpcManager(const UObject* WorldContextObject)
 {
 	if (WorldContextObject == nullptr)
 	{
 		TIndirectArray<FWorldContext> Worlds = GEngine->GetWorldContexts();
-		for (auto World : Worlds)
+		for (const auto& World : Worlds)
 		{
 			if (World.WorldType == EWorldType::Game || World.WorldType == EWorldType::PIE)
 			{
@@ -90,7 +90,7 @@ DEFINE_FUNCTION(UGrpcMessageToJsonFunctionLibrary::execJsonToGrpcMessageInternal
 	P_NATIVE_END;
 }
 
-bool UGrpcMessageToJsonFunctionLibrary::JsonToGrpcMessage_Impl(const FString& JsonString, void* StructPtr, FStructProperty* StructProperty)
+bool UGrpcMessageToJsonFunctionLibrary::JsonToGrpcMessage_Impl(const FString& JsonString, void* StructPtr, const FStructProperty* StructProperty)
 {
 	UScriptStruct* scriptStruct = StructProperty->Struct;
 	bool bIsGrpcMessage = scriptStruct->IsChildOf(FGrpcMessage::StaticStruct());

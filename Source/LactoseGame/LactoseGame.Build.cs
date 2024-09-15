@@ -16,6 +16,7 @@ public class LactoseGame : ModuleRules
 			    "InputCore", 
 			    "EnhancedInput", 
 			    "DiscordGame", 
+			    "LactoseGrpc",
 			    "TurboLinkGrpc"
             }
         );

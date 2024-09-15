@@ -10,7 +10,7 @@
 class UGrpcService;
 class UGrpcClient;
 
-class GrpcContext : public TSharedFromThis<GrpcContext>
+class TURBOLINKGRPC_API GrpcContext : public TSharedFromThis<GrpcContext>
 {
 	friend class UTurboLinkGrpcManager;
 	friend class UGrpcClient;

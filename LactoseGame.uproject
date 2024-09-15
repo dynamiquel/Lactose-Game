@@ -31,6 +31,10 @@
 		{
 			"Name": "DebugOverlay",
 			"Enabled": true
+		},
+		{
+			"Name": "LactoseGrpc",
+			"Enabled": true
 		}
 	]
 }

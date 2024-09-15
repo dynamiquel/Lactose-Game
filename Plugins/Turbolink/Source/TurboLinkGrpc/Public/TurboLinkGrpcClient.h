@@ -108,8 +108,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = TurboLink)
 	virtual void Shutdown();
 
+	UFUNCTION(BlueprintPure, Category = TurboLink)
+	UGrpcService* GetGrpcService() const { return Service; }
+	
 protected:
-	UGrpcService* Service;
+	UPROPERTY(Transient)
+	TObjectPtr<UGrpcService> Service = nullptr;
+	
 	TMap<FGrpcContextHandle, TSharedPtr<GrpcContext>> ContextMap;
 	bool bIsShutdowning=false;
 

@@ -6,24 +6,21 @@
 #include "UObject/UObjectHash.h"
 
 UTurboLinkGrpcManager::UTurboLinkGrpcManager()
-	: d (new UTurboLinkGrpcManager::Private())
-	, NextTag(0)
+	: ThisPrivate(MakeUnique<Private>())
 {
 }
 
 UTurboLinkGrpcManager::~UTurboLinkGrpcManager()
 {
-	for (auto& CurrentService : WorkingService)
+	for (auto& CurrentService : WorkingServices)
 	{
 		CurrentService.Value->Shutdown();
 	}
-
-	delete d;
 }
 
 void UTurboLinkGrpcManager::Initialize(FSubsystemCollectionBase& Collection)
 {
-	bIsShutdowning = false;
+	bIsShuttingDown = false;
 	if (bIsInitialized) return;
 	UE_LOG(LogTurboLink, Log, TEXT("Initialize TurboLinkGrpcManager"));
 
@@ -37,27 +34,27 @@ void UTurboLinkGrpcManager::Initialize(FSubsystemCollectionBase& Collection)
 		ServiceClassMap.Add(serviceClass->GetName(), serviceClass);
 	}
 	//Create global completion queue
-	d->CompletionQueue = std::make_unique<grpc::CompletionQueue>();
+	ThisPrivate->CompletionQueue = std::make_unique<grpc::CompletionQueue>();
 	bIsInitialized = true;
 }
 
 void UTurboLinkGrpcManager::Deinitialize()
 {
-	if (bIsShutdowning) return;
-	bIsShutdowning = true;
+	if (bIsShuttingDown) return;
+	bIsShuttingDown = true;
 	UE_LOG(LogTurboLink, Log, TEXT("Deinitialize TurboLinkGrpcManager"));
 
 	//Shutdown all service
-	for (auto& element : WorkingService)
+	for (auto& element : WorkingServices)
 	{
 		element.Value->Shutdown();
 	}
-	WorkingService.Empty();
-	ShutingDownService.Empty();
+	WorkingServices.Empty();
+	ShuttingDownServices.Empty();
 
 	//Shutdown and drain the completion queue
-	d->ShutdownCompletionQueue();
-	d->CompletionQueue = nullptr;
+	ThisPrivate->ShutdownCompletionQueue();
+	ThisPrivate->CompletionQueue = nullptr;
 	GrpcContextMap.Empty();
 
 	//clean class map
@@ -67,10 +64,10 @@ void UTurboLinkGrpcManager::Deinitialize()
 
 void UTurboLinkGrpcManager::Tick(float DeltaTime)
 {
-	if (bIsShutdowning || !bIsInitialized) return;
+	if (bIsShuttingDown || !bIsInitialized) return;
 
 	//Check channel state
-	for (auto& channelElement : d->ChannelMap)
+	for (auto& channelElement : ThisPrivate->ChannelMap)
 	{
 		std::shared_ptr<Private::ServiceChannel> serviceChannel = channelElement.second;
 		if (serviceChannel->UpdateState()) 
@@ -93,7 +90,7 @@ void UTurboLinkGrpcManager::Tick(float DeltaTime)
 	{
 		void* event_tag=nullptr;
 		bool ok;
-		auto result = d->CompletionQueue->AsyncNext(&event_tag, &ok, deadline);
+		auto result = ThisPrivate->CompletionQueue->AsyncNext(&event_tag, &ok, deadline);
 
 		if (result == grpc::CompletionQueue::NextStatus::GOT_EVENT)
 		{
@@ -116,7 +113,7 @@ void UTurboLinkGrpcManager::Tick(float DeltaTime)
 	int keepServiceAliveWithoutRefrenceSeconds = config->KeepServiceAliveWithoutRefrenceSeconds;
 
 	//Tick working service
-	for (auto it = WorkingService.CreateIterator(); it; ++it)
+	for (auto it = WorkingServices.CreateIterator(); it; ++it)
 	{
 		UGrpcService* service = it.Value();
 		service->Tick(DeltaTime);
@@ -129,7 +126,7 @@ void UTurboLinkGrpcManager::Tick(float DeltaTime)
 			{
 				//remove from working map and add to shutingdown set
 				it.RemoveCurrent();
-				ShutingDownService.Add(service);
+				ShuttingDownServices.Add(service);
 
 				//call real shutdown function
 				service->StartPendingShutdown = 0.0;
@@ -139,10 +136,10 @@ void UTurboLinkGrpcManager::Tick(float DeltaTime)
 			}
 		}
 	}
-	WorkingService.Compact();
+	WorkingServices.Compact();
 
 	//Tick shuting down service
-	for (auto it = ShutingDownService.CreateIterator(); it; ++it)
+	for (auto it = ShuttingDownServices.CreateIterator(); it; ++it)
 	{
 		UGrpcService* service = *it;
 		service->Tick(DeltaTime);
@@ -153,37 +150,36 @@ void UTurboLinkGrpcManager::Tick(float DeltaTime)
 			it.RemoveCurrent();
 		}
 	}
-	ShutingDownService.Compact();
+	ShuttingDownServices.Compact();
 }
 
 UGrpcService* UTurboLinkGrpcManager::MakeService(const FString& ServiceName)
 {
-	UGrpcService** workingService = WorkingService.Find(ServiceName);
-
 	//find existent working service 
-	if (workingService != nullptr)
+	if (UGrpcService* FoundWorkingService = WorkingServices.FindRef(ServiceName))
 	{
-		//add refrence
-		(*workingService)->RefrenceCounts += 1;
-		(*workingService)->StartPendingShutdown = 0.0;
+		//add reference
+		FoundWorkingService->RefrenceCounts += 1;
+		FoundWorkingService->StartPendingShutdown = 0.0;
 
-		UE_LOG(LogTurboLink, Log, TEXT("MakeService service[%s], RefrenceCounts=[%d]"), *ServiceName, (*workingService)->RefrenceCounts);
-		return *workingService;
+		UE_LOG(LogTurboLink, Log, TEXT("MakeService service[%s], RefrenceCounts=[%d]"), *ServiceName, FoundWorkingService->RefrenceCounts);
+		return FoundWorkingService;
 	}
 
 	//create new service object
-	UClass** serviceClass = ServiceClassMap.Find(ServiceName);
-	if (serviceClass == nullptr)
+	const UClass* ServiceClass = ServiceClassMap.FindRef(ServiceName);
+	if (!ServiceClass)
 	{
-		UE_LOG(LogTurboLink, Error, TEXT("Can't find service class[%s]"), *ServiceName);
+		UE_LOG(LogTurboLink, Error, TEXT("Can't find service class '%s'"), *ServiceName);
 		return nullptr;
 	}
 
-	UGrpcService* service = NewObject<UGrpcService>(this, *serviceClass);
-	service->TurboLinkManager = this;
-	service->RefrenceCounts = 1;
-	WorkingService.Add(ServiceName, service);
-	return service;
+	UGrpcService* Service = NewObject<UGrpcService>(this, ServiceClass);
+	check(Service);
+	Service->TurboLinkManager = this;
+	Service->RefrenceCounts = 1;
+	WorkingServices.Add(ServiceName, Service);
+	return Service;
 }
 
 void UTurboLinkGrpcManager::ReleaseService(UGrpcService* Service)
@@ -212,7 +208,7 @@ EGrpcServiceState UTurboLinkGrpcManager::GetServiceState(UGrpcService* Service)
 	return Service->GetServiceState();
 }
 
-void* UTurboLinkGrpcManager::GetNextTag(TSharedPtr<GrpcContext> Context)
+void* UTurboLinkGrpcManager::GetNextTag(const TSharedPtr<GrpcContext>& Context)
 {
 	void* nextTag = (void*)(++NextTag);
 	GrpcContextMap.Add(nextTag, Context);
@@ -226,6 +222,5 @@ void UTurboLinkGrpcManager::RemoveTag(void* Tag)
 
 FGrpcContextHandle UTurboLinkGrpcManager::GetNextContextHandle()
 {
-	FGrpcContextHandle nextHandle(++NextContextHandle);
-	return nextHandle;
+	return FGrpcContextHandle(++NextContextHandle);
 }

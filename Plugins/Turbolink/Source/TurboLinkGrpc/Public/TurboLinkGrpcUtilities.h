@@ -14,7 +14,7 @@ class TURBOLINKGRPC_API UTurboLinkGrpcUtilities : public UBlueprintFunctionLibra
 	
 public:
 	UFUNCTION(BlueprintPure, Category = "TurboLink", meta = (WorldContext = "WorldContextObject"))
-	static class UTurboLinkGrpcManager* GetTurboLinkGrpcManager(UObject* WorldContextObject);
+	static class UTurboLinkGrpcManager* GetTurboLinkGrpcManager(const UObject* WorldContextObject);
 
 	UFUNCTION(BlueprintPure, Category = "TurboLink")
 	static const class UTurboLinkGrpcConfig* GetTurboLinkGrpcConfig();
@@ -72,10 +72,15 @@ public:
 	}
 
 	// Generate grpc message from json string
-	template<typename T>
+	template<typename T> requires std::derived_from<T, FGrpcMessage>
 	static TSharedPtr<T> NewGrpcMessageFromJsonString(const FString& JsonString)
 	{
-		UScriptStruct* scriptStruct = T::StaticStruct();
+		TSharedRef<T> newMessage = MakeShared<T>();
+		bool bSuccess = newMessage->FromJsonString(JsonString);
+
+		return bSuccess ? newMessage : nullptr;
+		
+		/*UScriptStruct* scriptStruct = T::StaticStruct();
 		bool bIsGrpcMessage = scriptStruct->IsChildOf(FGrpcMessage::StaticStruct());
 		if (!bIsGrpcMessage) return TSharedPtr<T>();
 
@@ -89,7 +94,7 @@ public:
 			FMemory::Free(newMessage);
 			return TSharedPtr<T>();
 		}
-		return MakeShareable<T>(newMessage);
+		return MakeShareable<T>(newMessage);*/
 	}
 };
 
@@ -109,5 +114,5 @@ public:
 	static bool JsonToGrpcMessageInternal(const FString& JsonString, UStruct*& ReturnMessage);
 
 	DECLARE_FUNCTION(execJsonToGrpcMessageInternal);
-	static bool JsonToGrpcMessage_Impl(const FString& JsonString, void* StructPtr, FStructProperty* StructProperty);
+	static bool JsonToGrpcMessage_Impl(const FString& JsonString, void* StructPtr, const FStructProperty* StructProperty);
 };

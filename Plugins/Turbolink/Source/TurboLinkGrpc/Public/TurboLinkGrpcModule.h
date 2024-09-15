@@ -6,7 +6,7 @@
 #include "TurboLinkGrpcManager.h"
 #include "TurboLinkGrpcConfig.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogTurboLink, Log, All);
+TURBOLINKGRPC_API DECLARE_LOG_CATEGORY_EXTERN(LogTurboLink, Log, All);
 
 class TURBOLINKGRPC_API FTurboLinkGrpcModule : public IModuleInterface
 {
