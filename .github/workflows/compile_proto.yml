@@ -1,0 +1,38 @@
+name: Generate Unreal code from proto
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download and unzip third-party tools
+        run: |
+          curl -LO https://github.com/thejinchao/turbolink-libraries/releases/download/v1.3/protoc.zip
+          tar -xvf protoc.zip -C Plugins\Turbolink\Source\ThirdParty
+          mkdir -p Tools\ProtoOutput
+
+      - name: Copy Protos
+        shell: cmd
+        run: |
+            copy Source\LactoseGame\Private\Services\Identity\Protos\*.proto Plugins\Turbolink\Tools\ProtoInput
+
+
+      - name: Run generate_code.cmd
+        working-directory: Plugins\Turbolink\Tools\
+        # very important, since we use cmd scripts, the default is powershell - pwsh,
+        # and a bug prevents errors to bubble and show up in the logs
+        shell: cmd
+        run:  |
+            for %%i in (ProtoInput\*.proto) do (generate_code.cmd %%i ProtoOutput)
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Generated C++ code
+          path: Plugins\Turbolink\Tools\Output

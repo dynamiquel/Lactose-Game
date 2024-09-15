@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option csharp_namespace = "Lactose.Identity.Grpc";
+
+package Services;
+
+service Users {
+  // Core Users API
+  rpc QueryUsers (QueryUsersRequest) returns (QueryUsersResponse);
+  rpc GetUser (UserRequest) returns (UserResponse);
+  rpc CreateUser (CreateUserRequest) returns (UserResponse);
+  rpc DeleteUser (UserRequest) returns (google.protobuf.Empty);
+  rpc UpdateUserRoles (UpdateUserRolesRequest) returns (UserResponse);
+
+  // Helper API
+  rpc GetUserPermissions (UserRequest) returns (Permissions);
+}
+
+service Roles {
+  // Core Roles API
+  rpc QueryRoles (QueryRolesRequest) returns (QueryRolesResponse);
+  rpc GetRoles (RolesRequest) returns (RolesResponse);
+  rpc CreateRole (CreateRoleRequest) returns (RoleResponse);
+  rpc DeleteRoles (RolesRequest) returns (QueryRolesResponse);
+  rpc UpdateRolePermissions (UpdateRolePermissionsRequest) returns (RoleResponse);  
+}
+
+message QueryUsersRequest {
+  
+}
+
+message QueryUsersResponse {
+  repeated string userIds = 1;
+}
+
+message UserRequest {
+  string userId = 1;
+}
+
+message CreateUserRequest {
+  string userId = 1;
+  string username = 2;
+  repeated string roles = 3;
+}
+
+message UserResponse {
+  string userId = 1;
+  string username = 2;
+  repeated string roles = 3;
+  google.protobuf.Timestamp timeCreated = 4;
+  google.protobuf.Timestamp timeLastLoggedIn = 5;
+}
+
+message QueryRolesRequest {
+
+}
+
+message QueryRolesResponse {
+  repeated string roleIds = 1;
+}
+
+message CreateRoleRequest {
+  string roleId = 1;
+  string roleName = 2;
+  Permissions permissions = 3;
+}
+
+message RolesRequest {
+  repeated string roleIds = 1;
+}
+
+message Permissions
+{
+  repeated string permissions = 1;
+}
+
+message RoleResponse {
+  string roleId = 1;
+  string roleName = 2;
+  Permissions permissions = 3;
+}
+
+message RolesResponse {
+  repeated RoleResponse roles = 1;
+}
+
+message UpdateUserRolesRequest {
+  repeated string rolesToAdd = 1;
+  repeated string rolesToRemove = 2;
+}
+
+message UpdateRolePermissionsRequest {
+  repeated string permissionsToAdd = 1;
+  repeated string permissionsToRemove = 2;
+}

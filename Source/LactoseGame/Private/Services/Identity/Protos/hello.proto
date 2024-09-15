@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option csharp_namespace = "Lactose.Grpc";
+
+package Common;
+
+service Hello {
+  rpc Hello (HelloRequest) returns (HelloResponse);
+}
+
+message HelloRequest {
+  google.protobuf.Timestamp requestTime = 1;
+  string clientIdentifier = 2;
+}
+
+message HelloResponse {
+  google.protobuf.Timestamp requestTime = 1;
+  google.protobuf.Timestamp responseTime = 2;
+  string serviceName = 3;
+}
