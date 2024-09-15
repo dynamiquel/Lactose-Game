@@ -4,10 +4,10 @@ import "google/protobuf/timestamp.proto";
 
 option csharp_namespace = "Lactose.Grpc";
 
-package Common;
+package Lactose.Common;
 
 service Hello {
-  rpc Hello (HelloRequest) returns (HelloResponse);
+  rpc SayHello (HelloRequest) returns (HelloResponse);
 }
 
 message HelloRequest {
