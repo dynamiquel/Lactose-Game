@@ -15,7 +15,7 @@ jobs:
         run: |
           curl -LO https://github.com/thejinchao/turbolink-libraries/releases/download/v1.3/protoc.zip
           tar -xvf protoc.zip -C Plugins\Turbolink\Source\ThirdParty
-          mkdir -p Tools\ProtoOutput
+          mkdir -p Plugins\Turbolink\Tools\ProtoOutput
 
       - name: Copy Protos
         shell: cmd
