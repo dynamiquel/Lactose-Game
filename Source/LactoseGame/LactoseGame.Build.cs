@@ -9,22 +9,22 @@ public class LactoseGame : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(new[]
-            {
-			    "Core", 
-			    "CoreUObject", 
-			    "Engine", 
-			    "InputCore", 
-			    "EnhancedInput", 
-			    "DiscordGame", 
-			    "LactoseGrpc",
-			    "TurboLinkGrpc"
-            }
+        {
+			"Core", 
+			"CoreUObject", 
+			"Engine", 
+			"InputCore", 
+			"EnhancedInput", 
+			"DiscordGame",
+			"HTTP",
+        }
         );
 		
-		/*PrivateDependencyModuleNames.AddRange(new[]
+		PrivateDependencyModuleNames.AddRange(new[]
 		{
-			
-		});*/
-
+			"Json",
+			"JsonSerialization",
+			"JsonUtilities"
+		});
 	}
 }

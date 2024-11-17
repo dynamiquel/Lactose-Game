@@ -1,15 +1,49 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Interfaces/IHttpRequest.h"
+#include "Rest/LactoseRestRequest.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 
 #include "LactoseServiceSubsystem.generated.h"
 
-class UHello;
-struct FGrpcLactoseCommonHelloResponse;
-struct FGrpcResult;
-struct FGrpcContextHandle;
-class UHelloClient;
+USTRUCT()
+struct FLactoseServiceInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FString Name;
+
+	UPROPERTY()
+	FString Description;
+
+	UPROPERTY()
+	TArray<FString> Dependencies;
+
+	UPROPERTY()
+	FString Version;
+
+	UPROPERTY()
+	FString BuildTime;
+
+	UPROPERTY()
+	int32 Status;
+	
+	UPROPERTY()
+	FString Runtime;
+
+	UPROPERTY()
+	FString OperatingSystem;
+
+	UPROPERTY()
+	FString StartTime;
+
+	UPROPERTY()
+	FString Uptime;
+};
+
+using FGetServiceInfoRequest = Lactose::Rest::TRequest<void, FLactoseServiceInfo>;
 
 /**
  * 
@@ -21,22 +55,23 @@ class LACTOSEGAME_API ULactoseServiceSubsystem : public UGameInstanceSubsystem
 
 public:
 	UFUNCTION(BlueprintCallable, Category="Lactose|Services")
-	void SayHello();
+	void GetServiceInfo();
+
+	void GetServiceInfo2();
+	void GetServiceInfo3();
 
 protected:
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-	virtual void Deinitialize() override;
+	void Initialize(FSubsystemCollectionBase& Collection) override;
+	void Deinitialize() override;
 
-	UFUNCTION()
-	void OnHelloResponse(
-		FGrpcContextHandle Handle,
-		const FGrpcResult& GrpcResult,
-		const FGrpcLactoseCommonHelloResponse& Response);
+	void OnGetServiceInfoResponse(
+		FHttpRequestPtr Request,
+		FHttpResponsePtr Response,
+		bool bConnectedSuccessfully);
 
-private:
-	UPROPERTY(GlobalConfig)
-	FString HelloServiceName = TEXT("Hello");
+	void OnGetServiceInfoResponse2(
+		TSharedRef<Lactose::Rest::FRequest::FResponseContext> Context);
 
-	UPROPERTY(Transient)
-	TObjectPtr<UHelloClient> HelloClient = nullptr;
+	void OnGetServiceInfoResponse3(
+		TSharedRef<FGetServiceInfoRequest::FResponseContext> Context);
 };

@@ -1,90 +1,86 @@
 #include "Services/LactoseServiceSubsystem.h"
 
-#include "TurboLinkGrpcManager.h"
-#include "TurboLinkGrpcUtilities.h"
+#include "HttpModule.h"
+#include "Interfaces/IHttpResponse.h"
 #include "Services/LactoseServicesLog.h"
-#include "SLactoseCommon/HelloService.h"
 
-void ULactoseServiceSubsystem::SayHello()
+void ULactoseServiceSubsystem::GetServiceInfo()
 {
-	if (!IsValid(HelloClient))
-	{
-		UE_LOG(LogLactoseServices, Error, TEXT("Hello Service is unavailable"));
-		return;
-	}
-	
-	FGrpcContextHandle CtxHello = HelloClient->InitSayHello();
+	FHttpModule& HttpModule = FHttpModule::Get();
+	auto HttpRequest = HttpModule.CreateRequest();
+	HttpRequest->SetVerb(TEXT("GET"));
+	HttpRequest->SetURL(TEXT("https://lactose.mookrata.ovh/identity/info"));
+	HttpRequest->OnProcessRequestComplete().BindUObject(this, &ULactoseServiceSubsystem::OnGetServiceInfoResponse);
+	HttpRequest->ProcessRequest();
+}
 
-	FGrpcLactoseCommonHelloRequest HelloRequest;
-	HelloRequest.ClientIdentifier = TEXT("Temp");
+void ULactoseServiceSubsystem::GetServiceInfo2()
+{
+	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
+	auto RestRequest = Lactose::Rest::FRequest::Create(*RestSubsystem);
+	RestRequest->SetUrl(TEXT("https://lactose.mookrata.ovh/identity/info"));
+	RestRequest->GetOnResponseReceived2().AddUObject(this, &ULactoseServiceSubsystem::OnGetServiceInfoResponse2);
+	RestRequest->Send();
+}
 
-	const auto NowUtc = FTimespan(FDateTime::Now().GetTicks());
-	FGrpcGoogleProtobufTimestamp Now;
-	Now.Seconds = static_cast<int64>(NowUtc.GetTotalSeconds());
-	Now.Nanos = NowUtc.GetFractionNano();
-	HelloRequest.RequestTime = Now;
-
-	HelloClient->SayHello(CtxHello, HelloRequest);
+void ULactoseServiceSubsystem::GetServiceInfo3()
+{
+	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
+	auto RestRequest = FGetServiceInfoRequest::Create(*RestSubsystem);
+	RestRequest->SetUrl(TEXT("https://lactose.mookrata.ovh/identity/info"));
+	RestRequest->GetOnResponseReceived2().AddUObject(this, &ULactoseServiceSubsystem::OnGetServiceInfoResponse3);
+	RestRequest->Send();
 }
 
 void ULactoseServiceSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-
-	UTurboLinkGrpcManager* TurboLinkManager = UTurboLinkGrpcUtilities::GetTurboLinkGrpcManager(this);
-	if (!ensure(TurboLinkManager))
-	{
-		return;
-	}
-
-	auto* HelloService = TurboLinkManager->MakeService<UHello>();
-	if (!ensure(HelloService))
-	{
-		return;
-	}
-	
-	HelloService->Connect();
-	
-	HelloClient = HelloService->MakeClient();
-	if (!ensure(HelloClient))
-	{
-		return;
-	}
-	
-	HelloClient->OnSayHelloResponse.AddUniqueDynamic(this, &ThisClass::OnHelloResponse);
 }
 
 void ULactoseServiceSubsystem::Deinitialize()
 {
 	Super::Deinitialize();
-	
-	if (UTurboLinkGrpcManager* TurboLinkManager = UTurboLinkGrpcUtilities::GetTurboLinkGrpcManager(this))
-	{
-		if (HelloClient)
-		{
-			HelloClient->Shutdown();
+}
 
-			if (UGrpcService* GrpcService = HelloClient->GetGrpcService())
-				TurboLinkManager->ReleaseService(GrpcService);
-		}
+void ULactoseServiceSubsystem::OnGetServiceInfoResponse(
+	FHttpRequestPtr Request,
+	FHttpResponsePtr Response,
+	bool bConnectedSuccessfully)
+{
+	if (bConnectedSuccessfully)
+	{
+		UE_LOG(LogLactoseServices, Log, TEXT("Responsed: %s"), *Response->GetContentAsString())
+	}
+	else if (Response.IsValid())
+	{
+		UE_LOG(LogLactoseServices, Log, TEXT("Failed: %d"), Response->GetResponseCode());
+	}
+	else
+	{
+		UE_LOG(LogLactoseServices, Log, TEXT("Failed"));
 	}
 }
 
-void ULactoseServiceSubsystem::OnHelloResponse(
-	FGrpcContextHandle Handle,
-	const FGrpcResult& GrpcResult,
-	const FGrpcLactoseCommonHelloResponse& Response)
+void ULactoseServiceSubsystem::OnGetServiceInfoResponse2(TSharedRef<Lactose::Rest::FRequest::FResponseContext> Context)
 {
-	const double RequestTimeMs = FTimespan::FromMicroseconds(Response.RequestTime.Seconds * 1000000. + static_cast<double>(Response.RequestTime.Nanos) / 1000.).GetTotalMilliseconds();
-	const double ServerResponseTimeMs = FTimespan::FromMicroseconds(Response.ResponseTime.Seconds * 1000000. + static_cast<double>(Response.ResponseTime.Nanos) / 1000.).GetTotalMilliseconds();
-	const double ClientToServerLatencyMs = ServerResponseTimeMs - RequestTimeMs;
-	const double NowMs = FTimespan(FDateTime::UtcNow().GetTicks()).GetTotalMilliseconds();
-	const double RoundtripMs = NowMs - RequestTimeMs;
-	const double ServerToClientMs = NowMs - ServerResponseTimeMs;
-	
-	UE_LOG(LogLactoseServices, Log, TEXT("%s replied back in %fms (to server: %fms | from server: %fms"),
-		*Response.ServiceName,
-		RoundtripMs,
-		ClientToServerLatencyMs,
-		ServerToClientMs);
+	if (Context->IsSuccessful())
+	{
+		UE_LOG(LogLactoseServices, Log, TEXT("Responsed: %s"), *Context->HttpResponse->GetContentAsString())
+	}
+	else
+	{
+		UE_LOG(LogLactoseServices, Log, TEXT("Failed: %d"), Context->HttpResponse->GetResponseCode());
+	}
+}
+
+void ULactoseServiceSubsystem::OnGetServiceInfoResponse3(TSharedRef<FGetServiceInfoRequest::FResponseContext> Context)
+{
+	if (Context->ResponseContent)
+	{
+		UE_LOG(LogLactoseServices, Log, TEXT("Responsed: %s"), *Context->HttpResponse->GetContentAsString())
+	}
+	else
+	{
+		UE_LOG(LogLactoseServices, Log, TEXT("Failed: %d"), Context->HttpResponse->GetResponseCode());
+	}
 }

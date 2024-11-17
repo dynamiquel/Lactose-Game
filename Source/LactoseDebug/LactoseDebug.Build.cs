@@ -23,7 +23,8 @@ public class LactoseDebug : ModuleRules
                 "Slate",
                 "SlateCore",
                 "ImGui", 
-                "DiscordGame"
+                "DiscordGame",
+                "HTTP"
             }
         );
         
