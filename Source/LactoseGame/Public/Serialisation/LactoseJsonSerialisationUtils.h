@@ -73,4 +73,14 @@ namespace Lactose::Serialisation::Json
 
 		return Buffer;
 	}
+
+	// TODO: Move
+	inline TArray<uint8> StringToBytes(const FString& String)
+	{
+		const uint64 Utf8Length = FPlatformString::ConvertedLength<UTF8CHAR>(*String, String.Len());
+		TArray<uint8> Buffer;
+		Buffer.SetNumUninitialized(Utf8Length);
+		FPlatformString::Convert(reinterpret_cast<UTF8CHAR*>(Buffer.GetData()), Buffer.Num(), *String, String.Len());
+		return Buffer;
+	}
 }
