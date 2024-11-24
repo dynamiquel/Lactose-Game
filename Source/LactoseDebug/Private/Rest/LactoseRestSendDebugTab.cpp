@@ -21,23 +21,23 @@ void ULactoseRestSendDebugTab::Render()
 {
 	constexpr int32 Columns = 3;
 	constexpr int32 Flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersV | ImGuiTableFlags_SizingStretchProp;
-	if (!ImGui::BeginTable("###RestClientTable", Columns, Flags))
-		return;
+	if (ImGui::BeginTable("###RestClientTable", Columns, Flags))
+	{
+		constexpr int32 ColumnFlags = 0;
+		//constexpr float RequestsColumnWidth = 100.0f;
+		ImGui::TableSetupColumn("Requests", ColumnFlags, 1);
+		ImGui::TableSetupColumn("Selected Request", ColumnFlags, 2);
+		ImGui::TableSetupColumn("Response", ColumnFlags, 2);
 
-	constexpr int32 ColumnFlags = 0;
-	//constexpr float RequestsColumnWidth = 100.0f;
-	ImGui::TableSetupColumn("Requests", ColumnFlags, 1);
-	ImGui::TableSetupColumn("Selected Request", ColumnFlags, 2);
-	ImGui::TableSetupColumn("Response", ColumnFlags, 2);
+		ImGui::TableNextColumn();
+		DrawRequestsSection();
+		ImGui::TableNextColumn();
+		DrawSelectedRequestSection();
+		ImGui::TableNextColumn();
+		DrawResponseSection();
 
-	ImGui::TableNextColumn();
-	DrawRequestsSection();
-	ImGui::TableNextColumn();
-	DrawSelectedRequestSection();
-	ImGui::TableNextColumn();
-	DrawResponseSection();
-
-	ImGui::EndTable();
+		ImGui::EndTable();
+	}
 }
 
 void ULactoseRestSendDebugTab::DrawRequestsSection()
@@ -53,7 +53,7 @@ void ULactoseRestSendDebugTab::DrawRequestsSection()
 
 	ImGui::SameLine();
 
-	if (!SavedRequests.IsEmpty())
+	if (!SavedRequests.Requests.IsEmpty())
 		if (ImGui::Button("Clear"))
 			ClearRequests();
 	
@@ -61,49 +61,49 @@ void ULactoseRestSendDebugTab::DrawRequestsSection()
 
 	constexpr int32 Columns = 3;
 	constexpr int32 Flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingStretchProp;
-	if (!ImGui::BeginTable("Requests Table", Columns, Flags))
-		return;
-
-	ImGui::TableSetupColumn("###RequestNameColumn");
-
-	constexpr int32 ButtonColumnFlags = ImGuiTableColumnFlags_WidthFixed;
-	ImGui::TableSetupColumn("###SendRequestColumn", ButtonColumnFlags);
-	ImGui::TableSetupColumn("###DeleteRequestColumn", ButtonColumnFlags);
-
-	for (int32 RequestIdx = 0; RequestIdx < SavedRequests.Num(); RequestIdx++)
+	if (ImGui::BeginTable("Requests Table", Columns, Flags))
 	{
-		const FString UniqueRequestId = TEXT("###") + LexToString(RequestIdx);
-		ImGui::TableNextColumn();
+		ImGui::TableSetupColumn("###RequestNameColumn");
+
+		constexpr int32 ButtonColumnFlags = ImGuiTableColumnFlags_WidthFixed;
+		ImGui::TableSetupColumn("###SendRequestColumn", ButtonColumnFlags);
+		ImGui::TableSetupColumn("###DeleteRequestColumn", ButtonColumnFlags);
+
+		for (int32 RequestIdx = 0; RequestIdx < SavedRequests.Requests.Num(); RequestIdx++)
+		{
+			const FString UniqueRequestId = TEXT("###") + LexToString(RequestIdx);
+			ImGui::TableNextColumn();
 		
-		const bool bSelected = SelectedRequestIndex == RequestIdx;
-		const FString& RequestName = SavedRequests[RequestIdx].Name;
-		const FString Label = RequestName + UniqueRequestId;
+			const bool bSelected = SelectedRequestIndex == RequestIdx;
+			const FString& RequestName = SavedRequests.Requests[RequestIdx].Name;
+			const FString Label = RequestName + UniqueRequestId;
 
-		if (ImGui::Selectable(STR_TO_ANSI(Label), bSelected, ImGuiSelectableFlags_SpanAllColumns))
-			SelectedRequestIndex = RequestIdx;
+			if (ImGui::Selectable(STR_TO_ANSI(Label), bSelected))
+				SelectedRequestIndex = RequestIdx;
 
-		ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
 
-		const FString SendButtonLabel = TEXT("->") + UniqueRequestId;
-		if (ImGui::Button(STR_TO_ANSI(SendButtonLabel)))
-			SendRequest(RequestIdx);
+			const FString SendButtonLabel = TEXT("->") + UniqueRequestId;
+			if (ImGui::Button(STR_TO_ANSI(SendButtonLabel)))
+				SendRequest(RequestIdx);
 
-		ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
 
-		const FString DeleteButtonLabel = TEXT("X") + UniqueRequestId;
-		if (ImGui::Button(STR_TO_ANSI(DeleteButtonLabel)))
-			DeleteRequest(RequestIdx);
+			const FString DeleteButtonLabel = TEXT("X") + UniqueRequestId;
+			if (ImGui::Button(STR_TO_ANSI(DeleteButtonLabel)))
+				DeleteRequest(RequestIdx);
+		}
+
+		ImGui::EndTable();
 	}
-
-	ImGui::EndTable();
 }
 
 void ULactoseRestSendDebugTab::DrawSelectedRequestSection()
 {
-	if (!SavedRequests.IsValidIndex(SelectedRequestIndex))
+	if (!SavedRequests.Requests.IsValidIndex(SelectedRequestIndex))
 		return;
 	
-	FLactoseRestDebugRequest& SelectedRequest = SavedRequests[SelectedRequestIndex];
+	FLactoseRestDebugRequest& SelectedRequest = SavedRequests.Requests[SelectedRequestIndex];
 
 	std::string Name = STR_TO_ANSI(SelectedRequest.Name);
 	std::string RequestUrl = STR_TO_ANSI(SelectedRequest.Url);
@@ -124,6 +124,7 @@ void ULactoseRestSendDebugTab::DrawSelectedRequestSection()
 
 	ImGui::Text("Name:");
 	ImGui::SameLine();
+	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 	if (ImGui::InputText("###Name", &Name))
 	{
 		SelectedRequest.Name = ANSI_TO_TCHAR(Name.c_str());
@@ -132,6 +133,7 @@ void ULactoseRestSendDebugTab::DrawSelectedRequestSection()
 
 	ImGui::Text("Verb:");
 	ImGui::SameLine();
+	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 	if (ImGui::Combo("###Verb", &SelectedRequest.Verb, Verbs.data(), Verbs.size()))
 	{
 		bSelectedRequestDirty = true;
@@ -139,6 +141,7 @@ void ULactoseRestSendDebugTab::DrawSelectedRequestSection()
 
 	ImGui::Text("URL:");
 	ImGui::SameLine();
+	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 	if (ImGui::InputText("###URL", &RequestUrl))
 	{
 		SelectedRequest.Url = ANSI_TO_TCHAR(RequestUrl.c_str());
@@ -148,14 +151,23 @@ void ULactoseRestSendDebugTab::DrawSelectedRequestSection()
 	if (ImGui::Button("Send###SendRequest"))
 		SendRequest(SelectedRequestIndex);
 
-	constexpr ImVec2 TextBoxSize = ImVec2(200, 400);
-	constexpr int32 TextBoxFlags = ImGuiInputTextFlags_AllowTabInput;
-
 	ImGui::Text("Content");
-	if (ImGui::InputTextMultiline("###Content", &Content, TextBoxSize, TextBoxFlags))
+
+	constexpr ImVec2 RequestContentSectionSize = ImVec2();
+	constexpr bool bRequestContentSectionBorder = false;
+	constexpr int32 RequestContentSectionFlags = ImGuiWindowFlags_HorizontalScrollbar;
+	if (ImGui::BeginChild("RequestContentSection", RequestContentSectionSize, bRequestContentSectionBorder, RequestContentSectionFlags))
 	{
-		SelectedRequest.Content = ANSI_TO_TCHAR(Content.c_str());
-		bSelectedRequestDirty = true;
+		const ImVec2 TextBoxSize = ImVec2(-std::numeric_limits<float>::min(), ImGui::GetContentRegionAvail().y);
+		constexpr int32 TextBoxFlags = ImGuiInputTextFlags_AllowTabInput;
+
+		if (ImGui::InputTextMultiline("###Content", &Content, TextBoxSize, TextBoxFlags))
+		{
+			SelectedRequest.Content = ANSI_TO_TCHAR(Content.c_str());
+			bSelectedRequestDirty = true;
+		}
+
+		ImGui::EndChild();
 	}
 }
 
@@ -190,42 +202,54 @@ void ULactoseRestSendDebugTab::DrawResponseSection()
 
 	ImGui::Spacing();
 
-	ImGui::Text("Content");
-
 	const TArray<uint8>& ContentBytes = HttpResponse->GetContent();
 
-	// Don't worry about the const case as this text box is going to be read only.
-	char* ContentBytesRaw = reinterpret_cast<char*>(const_cast<uint8*>(ContentBytes.GetData()));
+	if (!ContentBytes.IsEmpty())
+	{
+		ImGui::Text("Content");
+		
+		constexpr ImVec2 ResponseContentSectionSize = ImVec2();
+		constexpr bool bResponseContentSectionBorder = false;
+		constexpr int32 ResponseContentSectionFlags = ImGuiWindowFlags_HorizontalScrollbar;
+		if (ImGui::BeginChild("ResponseContentSection", ResponseContentSectionSize, bResponseContentSectionBorder, ResponseContentSectionFlags))
+		{
+			// Content is converted to a new string because it is still possible for a read-only text box to be
+			// modified. We don't want some crash due to accidental modification of the const content data.
+			auto ContentString = std::string(reinterpret_cast<const char*>(ContentBytes.GetData()), ContentBytes.Num());
+			
+			const ImVec2 TextBoxSize = ImVec2(-std::numeric_limits<float>::min(), ImGui::GetContentRegionAvail().y);
+			constexpr int32 TextBoxFlags = ImGuiInputTextFlags_ReadOnly;
+			ImGui::InputTextMultiline("###ResponseContent", &ContentString, TextBoxSize, TextBoxFlags);
 
-	constexpr int32 TextBoxFlags = ImGuiInputTextFlags_ReadOnly;
-	constexpr ImVec2 TextBoxSize = ImVec2(200, 400);
-	ImGui::InputTextMultiline("###ResponseContent", ContentBytesRaw, ContentBytes.Num(), TextBoxSize, TextBoxFlags);
+			ImGui::EndChild();
+		}
+	}
 }
 
 void ULactoseRestSendDebugTab::CreateNewRequest()
 {
-	auto& NewRequest = SavedRequests.AddDefaulted_GetRef();
+	auto& NewRequest = SavedRequests.Requests.AddDefaulted_GetRef();
 	NewRequest.Name = TEXT("New Request");
 	NewRequest.Url = TEXT("https://");
 }
 
 void ULactoseRestSendDebugTab::ClearRequests()
 {
-	SavedRequests.Empty();
+	SavedRequests.Requests.Empty();
 }
 
 void ULactoseRestSendDebugTab::DeleteRequest(const int32 SavedRequestIdx)
 {
-	if (SavedRequests.IsValidIndex(SavedRequestIdx))
-		SavedRequests.RemoveAt(SavedRequestIdx);
+	if (SavedRequests.Requests.IsValidIndex(SavedRequestIdx))
+		SavedRequests.Requests.RemoveAt(SavedRequestIdx);
 }
 
 void ULactoseRestSendDebugTab::SendRequest(const int32 SavedRequestIdx)
 {
-	if (!SavedRequests.IsValidIndex(SavedRequestIdx))
+	if (!SavedRequests.Requests.IsValidIndex(SavedRequestIdx))
 		return;
 
-	FLactoseRestDebugRequest& SelectedRequest = SavedRequests[SavedRequestIdx];
+	FLactoseRestDebugRequest& SelectedRequest = SavedRequests.Requests[SavedRequestIdx];
 
 	auto RestSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
 	if (!RestSubsystem)

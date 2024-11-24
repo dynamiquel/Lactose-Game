@@ -28,6 +28,21 @@ struct FLactoseRestDebugRequest
 	FString Content;
 };
 
+USTRUCT()
+struct FLactoseRestDebugRequests
+{
+	GENERATED_BODY()
+
+	/**
+	 * Unreal 5.4 has a weird bug with containers in User Config files. They do not save multiple elements properly
+	 * and instead try to duplicate the property in the config file.
+	 * Wrapping the container in its own struct is a workaround for this bugged behaviour.
+	 */
+
+	UPROPERTY()
+	TArray<FLactoseRestDebugRequest> Requests;
+};
+
 struct FLactoseRestDebugSentRequest
 {
 	FDateTime TimeSent;
@@ -72,7 +87,7 @@ private:
 	inline static std::array<const char*, 7> Verbs = { "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD" };
 
 	UPROPERTY(EditAnywhere, Config)
-	TArray<FLactoseRestDebugRequest> SavedRequests;
+	FLactoseRestDebugRequests SavedRequests;
 
 	UPROPERTY(EditAnywhere, Config)
 	int32 SelectedRequestIndex = INDEX_NONE;

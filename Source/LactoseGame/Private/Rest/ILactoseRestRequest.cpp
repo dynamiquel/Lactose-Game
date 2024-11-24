@@ -52,15 +52,20 @@ TFuture<TSharedPtr<Lactose::Rest::IRequest::FResponseContext>> Lactose::Rest::IR
 		SharedThis(this),
 		&IRequest::OnResponseReceived);
 
+	const bool bNeedsContentType = GetInternal()->GetContentType().IsEmpty() && !GetInternal()->GetContent().IsEmpty();
+	if (bNeedsContentType)
+	{
+		// No Content Type is specified, assume JSON.
+		// Unreal's HTTP module will perform an assertion if no Content Type is set (annoying).
+		GetInternal()->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+	}
+
 	const ULactoseRestSubsystem* PinnedRestSubsystem = RestSubsystem.Get();
 	if (!PinnedRestSubsystem)
-	{
 		return {};
-	}
+	
 	if (!RestSubsystem->SendRequest(SharedThis(this)))
-	{
 		return {};
-	}
 
 	bSent = true;
 	return ResponsePromise.GetFuture(); 
