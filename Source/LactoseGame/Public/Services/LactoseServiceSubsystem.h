@@ -1,9 +1,9 @@
 #pragma once
 
-#include "CoreMinimal.h"
-#include "Interfaces/IHttpRequest.h"
+#include <CoreMinimal.h>
+#include <Subsystems/GameInstanceSubsystem.h>
+
 #include "Rest/LactoseRestRequest.h"
-#include "Subsystems/GameInstanceSubsystem.h"
 
 #include "LactoseServiceSubsystem.generated.h"
 
@@ -25,7 +25,7 @@ struct FLactoseServiceInfo
 	FString Version;
 
 	UPROPERTY()
-	FString BuildTime;
+	FDateTime BuildTime;
 
 	UPROPERTY()
 	int32 Status;
@@ -37,13 +37,13 @@ struct FLactoseServiceInfo
 	FString OperatingSystem;
 
 	UPROPERTY()
-	FString StartTime;
+	FDateTime StartTime;
 
 	UPROPERTY()
 	FString Uptime;
 };
 
-using FGetServiceInfoRequest = Lactose::Rest::TRequest<void, FLactoseServiceInfo>;
+using FGetServiceStatusRequest = Lactose::Rest::TRequest<void, FLactoseServiceInfo>;
 
 /**
  * 
@@ -54,24 +54,21 @@ class LACTOSEGAME_API ULactoseServiceSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable, Category="Lactose|Services")
-	void GetServiceInfo();
-
-	void GetServiceInfo2();
-	void GetServiceInfo3();
+	const FString& GetServiceBaseUrl() const { return ServiceBaseUrl; }
+	TFuture<TSharedPtr<FGetServiceStatusRequest::FResponseContext>> GetServiceInfo();
 
 protected:
+	// Begin override ULactoseServiceSubsystem
 	void Initialize(FSubsystemCollectionBase& Collection) override;
 	void Deinitialize() override;
+	// End override ULactoseServiceSubsystem
 
+	void SetServiceBaseUrl(FString&& InUrl);
+	
 	void OnGetServiceInfoResponse(
-		FHttpRequestPtr Request,
-		FHttpResponsePtr Response,
-		bool bConnectedSuccessfully);
+		TSharedRef<FGetServiceStatusRequest::FResponseContext> Context);
 
-	void OnGetServiceInfoResponse2(
-		TSharedRef<Lactose::Rest::FRequest::FResponseContext> Context);
-
-	void OnGetServiceInfoResponse3(
-		TSharedRef<FGetServiceInfoRequest::FResponseContext> Context);
+private:
+	UPROPERTY(EditDefaultsOnly, Config)
+	FString ServiceBaseUrl; 
 };

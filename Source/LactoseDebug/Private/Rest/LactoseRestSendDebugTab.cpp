@@ -184,7 +184,7 @@ void ULactoseRestSendDebugTab::DrawResponseSection()
 	if (bResponsePending)
 	{
 		const double WaitingTime = (FDateTime::UtcNow() - SentRequest.TimeSent).GetTotalMilliseconds();
-		ImGui::Text("Waiting for Response: %fms", WaitingTime);
+		ImGui::Text("Waiting for Response: %0.0f ms", WaitingTime);
 		return;
 	}
 
@@ -198,7 +198,7 @@ void ULactoseRestSendDebugTab::DrawResponseSection()
 	ImGui::Text("Code: %d", HttpResponse->GetResponseCode());
 
 	const double ResponseTimeMs = (RecentResponse.TimeReceived - SentRequest.TimeSent).GetTotalMilliseconds();
-	ImGui::Text("Response Time: %fms", ResponseTimeMs);
+	ImGui::Text("Response Time: %0.0f ms", ResponseTimeMs);
 
 	ImGui::Spacing();
 

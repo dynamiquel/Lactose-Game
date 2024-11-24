@@ -1,11 +1,11 @@
-#include "Identity/LactoseIdentityDiscordDebugTab.h"
+#include "Services/Identity/LactoseIdentityDiscordDebugTab.h"
 
 #include <imgui.h>
 
 #include "DebugImGuiHelpers.h"
 #include "DiscordGame/DiscordGameSubsystem.h"
 #include "DiscordGame/DiscordHelpers.h"
-#include "Identity/LactoseIdentityDebugApp.h"
+#include "Services/Identity/LactoseIdentityDebugApp.h"
 
 ULactoseIdentityDiscordDebugTab::ULactoseIdentityDiscordDebugTab()
 {

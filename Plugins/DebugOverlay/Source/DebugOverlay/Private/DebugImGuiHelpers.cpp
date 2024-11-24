@@ -88,7 +88,7 @@ bool Debug::ImGui::FSearchBox::PassesFilter(const FStringView CompareTo) const
 
 void Debug::ImGui::Error(const char* Format, ...)
 {
-	ImVec4 ColorVec = Color(FLinearColor::Red);
+	const ImVec4 ColorVec = Color(FLinearColor::Red);
 	
 	::ImGui::TextColored(ColorVec, "Error: ");
 	::ImGui::SameLine();

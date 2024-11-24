@@ -12,6 +12,11 @@ bool Lactose::Rest::IRequest::FResponseContext::IsSuccessful() const
 		&& HttpResponse->GetResponseCode() < 300;
 }
 
+double Lactose::Rest::IRequest::FResponseContext::GetLatencyMs() const
+{
+	return (ResponseTime - RequestTime).GetTotalMilliseconds();
+}
+
 Lactose::Rest::IRequest::IRequest(
 	const TWeakObjectPtr<ULactoseRestSubsystem>& InRestSubsystem,
 	const TSharedRef<IHttpRequest>& HttpRequest)
@@ -67,7 +72,7 @@ TFuture<TSharedPtr<Lactose::Rest::IRequest::FResponseContext>> Lactose::Rest::IR
 	if (!RestSubsystem->SendRequest(SharedThis(this)))
 		return {};
 
-	bSent = true;
+	TimeRequestSent = FDateTime::UtcNow();
 	return ResponsePromise.GetFuture(); 
 }
 
@@ -79,6 +84,8 @@ void Lactose::Rest::IRequest::OnResponseReceived(
 	TSharedRef<FResponseContext> ResponseContext = MakeShared<FResponseContext>();
 	ResponseContext->HttpRequest = Request;
 	ResponseContext->HttpResponse = Response;
+	ResponseContext->RequestTime = GetRequestTime();
+	ResponseContext->ResponseTime = FDateTime::UtcNow();
 
 	if (!ResponseContext->IsSuccessful())
 	{

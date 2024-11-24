@@ -4,3 +4,4 @@
 #include "Logging/LogCategory.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogLactoseServices, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogLactoseIdentityService, Log, All);

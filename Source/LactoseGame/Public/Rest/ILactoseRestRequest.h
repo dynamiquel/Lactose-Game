@@ -25,6 +25,10 @@ namespace Lactose::Rest
 
 			FHttpRequestPtr HttpRequest;
 			FHttpResponsePtr HttpResponse;
+			FDateTime RequestTime;
+			FDateTime ResponseTime;
+
+			double GetLatencyMs() const;
 		};
 
 		DECLARE_MULTICAST_DELEGATE_OneParam(FLactoseRestResponseReceivedDelegate, TSharedRef<FResponseContext>);
@@ -32,7 +36,8 @@ namespace Lactose::Rest
 		IRequest(const TWeakObjectPtr<ULactoseRestSubsystem>& InRestSubsystem, const TSharedRef<IHttpRequest>& HttpRequest);
 		virtual ~IRequest() = default;
 
-		bool HasBeenSent() const { return bSent; }
+		FDateTime GetRequestTime() const { return TimeRequestSent; }
+		bool HasBeenSent() const { return TimeRequestSent > 0; }
 		FLactoseRestResponseReceivedDelegate& GetOnResponseReceived() { return ResponseReceived; }
 		
 		IRequest& SetVerb(const FString& Verb);
@@ -49,11 +54,13 @@ namespace Lactose::Rest
 			FHttpResponsePtr Response,
 			bool bConnectedSuccessfully);
 
-	private:
+	protected:
 		TWeakObjectPtr<ULactoseRestSubsystem> RestSubsystem;
-		TSharedRef<IHttpRequest> InternalHttpRequest;
 		TPromise<TSharedPtr<FResponseContext>> ResponsePromise;
 		FLactoseRestResponseReceivedDelegate ResponseReceived;
-		bool bSent = false;
+		
+	private:
+		TSharedRef<IHttpRequest> InternalHttpRequest;
+		FDateTime TimeRequestSent;
 	};
 }

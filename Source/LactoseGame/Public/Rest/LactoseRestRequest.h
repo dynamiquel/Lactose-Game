@@ -7,6 +7,13 @@
 
 namespace Lactose::Rest
 {
+	namespace Concepts
+	{
+		template<typename T>
+		concept RequestType = requires { T::StaticStruct(); };
+	}
+
+	// TODO: Sort out this template specialisation vs generic bs. 
 	template<typename TRequestContent = void, typename TResponseContent = void>
 	class TRequest : public IRequest
 	{
@@ -32,7 +39,15 @@ namespace Lactose::Rest
 
 		FLactoseRestResponseReceived2Delegate& GetOnResponseReceived2() { return ResponseReceived2; }
 
-		template<typename TRequestContentEnabled = TRequestContent, std::enable_if_t<!std::is_same_v<TRequestContentEnabled, void>>>
+		TFuture<TSharedPtr<FResponseContext>> Send2()
+		{
+			if (IRequest::Send().IsValid())
+				return ResponsePromise2.GetFuture();
+
+			return {};
+		}
+
+		template<Concepts::RequestType TRequestContentEnabled = TRequestContent>
 		bool SetContentAsJson(const TRequestContentEnabled& Request)
 		{
 			TArray<uint8> JsonBytes = Serialisation::Json::Serialise(Request);
@@ -46,7 +61,7 @@ namespace Lactose::Rest
 			return true;
 		}
 
-		template<typename TRequestContentEnabled = TRequestContent, std::enable_if_t<!std::is_same_v<TRequestContentEnabled, void>>>
+		template<Concepts::RequestType TRequestContentEnabled = TRequestContent>
 		TFuture<TSharedPtr<FResponseContext>> SetContentAsJsonAndSendAsync(const TSharedRef<TRequestContentEnabled>& Request)
 		{
 			AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [This = SharedThis(this), Request]
@@ -70,35 +85,53 @@ namespace Lactose::Rest
 			FHttpResponsePtr Response,
 			bool bConnectedSuccessfully) override
 		{
-			IRequest::OnResponseReceived(Request, Response, bConnectedSuccessfully);
-			
 			TSharedRef<FResponseContext> Context = MakeShared<FResponseContext>();
 			Context->HttpRequest = Request;
 			Context->HttpResponse = Response;
-			
-			if (Context->IsSuccessful())
+			Context->RequestTime = GetRequestTime();
+			Context->ResponseTime = FDateTime::UtcNow();
+
+			if (!Context->IsSuccessful())
 			{
-				// Convert request and response to Json.
-
-				if constexpr (!std::is_same_v<TRequestContent, void>)
-				{
-					if (Request && !Request->GetContent().IsEmpty())
-					{
-						Context->RequestContent = Serialisation::Json::DeserialiseShared<TRequestContent>(Request->GetContent());
-					}
-				}
-
-				if constexpr (!std::is_same_v<TResponseContent, void>)
-				{
-					if (!Response->GetContent().IsEmpty())
-					{
-						Context->ResponseContent = Serialisation::Json::DeserialiseShared<TResponseContent>(Response->GetContent());
-					}
-				}
+				UE_CLOG(Context->HttpResponse, LogTemp, Error, TEXT("Received an unsuccessful response. Code %d; Reason: %d"),
+					Response->GetResponseCode(),
+					Response->GetFailureReason());
 			}
+			else
+			{
+				// Convert request and response from JSON on a background thread before dispatching back to game thread.
+				AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [This = SharedThis(this), Context]
+				{
+					if constexpr (Concepts::RequestType<TRequestContent>)
+					{
+						if (Context->HttpRequest && !Context->HttpRequest->GetContent().IsEmpty())
+						{
+							Context->RequestContent = Serialisation::Json::DeserialiseShared<TRequestContent>(
+								Context->HttpRequest->GetContent());
+						}
+					}
 
-			ResponsePromise2.SetValue(Context);
-			GetOnResponseReceived2().Broadcast(Context);
+					if constexpr (Concepts::RequestType<TResponseContent>)
+					{
+						if (Context->HttpResponse && !Context->HttpResponse->GetContent().IsEmpty())
+						{
+							Context->ResponseContent = Serialisation::Json::DeserialiseShared<TResponseContent>(
+								Context->HttpResponse->GetContent());
+						}
+					}
+
+					AsyncTask(ENamedThreads::GameThread, [This, Context]
+					{
+						This->ResponsePromise.SetValue(StaticCastSharedRef<IRequest::FResponseContext>(Context));
+						This->GetOnResponseReceived().Broadcast(StaticCastSharedRef<IRequest::FResponseContext>(Context));
+						This->ResponsePromise2.SetValue(Context);
+						This->GetOnResponseReceived2().Broadcast(Context);
+					});
+				});
+			}
+			
+			if (ULactoseRestSubsystem* PinnedRestSubsystem = RestSubsystem.Get())
+				PinnedRestSubsystem->RemoveRequest(SharedThis(this));
 		}
 
 	private:
