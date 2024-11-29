@@ -13,6 +13,16 @@ class ALactoseGameGameMode : public AGameModeBase
 
 public:
 	ALactoseGameGameMode();
+
+	// Begin override AGameModeBase
+	void StartPlay() override;
+	// End override AGameModeBase
+
+	void ProcessBeginPlayConditions();
+	
+private:
+	TArray<FString> PendingConditions;
+	FTimerHandle BeginPlayConditionCheckTimer;
 };
 
 

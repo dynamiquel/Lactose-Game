@@ -38,6 +38,14 @@ struct FLactoseIdentityGetUserResponse
 
 using FGetUserRequest = Lactose::Rest::TRequest<FLactoseIdentityGetUserRequest, FLactoseIdentityGetUserResponse>;
 
+UENUM()
+enum class ELactoseIdentityUserLoginStatus
+{
+	NotLoggedIn,
+	LoggingIn,
+	LoggedIn
+};
+
 /**
  * 
  */
@@ -49,14 +57,37 @@ class LACTOSEGAME_API ULactoseIdentityServiceSubsystem : public ULactoseServiceS
 	ULactoseIdentityServiceSubsystem();
 
 public:
+	// Begin override ULactoseServiceSubsystem
+	void Initialize(FSubsystemCollectionBase& Collection) override;
+	// End override ULactoseServiceSubsystem
+	
 	void Login();
 	void Logout();
 	
 	const TSharedPtr<FLactoseIdentityGetUserResponse>& GetLoggedInUserInfo() const { return LoggedInUserInfo; }
+	ELactoseIdentityUserLoginStatus GetLoginStatus() const;
 
 protected:
 	void OnUserLoggedIn(TSharedRef<FGetUserRequest::FResponseContext> Context);
 	
 private:
+	UPROPERTY(EditDefaultsOnly, Config)
+	bool bAutoLogin = true;
+	
+	TFuture<TSharedPtr<FGetUserRequest::FResponseContext>> LoggedInFuture;
 	TSharedPtr<FLactoseIdentityGetUserResponse> LoggedInUserInfo;
 };
+
+namespace Lactose::Identity::Events
+{
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FUserLoggedIn,
+		const ULactoseIdentityServiceSubsystem& /* Sender */,
+		const TSharedRef<FLactoseIdentityGetUserResponse>& /* User */);
+
+	DECLARE_MULTICAST_DELEGATE_OneParam(FGeneric,
+		const ULactoseIdentityServiceSubsystem& /* Sender */);
+
+	inline FUserLoggedIn OnUserLoggedIn;
+	inline FGeneric OnUserLoggedOut;
+	inline FGeneric OnUserLoginFailed;
+}

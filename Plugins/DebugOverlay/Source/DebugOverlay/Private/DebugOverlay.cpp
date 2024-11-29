@@ -127,12 +127,15 @@ void UDebugOverlay::RenderAppBar()
 	
 	ImGuiViewport* Viewport = ImGui::GetMainViewport();
 	check(Viewport);
-	
+
 	const float DesiredHeight = Viewport->WorkSize.y * .5f;
 	
-	ImGui::SetNextWindowPos(ImVec2(0.f, DesiredHeight), ImGuiCond_Always, ImVec2(0.f, .5f));
+	ImGui::SetNextWindowPos(ImVec2(0.f, 50.f), ImGuiCond_Always);
 
-	ImVec2 WindowSize = ImVec2(DebugOverlaySettings.AppBarButtonDimensions.X + DebugOverlaySettings.Sizes.GlobalPadding.X * 2,  DesiredHeight);
+	ImVec2 WindowSize = ImVec2(
+	    DebugOverlaySettings.AppBarButtonDimensions.X + DebugOverlaySettings.Sizes.GlobalPadding.X * 2,
+	    DesiredHeight);
+	
 	ImGui::SetNextWindowSize(WindowSize, ImGuiCond_Always);
 	
 	if (!ImGui::Begin("Apps"))
