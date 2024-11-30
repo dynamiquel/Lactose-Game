@@ -1,7 +1,6 @@
 #include "Rest/ILactoseRestRequest.h"
 
 #include "Interfaces/IHttpResponse.h"
-
 #include "Rest/LactoseRestSubsystem.h"
 
 bool Lactose::Rest::IRequest::FResponseContext::IsSuccessful() const
@@ -23,6 +22,17 @@ Lactose::Rest::IRequest::IRequest(
 	: RestSubsystem(InRestSubsystem)
 	, InternalHttpRequest(HttpRequest)
 {
+}
+
+Lactose::Rest::IRequest::~IRequest()
+{
+	// Wish there was a better way of cancelling promises.
+	const bool bPending = HasBeenSent() && !GetInternal()->GetResponse().IsValid();
+	if (bPending)
+	{
+		GetInternal()->CancelRequest();
+		ResponsePromise.SetValue(nullptr);
+	}
 }
 
 Lactose::Rest::IRequest& Lactose::Rest::IRequest::SetVerb(const FString& Verb)
@@ -65,11 +75,11 @@ TFuture<TSharedPtr<Lactose::Rest::IRequest::FResponseContext>> Lactose::Rest::IR
 		GetInternal()->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
 	}
 
-	const ULactoseRestSubsystem* PinnedRestSubsystem = RestSubsystem.Get();
+	ULactoseRestSubsystem* PinnedRestSubsystem = RestSubsystem.Get();
 	if (!PinnedRestSubsystem)
 		return {};
 	
-	if (!RestSubsystem->SendRequest(SharedThis(this)))
+	if (!PinnedRestSubsystem->SendRequest(SharedThis(this)))
 		return {};
 
 	TimeRequestSent = FDateTime::UtcNow();

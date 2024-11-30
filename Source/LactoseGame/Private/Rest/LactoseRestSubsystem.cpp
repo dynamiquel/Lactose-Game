@@ -4,6 +4,7 @@ bool ULactoseRestSubsystem::SendRequest(const TSharedRef<Lactose::Rest::IRequest
 {
 	if (Request->GetInternal()->ProcessRequest())
 	{
+		FScopeLock Lock(&PendingRequestsLock);
 		PendingRequests.Add(Request);
 		return true;
 	}
@@ -13,5 +14,6 @@ bool ULactoseRestSubsystem::SendRequest(const TSharedRef<Lactose::Rest::IRequest
 
 void ULactoseRestSubsystem::RemoveRequest(const TSharedRef<Lactose::Rest::IRequest>& Request)
 {
+	FScopeLock Lock(&PendingRequestsLock);
 	PendingRequests.Remove(Request);
 }

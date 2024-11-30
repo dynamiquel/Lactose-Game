@@ -13,7 +13,7 @@ class LACTOSEGAME_API ULactoseRestSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
-public:
+public:	
 	template<typename TRequest> requires (std::is_base_of_v<Lactose::Rest::IRequest, TRequest>)
 	TSharedRef<TRequest> CreateRequest()
 	{
@@ -32,4 +32,6 @@ public:
 private:
 	// Ensures Requests stay alive while they are being processed.
 	TSet<TSharedRef<Lactose::Rest::IRequest>> PendingRequests;
+
+	FCriticalSection PendingRequestsLock;
 };

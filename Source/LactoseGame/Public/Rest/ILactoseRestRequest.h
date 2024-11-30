@@ -34,7 +34,7 @@ namespace Lactose::Rest
 		DECLARE_MULTICAST_DELEGATE_OneParam(FLactoseRestResponseReceivedDelegate, TSharedRef<FResponseContext>);
 		
 		IRequest(const TWeakObjectPtr<ULactoseRestSubsystem>& InRestSubsystem, const TSharedRef<IHttpRequest>& HttpRequest);
-		virtual ~IRequest() = default;
+		virtual ~IRequest();
 
 		FDateTime GetRequestTime() const { return TimeRequestSent; }
 		bool HasBeenSent() const { return TimeRequestSent > 0; }

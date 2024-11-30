@@ -8,6 +8,7 @@
 #include "Services/Economy/LactoseEconomyUserItemsRequests.h"
 #include "LactoseEconomyUserItemsTab.generated.h"
 
+
 class ULactoseEconomyServiceSubsystem;
 /**
  * 
@@ -27,10 +28,9 @@ class LACTOSEDEBUG_API ULactoseEconomyUserItemsTab : public UDebugAppTab
 	UPROPERTY(Transient)
 	TObjectPtr<ULactoseEconomyServiceSubsystem> EconomySubsystem;
 
-	Debug::ImGui::FSearchBox CurrentUserItemsSearchBox;
-	Debug::ImGui::FSearchBox OtherUserItemsSearchBox;
+	Debug::ImGui::FSearchBox CurrentUserItemsSearchBox { TEXT("###CurrentUserItemsSearchBox") };
+	Debug::ImGui::FSearchBox OtherUserItemsSearchBox { TEXT("###OtherUserItemsSearchBox") };
+	std::array<char, 128> OtherUserIdBuffer;
 
 	TFuture<TSharedPtr<FGetEconomyUserItemsRequest::FResponseContext>> GetOtherUserItemsFuture;
-
-	std::array<char, 128> OtherUserIdBuffer;
 };

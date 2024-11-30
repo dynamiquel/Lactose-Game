@@ -34,7 +34,7 @@ void ULactoseEconomyUserItemsTab::Render()
 	
 	if (ImGui::TableNextColumn())
 	{
-		ImGui::Text("Status");
+		ImGui::Text("Status: ");
 		ImGui::SameLine();
 
 		switch (EconomySubsystem->GetCurrentUserItemsStatus())
@@ -82,8 +82,10 @@ void ULactoseEconomyUserItemsTab::Render()
 				{
 					ImGui::Indent();
 					ImGui::Text("Item Id: %s", STR_TO_ANSI(CurrentUserItem.Value->ItemId));
-					ImGui::Text("Quantity: %d", CurrentUserItem.Value->Quantity);
-					ImGui::Text("Infinite Quantity: %d", CurrentUserItem.Value->Quantity == -1);
+					if (CurrentUserItem.Value->Quantity == -1)
+						ImGui::Text("Quantity: Infinite");
+					else
+						ImGui::Text("Quantity: %d", CurrentUserItem.Value->Quantity);
 					ImGui::Unindent();
 				}
 			}
@@ -152,8 +154,10 @@ void ULactoseEconomyUserItemsTab::Render()
 							{
 								ImGui::Indent();
 								ImGui::Text("Item Id: %s", STR_TO_ANSI(CurrentUserItem.ItemId));
-								ImGui::Text("Quantity: %d", CurrentUserItem.Quantity);
-								ImGui::Text("Infinite Quantity: %d", CurrentUserItem.Quantity == -1);
+								if (CurrentUserItem.Quantity == -1)
+									ImGui::Text("Quantity: Infinite");
+								else
+									ImGui::Text("Quantity: %d", CurrentUserItem.Quantity);
 								ImGui::Unindent();
 							}
 						}

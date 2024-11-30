@@ -30,7 +30,16 @@ namespace Lactose::Rest
 		TRequest(const TWeakObjectPtr<ULactoseRestSubsystem>& RestSubsystem, const TSharedRef<IHttpRequest>& HttpRequest)
 			: IRequest(RestSubsystem, HttpRequest) { }
 	
-		virtual ~TRequest() = default;
+		virtual ~TRequest()
+		{
+			// Wish there was a better way of cancelling promises.
+			const bool bPending = HasBeenSent() && !GetInternal()->GetResponse().IsValid();
+			if (bPending)
+			{
+				GetInternal()->CancelRequest();
+				ResponsePromise2.SetValue(nullptr);
+			}
+		}
 
 		static TSharedRef<TRequest> Create(ULactoseRestSubsystem& RestSubsystem)
 		{
