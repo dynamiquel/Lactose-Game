@@ -79,5 +79,9 @@ namespace Lactose::Economy::Events
 	DECLARE_MULTICAST_DELEGATE_OneParam(FAllItemsLoaded,
 		const ULactoseEconomyServiceSubsystem& /* Sender */);
 
+	DECLARE_MULTICAST_DELEGATE_OneParam(FCurrentUserItemsLoaded,
+		const ULactoseEconomyServiceSubsystem& /* Sender */);
+
 	inline FAllItemsLoaded OnAllItemsLoaded;
+	inline FCurrentUserItemsLoaded OnCurrentUserItemsLoaded;
 }

@@ -52,7 +52,7 @@ void ULactoseEconomyUserItemsTab::Render()
 				if (ImGui::Button("Refresh"))
 					EconomySubsystem->LoadCurrentUserItems();
 				break;
-		default:
+			default:
 				ImGui::Text("Unknown");
 		}
 

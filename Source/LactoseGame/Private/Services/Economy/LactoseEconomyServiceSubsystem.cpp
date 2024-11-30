@@ -129,6 +129,8 @@ void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()
 
 		UE_LOG(LogLactoseEconomyService, Verbose, TEXT("Loaded All %d User Items"),
 			ThisPinned->CurrentUserItems.Num());
+
+		Lactose::Economy::Events::OnCurrentUserItemsLoaded.Broadcast(*ThisPinned);
 	});
 }
 

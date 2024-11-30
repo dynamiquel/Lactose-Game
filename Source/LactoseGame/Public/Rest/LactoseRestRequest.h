@@ -105,6 +105,9 @@ namespace Lactose::Rest
 				UE_CLOG(Context->HttpResponse, LogTemp, Error, TEXT("Received an unsuccessful response. Code %d; Reason: %d"),
 					Response->GetResponseCode(),
 					Response->GetFailureReason());
+
+				ResponsePromise.SetValue(nullptr);
+				ResponsePromise2.SetValue(nullptr);
 			}
 			else
 			{
