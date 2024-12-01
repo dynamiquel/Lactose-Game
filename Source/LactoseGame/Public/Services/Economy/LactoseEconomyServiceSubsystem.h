@@ -62,6 +62,8 @@ protected:
 		const ULactoseIdentityServiceSubsystem& Sender,
 		const TSharedRef<FLactoseIdentityGetUserResponse>& User);
 
+	void OnUserLoggedOut(const ULactoseIdentityServiceSubsystem& Sender);
+
 private:
 	UPROPERTY(EditDefaultsOnly, Config)
 	bool bAutoRetrieveItems = true;

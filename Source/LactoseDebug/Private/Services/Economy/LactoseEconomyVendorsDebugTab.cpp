@@ -106,9 +106,9 @@ void ULactoseEconomyVendorsDebugTab::DrawVendorItems(
 		if (ImGui::TableNextColumn())
 		{
 			if (VendorItem.Quantity == -1)
-				ImGui::Text("Quantity: Infinite");
+				ImGui::Text("Infinite");
 			else
-				ImGui::Text("Quantity: %d", VendorItem.Quantity);
+				ImGui::Text("%d", VendorItem.Quantity);
 		}
 
 		if (ImGui::TableNextColumn())

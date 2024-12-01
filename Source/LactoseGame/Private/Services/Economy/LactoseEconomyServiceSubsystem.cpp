@@ -16,6 +16,7 @@ void ULactoseEconomyServiceSubsystem::Initialize(FSubsystemCollectionBase& Colle
 	Super::Initialize(Collection);
 
 	Lactose::Identity::Events::OnUserLoggedIn.AddUObject(this, &ThisClass::OnUserLoggedIn);
+	Lactose::Identity::Events::OnUserLoggedOut.AddUObject(this, &ThisClass::OnUserLoggedOut);
 }
 
 TSharedPtr<const FLactoseEconomyItem> ULactoseEconomyServiceSubsystem::GetItem(const FString& ItemId) const
@@ -192,4 +193,9 @@ void ULactoseEconomyServiceSubsystem::OnUserLoggedIn(
 		LoadAllItems();
 
 	LoadCurrentUserItems();
+}
+
+void ULactoseEconomyServiceSubsystem::OnUserLoggedOut(const ULactoseIdentityServiceSubsystem& Sender)
+{
+	CurrentUserItems.Reset();
 }

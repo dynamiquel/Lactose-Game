@@ -1,5 +1,8 @@
 #include "Services/Simulation/LactoseSimulationUserCropsTab.h"
 
+#include <string>
+#include "imgui_stdlib.h"
+
 #include "Services/Simulation/LactoseSimulationDebugApp.h"
 #include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
 #include "Services/Economy/LactoseEconomyServiceSubsystem.h"
@@ -48,9 +51,29 @@ void ULactoseSimulationUserCropsTab::Render()
 	auto UserCrops = SimulationSubsystem->GetCurrentUserCrops();
 	if (!UserCrops)
 		return;
-
+	
 	ImGui::Spacing();
+	
+	if (ImGui::Button("Simulate"))
+		SimulationSubsystem->Simulate();
+
+	ImGui::SameLine();
+	
+	if (SimulationSubsystem->IsAutoSimulateTicking())
+	{
+		if (ImGui::Button("Disable Simulate Tick"))
+			SimulationSubsystem->DisableSimulateTicker();
+	}
+	else
+	{
+		if (ImGui::Button("Enable Simulate Tick"))
+			SimulationSubsystem->EnableSimulateTicker();
+	}
+	
+	ImGui::SameLine();
+	
 	ImGui::Text("Previous Simulation Time: %s", STR_TO_ANSI(SimulationSubsystem->GetCurrentUserPreviousSimulationTime().ToString()));
+	
 	ImGui::Spacing();
 
 	const bool bAnyCropsSelected = !SelectedUserCrops.IsEmpty();
@@ -77,38 +100,63 @@ void ULactoseSimulationUserCropsTab::Render()
 		ImGui::SameLine();
 		ImGui::Text("Selected %d Crops", SelectedUserCrops.Num());
 
-		if (ImGui::Button("Harvest"))
-		{
-			
-		}
-		
-		ImGui::SameLine();
-		
-		if (ImGui::Button("Seed"))
-		{
-			
-		}
+		ImGui::Spacing();
 
+		if (ImGui::Button("Harvest"))
+			SimulationSubsystem->HarvestCropInstances(SelectedUserCrops.Array());
+		
 		ImGui::SameLine();
 
 		if (ImGui::Button("Fertilise"))
-		{
-			
-		}
+			SimulationSubsystem->FertiliseCropInstances(SelectedUserCrops.Array());
 
 		ImGui::SameLine();
 
 		if (ImGui::Button("Destroy"))
+			SimulationSubsystem->DestroyCropInstances(SelectedUserCrops.Array());
+
+		ImGui::SameLine();
+		
+		if (ImGui::Button("Seed"))
 		{
-			
+			if (!OverrideSeedCropId.empty())
+			{
+				const FString SeedCropIdStr = ANSI_TO_TCHAR(OverrideSeedCropId.data());
+				SimulationSubsystem->SeedCropInstances(SelectedUserCrops.Array(), SeedCropIdStr);
+			}
+			else
+			{
+				/*
+				 * Go through each Selected Crop and reseed it with its last known crop.
+				 * Batch process the requests based on the seed crop.
+				 *
+				 * This is done because the Simulation API can only do batch requests on a per-seed basis.
+				 *
+				 * TMap<SeedCropId, UserCropInstanceId
+				 */
+				TMap<FString, TArray<FString>> CropsToSeedBySeed;
+				
+				for (const FString& SelectedUserCropId : SelectedUserCrops)
+					if (auto UserCropInstance = UserCrops->FindCropInstance(SelectedUserCropId))
+						CropsToSeedBySeed.FindOrAdd(UserCropInstance->CropId).Add(UserCropInstance->Id);
+
+				for (const auto& CropsToSeed : CropsToSeedBySeed)
+					SimulationSubsystem->SeedCropInstances(CropsToSeed.Value, CropsToSeed.Key);
+			}
 		}
+		ImGui::SameLine();
+		ImGui::Text("Override Seed Crop Id: ");
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(200.f);
+		ImGui::InputText("###SeedCropIdInput", &OverrideSeedCropId);
 	}
 
 	ImGui::Spacing();
-	
+
+	ImGui::SetNextItemWidth(200.f);
 	UserCropsSearchBox.Draw();
 
-	constexpr int32 Columns = 9;
+	constexpr int32 Columns = 8;
 	constexpr int32 TableFlags = ImGuiTableFlags_Resizable | ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY;
 	if (ImGui::BeginTable("UserCropsTable", Columns, TableFlags))
 	{
@@ -120,7 +168,6 @@ void ULactoseSimulationUserCropsTab::Render()
 		ImGui::TableSetupColumn("Created");
 		ImGui::TableSetupColumn("Harvest");
 		ImGui::TableSetupColumn("Fertilise");
-		ImGui::TableSetupColumn("Actions");
 		ImGui::TableHeadersRow();
 		
 		for (const TSharedRef<FLactoseSimulationUserCropInstance>& UserCrop : UserCrops->GetAllCropInstances())
@@ -137,7 +184,7 @@ void ULactoseSimulationUserCropsTab::Render()
 				*UserCrop->State);
 			
 			if (!UserCropsSearchBox.PassesFilter(CropSearchIdentifier))
-				return;
+				continue;
 			
 			if (ImGui::TableNextColumn())
 			{
@@ -171,46 +218,10 @@ void ULactoseSimulationUserCropsTab::Render()
 			}
 
 			if (ImGui::TableNextColumn())
-				ImGui::Text("%f.0 s", UserCrop->RemainingHarvestSeconds);
+				ImGui::Text("%.0f s", UserCrop->RemainingHarvestSeconds);
 
 			if (ImGui::TableNextColumn())
-				ImGui::Text("%f.0 s", UserCrop->RemainingFertiliserSeconds);
-
-			if (ImGui::TableNextColumn())
-			{
-				if (UserCrop->State == Lactose::Simulation::States::Empty)
-				{
-					if (ImGui::Button("Seed"))
-					{
-						
-					}
-
-					ImGui::SameLine();
-				}
-				else if (UserCrop->State == Lactose::Simulation::States::Growing)
-				{
-					if (ImGui::Button("Fertilise"))
-					{
-						
-					}
-
-					ImGui::SameLine();
-				}
-				else if (UserCrop->State == Lactose::Simulation::States::Harvestable)
-				{
-					if (ImGui::Button("Harvest"))
-					{
-						
-					}
-
-					ImGui::SameLine();
-				}
-				
-				if (ImGui::Button("Destroy"))
-				{
-					
-				}
-			}
+				ImGui::Text("%.0f s", UserCrop->RemainingFertiliserSeconds);
 		}
 
 		ImGui::EndTable();

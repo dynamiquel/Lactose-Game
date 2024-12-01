@@ -27,11 +27,11 @@ Lactose::Rest::IRequest::IRequest(
 Lactose::Rest::IRequest::~IRequest()
 {
 	// Wish there was a better way of cancelling promises.
-	const bool bPending = HasBeenSent() && !GetInternal()->GetResponse().IsValid();
+	const bool bPending = GetInternal()->GetStatus() == EHttpRequestStatus::Processing;
 	if (bPending)
 	{
-		GetInternal()->CancelRequest();
 		ResponsePromise.SetValue(nullptr);
+		GetInternal()->CancelRequest();
 	}
 }
 

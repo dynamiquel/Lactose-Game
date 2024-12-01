@@ -5,6 +5,7 @@ public class LactoseDebug : ModuleRules
     public LactoseDebug(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        CppStandard = CppStandardVersion.Latest;
 
         PublicDependencyModuleNames.AddRange(
             new string[]

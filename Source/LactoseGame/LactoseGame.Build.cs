@@ -7,6 +7,7 @@ public class LactoseGame : ModuleRules
 	public LactoseGame(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		CppStandard = CppStandardVersion.Latest;
 
 		PublicDependencyModuleNames.AddRange(new[]
         {

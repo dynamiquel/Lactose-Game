@@ -2,7 +2,9 @@
 
 #include "LactoseGameGameMode.h"
 #include "LactoseGameCharacter.h"
+#include "Services/Economy/LactoseEconomyServiceSubsystem.h"
 #include "Services/Identity/LactoseIdentityServiceSubsystem.h"
+#include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
 #include "UObject/ConstructorHelpers.h"
 
 ALactoseGameGameMode::ALactoseGameGameMode()
@@ -31,7 +33,7 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 	auto* Identity = GetGameInstance()->GetSubsystem<ULactoseIdentityServiceSubsystem>();
 	check(Identity);
 
-	switch (ELactoseIdentityUserLoginStatus IdentityStatus = Identity->GetLoginStatus())
+	switch (Identity->GetLoginStatus())
 	{
 		case ELactoseIdentityUserLoginStatus::NotLoggedIn:
 			PendingConditions.Emplace(TEXT("You are not logged in"));
@@ -39,9 +41,65 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 		case ELactoseIdentityUserLoginStatus::LoggingIn:
 			PendingConditions.Emplace(TEXT("You are being logged in"));
 			break;
-		default: ;
+		default:
 	}
 
+	auto* Economy = GetGameInstance()->GetSubsystem<ULactoseEconomyServiceSubsystem>();
+	check(Economy);
+	
+	switch (Economy->GetAllItemsStatus())
+	{
+		case ELactoseEconomyAllItemsStatus::None:
+			PendingConditions.Emplace(TEXT("Economy items have not been loaded"));
+			break;
+		case ELactoseEconomyAllItemsStatus::Querying:
+			PendingConditions.Emplace(TEXT("Economy items are being queried"));
+			break;
+		case ELactoseEconomyAllItemsStatus::Retrieving:
+			PendingConditions.Emplace(TEXT("Economy items are being loaded"));
+			break;
+		default:
+	}
+
+	switch (Economy->GetCurrentUserItemsStatus())
+	{
+		case ELactoseEconomyUserItemsStatus::None:
+			PendingConditions.Emplace(TEXT("Your items have not been loaded"));
+			break;
+		case ELactoseEconomyUserItemsStatus::Retrieving:
+			PendingConditions.Emplace(TEXT("Your items are being loaded"));
+			break;
+		default:
+	}
+
+	auto* Simulation = GetGameInstance()->GetSubsystem<ULactoseSimulationServiceSubsystem>();
+	check(Simulation);
+
+	switch (Simulation->GetAllCropsStatus())
+	{
+		case ELactoseSimulationCropsStatus::None:
+			PendingConditions.Emplace(TEXT("Crops have not been loaded"));
+			break;
+		case ELactoseSimulationCropsStatus::Querying:
+			PendingConditions.Emplace(TEXT("Crops are being queried"));
+			break;
+		case ELactoseSimulationCropsStatus::Retrieving:
+			PendingConditions.Emplace(TEXT("Crops are being loaded"));
+			break;
+		default:
+	}
+
+	switch (Simulation->GetCurrentUserCropsStatus())
+	{
+		case ELactoseSimulationUserCropsStatus::None:
+			PendingConditions.Emplace(TEXT("Your crops have not been loaded"));
+			break;
+		case ELactoseSimulationUserCropsStatus::Retrieving:
+			PendingConditions.Emplace(TEXT("Your crops are being loaded"));
+			break;
+		default:
+	}
+	
 	if (PendingConditions.IsEmpty())
 	{
 		GetWorldTimerManager().ClearTimer(BeginPlayConditionCheckTimer);

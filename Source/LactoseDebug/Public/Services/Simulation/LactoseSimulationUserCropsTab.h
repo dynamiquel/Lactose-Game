@@ -2,6 +2,9 @@
 
 #pragma once
 
+#include <optional>
+#include <string>
+
 #include "CoreMinimal.h"
 #include "DebugAppTab.h"
 #include "DebugImGuiHelpers.h"
@@ -34,4 +37,6 @@ private:
 	Debug::ImGui::FSearchBox UserCropsSearchBox;
 
 	TSet<FString> SelectedUserCrops;
+
+	std::string OverrideSeedCropId;
 };

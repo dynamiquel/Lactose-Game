@@ -38,8 +38,11 @@ public:
 	TSharedRef<const FLactoseSimulationUserCropInstance> UpdateCropInstance(const FLactoseSimulationUserCropInstance& NewCropInstanceData);
 	bool DeleteCropInstance(const FString& CropInstanceId);
 
+	TArray<TSharedRef<const FLactoseSimulationUserCropInstance>> FindCropInstances(TConstArrayView<FString> CropInstanceIds) const;
+	
 private:
 	TSharedPtr<FLactoseSimulationUserCropInstance> FindCropInstance(const FString& CropInstanceId);
+	void EmplaceCropInstance(const TSharedRef<FLactoseSimulationUserCropInstance>& ExistingCropInstance);
 
 private:
 	TArray<TSharedRef<FLactoseSimulationUserCropInstance>> Database;
@@ -72,18 +75,44 @@ public:
 
 	void LoadCurrentUserCrops();
 
+	void Simulate();
+	void HarvestCropInstances(TConstArrayView<FString> CropInstanceIds);
+	void SeedCropInstances(TConstArrayView<FString> CropInstanceIds, const FString& CropId);
+	void FertiliseCropInstances(TConstArrayView<FString> CropInstanceIds);
+	void DestroyCropInstances(TConstArrayView<FString> CropInstanceIds);
+
+	void EnableSimulateTicker();
+	void DisableSimulateTicker();
+	bool IsAutoSimulateTicking() const { return SimulateTicker.IsValid(); }
+
 protected:
 	void OnAllCropsQueried(TSharedRef<FQuerySimulationCropsRequest::FResponseContext> Context);
 	void OnAllCropsRetrieved(TSharedRef<FGetSimulationCropsRequest::FResponseContext> Context);
-	void OnCurrentUserCropsRetrieved(TSharedRef<FGetSimulationUserCropsRequest::FResponseContext> Context);
 	
+	void OnCurrentUserCropsRetrieved(TSharedRef<FGetSimulationUserCropsRequest::FResponseContext> Context);
+	void OnCurrentUserCropsSimulated(TSharedRef<FSimulateSimulationUserCropsRequest::FResponseContext> Context);
+	void OnCurrentUserCropsHarvested(TSharedRef<FHarvestSimulationUserCropsRequest::FResponseContext> Context);
+	void OnCurrentUserCropsSeeded(TSharedRef<FSeedSimulationUserCropsRequest::FResponseContext> Context);
+	void OnCurrentUserCropsFertilised(TSharedRef<FFertiliseSimulationUserCropsRequest::FResponseContext> Context);
+	void OnCurrentUserCropsDestroyed(TSharedRef<FDeleteSimulationUserCropsRequest::FResponseContext> Context);
+
 	void OnUserLoggedIn(
 		const ULactoseIdentityServiceSubsystem& Sender,
 		const TSharedRef<FLactoseIdentityGetUserResponse>& User);
 
+	void OnUserLoggedOut(const ULactoseIdentityServiceSubsystem& Sender);
+
+	void OnSimulateTick();
+
 private:
 	UPROPERTY(EditDefaultsOnly, Config)
 	bool bAutoRetrieveCrops = true;
+
+	UPROPERTY(EditDefaultsOnly, Config)
+	float SimulateTickInterval = 2.f;
+
+	UPROPERTY(EditDefaultsOnly, Config)
+	bool bRefreshUserCropsOnSimulated = true;
 	
 	TFuture<TSharedPtr<FQuerySimulationCropsRequest::FResponseContext>> QueryAllCropsFuture;
 	TFuture<TSharedPtr<FGetSimulationCropsRequest::FResponseContext>> GetAllCropsFuture;
@@ -92,7 +121,11 @@ private:
 	TFuture<TSharedPtr<FGetSimulationUserCropsRequest::FResponseContext>> GetCurrentUserCropsFuture;
 	TSharedPtr<FLactoseSimulationUserCrops> CurrentUserCrops;
 
+	TFuture<TSharedPtr<FSimulateSimulationUserCropsRequest::FResponseContext>> SimulateCurrentUserCropsFuture;
+
 	FDateTime PreviousUserSimulationTime;
+
+	FTimerHandle SimulateTicker;
 };
 
 namespace Lactose::Simulation::Events
@@ -102,11 +135,28 @@ namespace Lactose::Simulation::Events
 
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FUserCropsLoaded,
 		const ULactoseSimulationServiceSubsystem& /* Sender */,
-		TSharedRef<FLactoseSimulationUserCrops> UserCrops);
+		TSharedRef<FLactoseSimulationUserCrops> /* UserCrops */);
+
+	DECLARE_MULTICAST_DELEGATE_ThreeParams(FUserCropsSimulated,
+		const ULactoseSimulationServiceSubsystem& /* Sender */,
+		FDateTime /* PreviousSimulationTime */,
+		FDateTime /* NewSimulationTime */);
+
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FUserCropsDelegate,
+		const ULactoseSimulationServiceSubsystem& /* Sender */,
+		const TArray<TSharedRef<const FLactoseSimulationUserCropInstance>>& /* ModifiedUserCrops */);
+
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FUserCropsDestroyed,
+		const ULactoseSimulationServiceSubsystem& /* Sender */,
+		TConstArrayView<FString> /* DestroyedUserCrops */);
 
 	inline FAllCropsLoaded OnAllCropsLoaded;
 	inline FUserCropsLoaded OnCurrentUserCropsLoaded;
-
+	inline FUserCropsSimulated OnCurrentUserCropsSimulated;
+	inline FUserCropsDelegate OnCurrentUserCropsHarvested;
+	inline FUserCropsDelegate OnCurrentUserCropsSeeded;
+	inline FUserCropsDelegate OnCurrentUserCropsFertilised;
+	inline FUserCropsDestroyed OnCurrentUserCropsDestroyed;
 }
 
 namespace Lactose::Simulation::States

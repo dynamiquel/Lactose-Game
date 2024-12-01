@@ -33,11 +33,11 @@ namespace Lactose::Rest
 		virtual ~TRequest()
 		{
 			// Wish there was a better way of cancelling promises.
-			const bool bPending = HasBeenSent() && !GetInternal()->GetResponse().IsValid();
+			const bool bPending = GetInternal()->GetStatus() == EHttpRequestStatus::Processing;
 			if (bPending)
 			{
-				GetInternal()->CancelRequest();
 				ResponsePromise2.SetValue(nullptr);
+				GetInternal()->CancelRequest();
 			}
 		}
 
@@ -152,4 +152,10 @@ namespace Lactose::Rest
 	};
 
 	using FRequest = TRequest<>;
+
+	template<typename TRequestFuture>
+	static bool IsPending(const TRequestFuture& RequestFuture)
+	{
+		return RequestFuture.IsValid() && !RequestFuture.IsReady();
+	}
 }

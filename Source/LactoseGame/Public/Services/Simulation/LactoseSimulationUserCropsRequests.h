@@ -187,7 +187,7 @@ struct FLactoseSimulationDeleteUserCropsResponse
 	GENERATED_BODY()
 
 	UPROPERTY()
-	TArray<FString> SeededCropInstanceIds;
+	TArray<FString> DeletedCropInstanceIds;
 };
 
 using FGetSimulationUserCropsRequest = Lactose::Rest::TRequest<FLactoseSimulationGetUserCropsRequest, FLactoseSimulationGetUserCropsResponse>;
