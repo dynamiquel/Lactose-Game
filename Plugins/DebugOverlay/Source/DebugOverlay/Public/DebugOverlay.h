@@ -67,4 +67,6 @@ protected:
 	// Instantiated Debug Apps that are currently active.
 	UPROPERTY(Transient)
 	TMap<TSubclassOf<UDebugApp>, TObjectPtr<UDebugApp>> ActiveApps;
+
+	double DeltaSeconds = 0.;
 };

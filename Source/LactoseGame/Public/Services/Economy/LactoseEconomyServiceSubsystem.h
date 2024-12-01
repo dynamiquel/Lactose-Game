@@ -36,11 +36,11 @@ class LACTOSEGAME_API ULactoseEconomyServiceSubsystem : public ULactoseServiceSu
 	
 	ULactoseEconomyServiceSubsystem();
 
-public:
 	// Begin override ULactoseServiceSubsystem
 	void Initialize(FSubsystemCollectionBase& Collection) override;
 	// End override ULactoseServiceSubsystem
-
+	
+public:
 	const TMap<FString, TSharedRef<FLactoseEconomyItem>>& GetAllItems() const { return AllItems; }
 	TSharedPtr<const FLactoseEconomyItem> GetItem(const FString& ItemId) const;
 	ELactoseEconomyAllItemsStatus GetAllItemsStatus() const;

@@ -23,9 +23,7 @@ void ULactoseIdentityUserTab::Init()
 void ULactoseIdentityUserTab::Render()
 {
 	if (!IsValid(IdentitySubsystem))
-	{
 		return Debug::ImGui::Error("Identity Subsystem could not be found");
-	}
 
 	constexpr int32 CurrentUserHeaderFlags = ImGuiTreeNodeFlags_DefaultOpen;
 	if (ImGui::CollapsingHeader("Current User"), CurrentUserHeaderFlags)

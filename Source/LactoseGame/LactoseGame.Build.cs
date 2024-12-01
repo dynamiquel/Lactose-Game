@@ -18,6 +18,7 @@ public class LactoseGame : ModuleRules
 			"EnhancedInput", 
 			"DiscordGame",
 			"HTTP",
+			"StructUtils"
         }
         );
 		

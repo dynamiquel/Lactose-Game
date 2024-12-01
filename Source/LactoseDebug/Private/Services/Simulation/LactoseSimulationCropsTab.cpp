@@ -53,6 +53,8 @@ void ULactoseSimulationCropsTab::Render()
 
 	ImGui::Spacing();
 
+	CropsSearchBox.Draw();
+
 	ImGui::BeginChild("SimulationCrops", ImVec2(0, 0), /* bBorder*/ true);
 	ON_SCOPE_EXIT
 	{
@@ -66,8 +68,6 @@ void ULactoseSimulationCropsTab::Render()
 		return;
 	}
 	
-	CropsSearchBox.Draw();
-
 	for (const auto& SimulationCrop : SimulationCrops)
 	{
 		const FString SimulationCropLabel = FString::Printf(TEXT("%s (%s)"), *SimulationCrop.Value->Id, *SimulationCrop.Value->Name);

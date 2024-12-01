@@ -55,11 +55,15 @@ void UDebugOverlay::Init()
 
 void UDebugOverlay::Render()
 {
+	const double BeginPlatformTime = FPlatformTime::Seconds();
 	auto ScopedStyling = FDebugOverlayScopedStyling();
 	
 	RenderMiscActions();
 	RenderAppBar();
 	RenderApps();
+
+	const double EndPlatformTime = FPlatformTime::Seconds();
+	DeltaSeconds = EndPlatformTime - BeginPlatformTime;
 }
 
 void UDebugOverlay::RegisterApps()
@@ -115,6 +119,9 @@ void UDebugOverlay::RenderMiscActions()
 	if (ImGui::Button("Restart Level"))
 		if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
 			PC->ConsoleCommand("RestartLevel");
+
+	ImGui::SameLine();
+	ImGui::Text("Draw: %.1fms", DeltaSeconds * 1000.f);
 
 	ImGui::End();
 }

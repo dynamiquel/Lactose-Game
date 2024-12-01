@@ -4,3 +4,4 @@ DEFINE_LOG_CATEGORY(LogLactoseServices);
 DEFINE_LOG_CATEGORY(LogLactoseIdentityService);
 DEFINE_LOG_CATEGORY(LogLactoseEconomyService);
 DEFINE_LOG_CATEGORY(LogLactoseSimulationService);
+DEFINE_LOG_CATEGORY(LogLactoseConfigService);

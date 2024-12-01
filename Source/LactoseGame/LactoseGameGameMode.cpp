@@ -2,6 +2,7 @@
 
 #include "LactoseGameGameMode.h"
 #include "LactoseGameCharacter.h"
+#include "Services/ConfigCloud/LactoseConfigCloudServiceSubsystem.h"
 #include "Services/Economy/LactoseEconomyServiceSubsystem.h"
 #include "Services/Identity/LactoseIdentityServiceSubsystem.h"
 #include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
@@ -24,6 +25,11 @@ void ALactoseGameGameMode::StartPlay()
 		this, &ThisClass::ProcessBeginPlayConditions,
 		/* Rate */ .25f,
 		/* bLoop */ true);
+
+	// This only prevents BeginPlay being called on Actors and Components.
+	// It doesn't prevent the World from calling Begin Play or its Subsystems.
+	// That seems to require an engine change but another hack around could be to just reload the World when
+	// everything is ready.
 }
 
 void ALactoseGameGameMode::ProcessBeginPlayConditions()
@@ -96,6 +102,20 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 			break;
 		case ELactoseSimulationUserCropsStatus::Retrieving:
 			PendingConditions.Emplace(TEXT("Your crops are being loaded"));
+			break;
+		default:
+	}
+
+	auto* ConfigCloud = GetGameInstance()->GetSubsystem<ULactoseConfigCloudServiceSubsystem>();
+	check(ConfigCloud);
+
+	switch (ConfigCloud->GetStatus())
+	{
+		case ELactoseConfigCloudStatus::None:
+			PendingConditions.Emplace(TEXT("Config has not been loaded"));
+			break;
+		case ELactoseConfigCloudStatus::Retrieving:
+			PendingConditions.Emplace(TEXT("Config is being loaded"));
 			break;
 		default:
 	}
