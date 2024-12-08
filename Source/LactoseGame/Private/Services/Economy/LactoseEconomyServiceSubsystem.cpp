@@ -81,7 +81,7 @@ TFuture<TSharedPtr<FGetEconomyUserItemsRequest::FResponseContext>> ULactoseEcono
 	return Future;
 }
 
-const TMap<FString, TSharedRef<FLactoseEconomyUserItem>>& ULactoseEconomyServiceSubsystem::GetCurrentUserItems()
+const TMap<FString, TSharedRef<FLactoseEconomyUserItem>>& ULactoseEconomyServiceSubsystem::GetCurrentUserItems() const
 {
 	return CurrentUserItems;
 }
@@ -95,6 +95,13 @@ ELactoseEconomyUserItemsStatus ULactoseEconomyServiceSubsystem::GetCurrentUserIt
 		return ELactoseEconomyUserItemsStatus::Retrieving;
 
 	return ELactoseEconomyUserItemsStatus::None;
+}
+
+TSharedPtr<const FLactoseEconomyUserItem> ULactoseEconomyServiceSubsystem::FindCurrentUserItem(
+	const FString& ItemId) const
+{
+	const TSharedRef<FLactoseEconomyUserItem>* FoundUserItem = GetCurrentUserItems().Find(ItemId);
+	return FoundUserItem ? TSharedPtr<const FLactoseEconomyUserItem>(*FoundUserItem) : TSharedPtr<const FLactoseEconomyUserItem>(nullptr);
 }
 
 void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()

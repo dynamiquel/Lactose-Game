@@ -49,8 +49,10 @@ public:
 	void ResetAllItems();
 
 	TFuture<TSharedPtr<FGetEconomyUserItemsRequest::FResponseContext>> GetUserItems(const FString& UserId) const;
-	const TMap<FString, TSharedRef<FLactoseEconomyUserItem>>& GetCurrentUserItems();
+	const TMap<FString, TSharedRef<FLactoseEconomyUserItem>>& GetCurrentUserItems() const;
 	ELactoseEconomyUserItemsStatus GetCurrentUserItemsStatus() const;
+
+	TSharedPtr<const FLactoseEconomyUserItem> FindCurrentUserItem(const FString& ItemId) const;
 
 	void LoadCurrentUserItems();
 	

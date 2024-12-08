@@ -28,7 +28,6 @@ TSharedRef<const FLactoseSimulationUserCropInstance> FLactoseSimulationUserCrops
 		return NewCropInstance;
 	}
 
-
 	*FoundCropInstance = NewCropInstanceData;
 	return FoundCropInstance.ToSharedRef();
 }
@@ -407,12 +406,19 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsRetrieved(TSharedRef<
 	for (const FLactoseSimulationUserCropInstance& CropInstance : Context->ResponseContent->CropInstances)
 	{
 		ExistingCropInstanceIds.Remove(CropInstance.Id);
-		CurrentUserCrops->UpdateCropInstance(CropInstance);
+		auto SharedCropInstance = CurrentUserCrops->UpdateCropInstance(CropInstance);
+		SharedCropInstance->OnLoaded.Broadcast(SharedCropInstance);
 	}
-
-	// Anything in Existing Crops is a crop that no longer exists.
-	for (const FString& LingeringCropInstanceId : ExistingCropInstanceIds)
-		CurrentUserCrops->DeleteCropInstance(LingeringCropInstanceId);
+	
+	if (!ExistingCropInstanceIds.IsEmpty())
+	{
+		// Anything in Existing Crops is a crop that no longer exists.
+		// Forward this to the Delete function.
+		
+		auto DestroyRequest = MakeShared<FDeleteSimulationUserCropsRequest::FResponseContext>();
+		DestroyRequest->ResponseContent->DeletedCropInstanceIds.Append(ExistingCropInstanceIds.Array());
+		OnCurrentUserCropsDestroyed(DestroyRequest);
+	}
 
 	Lactose::Simulation::Events::OnCurrentUserCropsLoaded.Broadcast(*this, CurrentUserCrops.ToSharedRef());
 }
@@ -453,6 +459,9 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsHarvested(TSharedRef<
 		Context->ResponseContent->HarvestedCropInstanceIds.Num());
 
 	Lactose::Simulation::Events::OnCurrentUserCropsHarvested.Broadcast(*this, HarvestedCropInstances);
+
+	for (const auto& HarvestedCrop : HarvestedCropInstances)
+		HarvestedCrop->OnHarvested.Broadcast(HarvestedCrop);
 }
 
 void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSeeded(TSharedRef<FSeedSimulationUserCropsRequest::FResponseContext> Context)
@@ -473,6 +482,9 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSeeded(TSharedRef<FSe
 		Context->ResponseContent->SeededCropInstanceIds.Num());
 
 	Lactose::Simulation::Events::OnCurrentUserCropsSeeded.Broadcast(*this, SeededCropInstances);
+
+	for (const auto& SeededCrop : SeededCropInstances)
+		SeededCrop->OnSeeded.Broadcast(SeededCrop);
 }
 
 void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsFertilised(TSharedRef<FFertiliseSimulationUserCropsRequest::FResponseContext> Context)
@@ -493,6 +505,9 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsFertilised(TSharedRef
 		Context->ResponseContent->FertilisedCropInstanceIds.Num());
 
 	Lactose::Simulation::Events::OnCurrentUserCropsFertilised.Broadcast(*this, FertilisedCropInstances);
+
+	for (const auto& FertilisedCrop : FertilisedCropInstances)
+		FertilisedCrop->OnFertilised.Broadcast(FertilisedCrop);
 }
 
 void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsDestroyed(TSharedRef<FDeleteSimulationUserCropsRequest::FResponseContext> Context)
@@ -506,10 +521,23 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsDestroyed(TSharedRef<
 		return;
 	}
 
-	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Deleted %d User Crops"),
-		Context->ResponseContent->DeletedCropInstanceIds.Num());
+	
+	const TArray<TSharedRef<const FLactoseSimulationUserCropInstance>> DestroyedCropInstances =
+		GetCurrentUserCrops()->FindCropInstances(Context->ResponseContent->DeletedCropInstanceIds);
 
-	Lactose::Simulation::Events::OnCurrentUserCropsDestroyed.Broadcast(*this, Context->ResponseContent->DeletedCropInstanceIds);
+	for (const auto& DestroyedCropInstance : DestroyedCropInstances)
+	{
+		CurrentUserCrops->DeleteCropInstance(DestroyedCropInstance->Id);
+		DestroyedCropInstance->OnDestroyed.Broadcast(DestroyedCropInstance);
+	}
+
+	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Deleted %d User Crops"),
+		DestroyedCropInstances.Num());
+
+	Lactose::Simulation::Events::OnCurrentUserCropsDestroyed.Broadcast(*this, DestroyedCropInstances);
+
+	for (const auto& DestroyedCrop : DestroyedCropInstances)
+		DestroyedCrop->OnDestroyed.Broadcast(DestroyedCrop);
 }
 
 void ULactoseSimulationServiceSubsystem::OnUserLoggedIn(

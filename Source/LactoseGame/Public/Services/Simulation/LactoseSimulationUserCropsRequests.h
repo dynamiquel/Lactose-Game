@@ -13,10 +13,28 @@ struct FLactoseSimulationGetUserCropsRequest
 	FString UserId;
 };
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FLactoseSimulationUserCropInstanceDelegate,
+	const TSharedRef<const struct FLactoseSimulationUserCropInstance>& /* Sender */);
+
 USTRUCT()
 struct FLactoseSimulationUserCropInstance
 {
 	GENERATED_BODY()
+	
+	FLactoseSimulationUserCropInstance& operator=(const FLactoseSimulationUserCropInstance& Other)
+	{
+		// Copy properties only.
+		Id = Other.Id;
+		CropId = Other.CropId;
+		State = Other.State;
+		Location = Other.Location;
+		Rotation = Other.Rotation;
+		CreationTime = Other.CreationTime;
+		RemainingHarvestSeconds = Other.RemainingHarvestSeconds;
+		RemainingFertiliserSeconds = Other.RemainingFertiliserSeconds;
+
+		return *this;
+	}
 
 	UPROPERTY()
 	FString Id;
@@ -41,6 +59,12 @@ struct FLactoseSimulationUserCropInstance
 
 	UPROPERTY()
 	double RemainingFertiliserSeconds;
+
+	mutable FLactoseSimulationUserCropInstanceDelegate OnLoaded;
+	mutable FLactoseSimulationUserCropInstanceDelegate OnHarvested;
+	mutable FLactoseSimulationUserCropInstanceDelegate OnFertilised;
+	mutable FLactoseSimulationUserCropInstanceDelegate OnSeeded;
+	mutable FLactoseSimulationUserCropInstanceDelegate OnDestroyed;
 };
 
 USTRUCT()

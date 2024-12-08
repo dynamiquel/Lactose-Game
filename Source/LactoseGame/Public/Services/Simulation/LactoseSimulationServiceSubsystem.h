@@ -146,17 +146,13 @@ namespace Lactose::Simulation::Events
 		const ULactoseSimulationServiceSubsystem& /* Sender */,
 		const TArray<TSharedRef<const FLactoseSimulationUserCropInstance>>& /* ModifiedUserCrops */);
 
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FUserCropsDestroyed,
-		const ULactoseSimulationServiceSubsystem& /* Sender */,
-		TConstArrayView<FString> /* DestroyedUserCrops */);
-
 	inline FAllCropsLoaded OnAllCropsLoaded;
 	inline FUserCropsLoaded OnCurrentUserCropsLoaded;
 	inline FUserCropsSimulated OnCurrentUserCropsSimulated;
 	inline FUserCropsDelegate OnCurrentUserCropsHarvested;
 	inline FUserCropsDelegate OnCurrentUserCropsSeeded;
 	inline FUserCropsDelegate OnCurrentUserCropsFertilised;
-	inline FUserCropsDestroyed OnCurrentUserCropsDestroyed;
+	inline FUserCropsDelegate OnCurrentUserCropsDestroyed;
 }
 
 namespace Lactose::Simulation::States
