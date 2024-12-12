@@ -46,6 +46,7 @@ protected:
 	virtual void OnDestroyed(const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance);
 
 	virtual void OnInteracted(const ULactoseInteractionComponent& InteractionComponent);
+	virtual void OnDestroyInteracted(const ULactoseInteractionComponent& InteractionComponent);
 
 	void UpdateBillboard();
 	void UpdateBillboardText();
@@ -57,6 +58,9 @@ protected:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<ULactoseInteractionComponent> Interaction;
 
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<ULactoseInteractionComponent> DestroyInteraction;
+	
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UMeshComponent> PlantMesh;
 

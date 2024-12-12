@@ -5,7 +5,13 @@
 
 #include "CropActor.h"
 #include "LactoseGame/LactoseGame.h"
+#include "Services/ConfigCloud/LactoseConfigCloudServiceSubsystem.h"
 #include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
+
+bool ULactoseCropWorldSubsystem::CanCreateCrops() const
+{
+	return !bWaitingForCrops && !bWaitingForUserCrops && !bWaitingForCropActorClassMap;
+}
 
 void ULactoseCropWorldSubsystem::RegisterCropActor(ACropActor& CropActor)
 {
@@ -34,6 +40,11 @@ ACropActor* ULactoseCropWorldSubsystem::FindCropActorForCropInstance(const FStri
 	return RegisteredCropActors.FindRef(CropInstanceId);
 }
 
+TSubclassOf<ACropActor> ULactoseCropWorldSubsystem::FindCropActorClassForCrop(const FString& CropId) const
+{
+	return CropIdToCropActorMap.FindRef(CropId);
+}
+
 void ULactoseCropWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
@@ -56,6 +67,18 @@ void ULactoseCropWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	if (Simulation->GetCurrentUserCropsStatus() == ELactoseSimulationUserCropsStatus::Loaded)
 		bWaitingForUserCrops = false;
 
+	auto* Config = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseConfigCloudServiceSubsystem>();
+	check(Config);
+
+	if (Config->GetStatus() == ELactoseConfigCloudStatus::Loaded)
+	{
+		LoadCropActorClasses();
+	}
+	else
+	{
+		Lactose::Config::Events::OnConfigLoaded.AddUObject(this, &ThisClass::OnConfigCloudLoaded);
+	}
+
 	if (CanCreateCrops())
 		CreateRequiredUserCrops();
 }
@@ -65,6 +88,7 @@ void ULactoseCropWorldSubsystem::OnAllCropsLoaded(const ULactoseSimulationServic
 	if (bWaitingForCrops)
 	{
 		bWaitingForCrops = false;
+		UE_LOG(LogLactose, Verbose, TEXT("Crop Subsystem: Received Crops"));
 
 		if (CanCreateCrops())
 			CreateRequiredUserCrops();
@@ -82,6 +106,21 @@ void ULactoseCropWorldSubsystem::OnUserCropsLoaded(
 	{
 		bWaitingForUserCrops = false;
 		UE_LOG(LogLactose, Verbose, TEXT("Crop Subsystem: Received User Crops"));
+		
+		if (CanCreateCrops())
+			CreateRequiredUserCrops();
+	}
+}
+
+void ULactoseCropWorldSubsystem::OnConfigCloudLoaded(
+	const ULactoseConfigCloudServiceSubsystem& Sender,
+   TSharedRef<FLactoseConfigCloudConfig> Config)
+{
+	if (bWaitingForCropActorClassMap)
+	{
+		UE_LOG(LogLactose, Verbose, TEXT("Crop Subsystem: Received Config"));
+
+		LoadCropActorClasses();
 		
 		if (CanCreateCrops())
 			CreateRequiredUserCrops();
@@ -128,13 +167,18 @@ bool ULactoseCropWorldSubsystem::CreateUserCrop(
 		return false;
 	}
 
-	// TODO: Find Crop Actor Class for Crop.
-	TSubclassOf<ACropActor> CropActorClass = ACropActor::StaticClass();
+	TSubclassOf<ACropActor> CropActorClass = FindCropActorClassForCrop(Crop->Id);
 	if (!CropActorClass)
 	{
 		UE_LOG(LogLactose, Error, TEXT("Could not find a Crop Actor class for Crop '%s'"),
 			*Crop->Id);
+
+#if UE_BUILD_SHIPPING || UE_BUILD_TEST 
 		return false;
+#else
+		UE_LOG(LogLactose, Warning, TEXT("Fallbacking to default Crop Actor class for development purposes"));
+		CropActorClass = ACropActor::StaticClass();
+#endif // UE_BUILD_SHIPPING || UE_BUILD_TEST 
 	}
 
 	const auto CropRotation = FRotator(
@@ -168,4 +212,56 @@ bool ULactoseCropWorldSubsystem::CreateUserCrop(
 		*CropInstance->Id);
 	
 	return true;
+}
+
+void ULactoseCropWorldSubsystem::LoadCropActorClasses()
+{
+
+	auto* ConfigSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseConfigCloudServiceSubsystem>();
+	check(ConfigSubsystem);
+
+	TSharedPtr<const FLactoseConfigCloudConfig> Config = ConfigSubsystem->GetConfig();
+	if (!Config)
+	{
+		UE_LOG(LogLactose, Error, TEXT("Crop Subsystem: Config Subsystem does not have a Config"));
+		return;
+	}
+
+	TSharedPtr<const FLactoseConfigCloudEntry> FoundCropIdToCropActorClassMap = Config->FindEntry(CropIdToCropActorMapEntryId);
+	if (!FoundCropIdToCropActorClassMap)
+	{
+		UE_LOG(LogLactose, Error, TEXT("Crop Subsystem: Could not find the Crop Actor Classes Map in the Config (%s)"),
+			*CropIdToCropActorMapEntryId);
+		return;
+	}
+
+	const FLactoseCropActorClassesDatabase* DeserialisedMap = FoundCropIdToCropActorClassMap->Get<FLactoseCropActorClassesDatabase>();
+	if (!DeserialisedMap)
+	{
+		UE_LOG(LogLactose, Error, TEXT("Crop Subsystem: The Crop Actor Classes Map in the Config (%s) could not be deserialised"),
+			*CropIdToCropActorMapEntryId);
+		return;
+	}
+
+	if (DeserialisedMap->Items.IsEmpty())
+	{
+		UE_LOG(LogLactose, Error, TEXT("Crop Subsystem: The Crop Actor Classes Map in the Config (%s) is empty"),
+			*CropIdToCropActorMapEntryId);
+		return;
+	}
+
+	for (const TTuple<FString, TSoftClassPtr<ACropActor>>& CropIdToCropActorMapping : DeserialisedMap->Items)
+	{
+		TSubclassOf<ACropActor> CropActorClass = CropIdToCropActorMapping.Value.LoadSynchronous();
+		if (!CropActorClass)
+		{
+			UE_LOG(LogLactose, Error, TEXT("Crop Subsystem: Could not load Actor Class with path '%s'"),
+				*CropIdToCropActorMapping.Value.ToString());
+			continue;
+		}
+
+		CropIdToCropActorMap.Add(CropIdToCropActorMapping.Key, CropActorClass);
+	}
+	
+	bWaitingForCropActorClassMap = false;
 }

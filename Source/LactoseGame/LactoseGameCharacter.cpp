@@ -39,6 +39,11 @@ ALactoseGameCharacter::ALactoseGameCharacter()
 	Mesh1P->CastShadow = false;
 	//Mesh1P->SetRelativeRotation(FRotator(0.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> DefaultInteractInputAction(TEXT("/Game/FirstPerson/Input/Actions/IA_Interact.IA_Interact"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> DefaultInteractSecondaryInputAction(TEXT("/Game/FirstPerson/Input/Actions/IA_InteractSecondary.IA_InteractSecondary"));
+	InteractAction = DefaultInteractInputAction.Object;
+	InteractSecondaryAction = DefaultInteractSecondaryInputAction.Object;
 }
 
 void ALactoseGameCharacter::BeginPlay()
@@ -51,7 +56,7 @@ void ALactoseGameCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	UpdateClosestInteraction();
+	UpdateClosestInteractions();
 }
 
 void ALactoseGameCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
@@ -110,7 +115,8 @@ void ALactoseGameCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ALactoseGameCharacter::Look);
 
 		// Interaction
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ThisClass::Interact);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ThisClass::InteractPrimary);
+		EnhancedInputComponent->BindAction(InteractSecondaryAction, ETriggerEvent::Triggered, this, &ThisClass::InteractSecondary);
 	}
 	else
 	{
@@ -118,6 +124,11 @@ void ALactoseGameCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	}
 }
 
+
+ULactoseInteractionComponent* ALactoseGameCharacter::FindInteractionForAction(const UInputAction& InputAction) const
+{
+	return ClosestInteractions.FindRef(&InputAction);
+}
 
 void ALactoseGameCharacter::Move(const FInputActionValue& Value)
 {
@@ -145,25 +156,45 @@ void ALactoseGameCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
-void ALactoseGameCharacter::Interact(const FInputActionValue& Value)
+void ALactoseGameCharacter::InteractPrimary(const FInputActionValue& Value)
 {
-	if (!IsValid(ClosestInteraction))
+	if (!IsValid(InteractAction))
+		return;
+	
+	auto* FoundPrimaryInteraction = FindInteractionForAction(*InteractAction);
+	if (!FoundPrimaryInteraction)
 		return;
 
-	ClosestInteraction->Interact();
+	FoundPrimaryInteraction->Interact();
 }
 
-void ALactoseGameCharacter::UpdateClosestInteraction()
+void ALactoseGameCharacter::InteractSecondary(const FInputActionValue& Value)
+{
+	if (!IsValid(InteractSecondaryAction))
+		return;
+	
+	auto* FoundSecondaryInteraction = FindInteractionForAction(*InteractSecondaryAction);
+	if (!FoundSecondaryInteraction)
+		return;
+
+	FoundSecondaryInteraction->Interact();
+}
+
+void ALactoseGameCharacter::UpdateClosestInteractions()
 {
 	if (OverlappedInteractions.IsEmpty())
 	{
-		SetClosestInteraction(nullptr);
+		for (auto Element : ClosestInteractions)
+		{
+			
+		}
+		ClosestInteractions.Reset();
 		return;
 	}
-
-	float ClosestDistanceSq = TNumericLimits<float>::Max();
-	ULactoseInteractionComponent* NewClosestInteraction = nullptr;
-
+	
+	typedef TTuple<ULactoseInteractionComponent*, float> FClosestInteractionComponent;
+	TMap<const UInputAction*, FClosestInteractionComponent> NewClosestInteractionComponents;
+	
 	for (ULactoseInteractionComponent* Interaction : OverlappedInteractions)
 	{
 		if (!IsValid(Interaction) || !Interaction->CanBeInteracted())
@@ -171,31 +202,62 @@ void ALactoseGameCharacter::UpdateClosestInteraction()
 		
 		const FVector InteractionActorLocation = Interaction->GetOwner()->GetActorLocation();
 		const float Distance = FVector::DistSquared(InteractionActorLocation, GetActorLocation());
-		if (Distance < ClosestDistanceSq)
+
+		auto* ExistingClosestInteractionComp = NewClosestInteractionComponents.Find(Interaction->InputAction);
+		if (!ExistingClosestInteractionComp)
 		{
-			ClosestDistanceSq = Distance;
-			NewClosestInteraction = Interaction;
+			NewClosestInteractionComponents.Emplace(
+				Interaction->InputAction,
+				FClosestInteractionComponent(Interaction, Distance));
+		}
+		else if (Distance < ExistingClosestInteractionComp->Value)
+		{
+			*ExistingClosestInteractionComp = FClosestInteractionComponent(Interaction, Distance);
 		}
 	}
 
-	SetClosestInteraction(NewClosestInteraction);
+	// Reset Actions that are no longer being referenced.
+	for (auto& ClosestInteraction : ClosestInteractions)
+	{
+		const UInputAction* InputAction = ClosestInteraction.Key;
+		if (!NewClosestInteractionComponents.Contains(InputAction))
+			SetClosestInteraction(*InputAction, nullptr);
+	}
+
+	for (auto& NewClosestInteractionComponent : NewClosestInteractionComponents)
+	{
+		const UInputAction* InputAction = NewClosestInteractionComponent.Key;
+		ULactoseInteractionComponent* InteractionComponent = NewClosestInteractionComponent.Value.Key;
+		SetClosestInteraction(*InputAction, InteractionComponent);
+	}
 }
 
-void ALactoseGameCharacter::SetClosestInteraction(ULactoseInteractionComponent* InteractionComponent)
+void ALactoseGameCharacter::ResetAllInteractions()
 {
-	if (ClosestInteraction == InteractionComponent)
-		return;
-	
-	ClosestInteraction = InteractionComponent;
+	for (TTuple<TObjectPtr<const UInputAction>, TObjectPtr<ULactoseInteractionComponent>>& Interaction : ClosestInteractions)
+		SetClosestInteraction(*Interaction.Key, nullptr);
 
-	if (ClosestInteraction)
+	ClosestInteractions.Reset();
+}
+
+void ALactoseGameCharacter::SetClosestInteraction(const UInputAction& InputAction, ULactoseInteractionComponent* InteractionComponent)
+{
+	TObjectPtr<ULactoseInteractionComponent>& ExistingClosestInteraction = ClosestInteractions.FindOrAdd(&InputAction);
+	if (ExistingClosestInteraction == InteractionComponent)
+		return;
+
+	ExistingClosestInteraction = InteractionComponent;
+	
+	if (InteractionComponent)
 	{
-		UE_LOG(LogLactose, Verbose, TEXT("Player's closest Interaction is for Actor '%s' (%s)"),
-			*ClosestInteraction->GetOwner()->GetActorNameOrLabel(),
-			*ClosestInteraction->GetInteractionText());
+		UE_LOG(LogLactose, Verbose, TEXT("Player's closest Interaction for '%s' is for Actor '%s' (%s)"),
+			*InputAction.GetName(),
+			*InteractionComponent->GetOwner()->GetActorNameOrLabel(),
+			*InteractionComponent->GetInteractionText());
 	}
 	else
 	{
-		UE_LOG(LogLactose, Verbose, TEXT("Player is no longer interacting with anything"));
+		UE_LOG(LogLactose, Verbose, TEXT("Player is no longer interacting with anything for '%s'"),
+			*InputAction.GetName());
 	}
 }

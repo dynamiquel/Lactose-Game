@@ -6,46 +6,71 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "LactoseCropWorldSubsystem.generated.h"
 
+class FLactoseConfigCloudConfig;
+class ULactoseConfigCloudServiceSubsystem;
 struct FLactoseSimulationCrop;
 class ACropActor;
 struct FLactoseSimulationUserCropInstance;
 class FLactoseSimulationUserCrops;
 class ULactoseSimulationServiceSubsystem;
 
+USTRUCT()
+struct FLactoseCropActorClassesDatabase
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TMap<FString, TSoftClassPtr<ACropActor>> Items;
+};
+
 /**
  * 
  */
-UCLASS()
+UCLASS(Config=Services, DefaultConfig)
 class LACTOSEGAME_API ULactoseCropWorldSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
 public:
-	bool CanCreateCrops() const { return !bWaitingForCrops && !bWaitingForUserCrops; }
+	bool CanCreateCrops() const;
 	void RegisterCropActor(ACropActor& CropActor);
 	void DeregisterCropActor(const ACropActor& CropActor);
 	ACropActor* FindCropActorForCropInstance(const FString& CropInstanceId) const;
-
+	TSubclassOf<ACropActor> FindCropActorClassForCrop(const FString& CropId) const;
+	
 protected:
 	// Begin override UWorldSubsystem
 	void OnWorldBeginPlay(UWorld& InWorld) override;
 	// End override UWorldSubsystem
 
 	void OnAllCropsLoaded(const ULactoseSimulationServiceSubsystem& Sender);
+	
 	void OnUserCropsLoaded(
 		const ULactoseSimulationServiceSubsystem& Sender,
 		TSharedRef<FLactoseSimulationUserCrops> UserCrops);
 
+	void OnConfigCloudLoaded(
+		const ULactoseConfigCloudServiceSubsystem& Sender,
+		TSharedRef<FLactoseConfigCloudConfig> Config);
+	
 	void CreateRequiredUserCrops();
 	bool CreateUserCrop(
 		const TSharedRef<const FLactoseSimulationCrop>& Crop,
 		const TSharedRef<const FLactoseSimulationUserCropInstance>& CropInstance);
 
+	void LoadCropActorClasses();
 
 private:
+	UPROPERTY(EditAnywhere, Config)
+	FString CropIdToCropActorMapEntryId = TEXT("CropActorClassesMap");
+	
 	bool bWaitingForCrops = true;
 	bool bWaitingForUserCrops = true;
+	bool bWaitingForCropActorClassMap = true;
 
 	UPROPERTY(Transient)
 	TMap<FString, TObjectPtr<ACropActor>> RegisteredCropActors;
+
+	UPROPERTY(Transient)
+	TMap<FString, TSubclassOf<ACropActor>> CropIdToCropActorMap;
 };

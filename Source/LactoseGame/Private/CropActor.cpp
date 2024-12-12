@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Services/Economy/LactoseEconomyServiceSubsystem.h"
 #include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
+#include "InputAction.h"
 
 ACropActor::ACropActor()
 {
@@ -27,17 +28,11 @@ ACropActor::ACropActor()
 		const FString CropName = This->Crop->Name;
 
 		if (This->CropInstance->State == Lactose::Simulation::States::Empty)
-		{
 			return FString::Printf(TEXT("Seed your %s"), *CropName);
-		}
 		if (This->CropInstance->State == Lactose::Simulation::States::Harvestable)
-		{
 			return FString::Printf(TEXT("Harvest your %s"), *CropName);
-		}
 		if (This->CropInstance->State == Lactose::Simulation::States::Growing)
-		{
 			return FString::Printf(TEXT("Fertilise your %s"), *CropName);
-		}
 		
 		return FString();
 	};
@@ -74,17 +69,24 @@ ACropActor::ACropActor()
 		return false;
 	};
 
+	DestroyInteraction = CreateDefaultSubobject<ULactoseInteractionComponent>(TEXT("DestroyInteraction"));
+	DestroyInteraction->InteractionText = TEXT("Destroy");
+	DestroyInteraction->OnInteractionComplete.AddUObject(this, &ThisClass::OnDestroyInteracted);
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> InteractSecondaryInputAction(TEXT("/Game/FirstPerson/Input/Actions/IA_InteractSecondary.IA_InteractSecondary"));
+	DestroyInteraction->InputAction = InteractSecondaryInputAction.Object;
+
 	if (auto* InteractionCollisionBox = Cast<UBoxComponent>(InteractionCollision))
-		InteractionCollisionBox->InitBoxExtent(FVector(150., 150., 150.));
+		InteractionCollisionBox->InitBoxExtent(FVector(75., 75., 75.));
 
 	GroundMesh = CreateDefaultSubobject<UStaticMeshComponent>("GroundMesh");
 	GroundMesh->SetupAttachment(GetRootComponent());
 
-	PlantMesh = CreateDefaultSubobject<UStaticMeshComponent>("Mesh");
-	PlantMesh->SetupAttachment(GroundMesh);
+	PlantMesh = CreateDefaultSubobject<UStaticMeshComponent>("PlantMesh");
+	PlantMesh->SetupAttachment(GetRootComponent());
 
 	BillboardComponent = CreateDefaultSubobject<USceneComponent>("Billboard");
-	BillboardComponent->SetupAttachment(GroundMesh);
+	BillboardComponent->SetupAttachment(GetRootComponent());
 	CropNameTextComponent = CreateDefaultSubobject<UTextRenderComponent>("CropNameText");
 	CropNameTextComponent->SetupAttachment(BillboardComponent);
 	CropNameTextComponent->SetRelativeLocation(FVector(0., 0., 100.));
@@ -208,18 +210,25 @@ void ACropActor::OnInteracted(const ULactoseInteractionComponent& InteractionCom
 		return;
 	
 	if (CropInstance->State == Lactose::Simulation::States::Empty)
-	{
 		SimulationSubsystem->SeedCropInstances({ CropInstance->Id }, Crop->Id);
-	}
 	else if (CropInstance->State == Lactose::Simulation::States::Harvestable)
-	{
 		SimulationSubsystem->HarvestCropInstances({ CropInstance->Id });
-
-	}
 	else if (CropInstance->State == Lactose::Simulation::States::Growing)
-	{
 		SimulationSubsystem->FertiliseCropInstances({ CropInstance->Id });
+}
+
+void ACropActor::OnDestroyInteracted(const ULactoseInteractionComponent& InteractionComponent)
+{
+	auto* SimulationSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseSimulationServiceSubsystem>();
+	if (!ensure(SimulationSubsystem))
+	{
+		return;
 	}
+
+	if (!Crop || !CropInstance)
+		return;
+
+	SimulationSubsystem->DestroyCropInstances({ CropInstance->Id} );
 }
 
 void ACropActor::UpdateBillboard()

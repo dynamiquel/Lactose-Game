@@ -416,6 +416,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsRetrieved(TSharedRef<
 		// Forward this to the Delete function.
 		
 		auto DestroyRequest = MakeShared<FDeleteSimulationUserCropsRequest::FResponseContext>();
+		DestroyRequest->ResponseContent = MakeShared<FLactoseSimulationDeleteUserCropsResponse>();
 		DestroyRequest->ResponseContent->DeletedCropInstanceIds.Append(ExistingCropInstanceIds.Array());
 		OnCurrentUserCropsDestroyed(DestroyRequest);
 	}

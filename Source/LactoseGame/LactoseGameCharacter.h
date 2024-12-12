@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InputAction.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "LactoseGameCharacter.generated.h"
@@ -42,6 +43,9 @@ class ALactoseGameCharacter : public ACharacter
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> InteractAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> InteractSecondaryAction;
 	
 public:
 	ALactoseGameCharacter();
@@ -58,6 +62,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
 
+public:
+	ULactoseInteractionComponent* FindInteractionForAction(const UInputAction& InputAction) const;
+
 protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -65,11 +72,12 @@ protected:
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 
-	void Interact(const FInputActionValue& Value);
+	void InteractPrimary(const FInputActionValue& Value);
+	void InteractSecondary(const FInputActionValue& Value);
 
-
-	void UpdateClosestInteraction();
-	void SetClosestInteraction(ULactoseInteractionComponent* InteractionComponent);
+	void UpdateClosestInteractions();
+	void ResetAllInteractions();
+	void SetClosestInteraction(const UInputAction& InputAction, ULactoseInteractionComponent* InteractionComponent);
 
 protected:
 	// APawn interface
@@ -88,6 +96,6 @@ private:
 	TArray<TObjectPtr<ULactoseInteractionComponent>> OverlappedInteractions;
 
 	UPROPERTY(Transient)
-	TObjectPtr<ULactoseInteractionComponent> ClosestInteraction;
+	TMap<TObjectPtr<const UInputAction>, TObjectPtr<ULactoseInteractionComponent>> ClosestInteractions;
 };
 
