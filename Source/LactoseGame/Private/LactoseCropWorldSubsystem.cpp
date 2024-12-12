@@ -147,7 +147,12 @@ void ULactoseCropWorldSubsystem::CreateRequiredUserCrops()
 		
 		auto Crop = Simulation->FindCrop(UserCrop->CropId);
 		if (!Crop)
+		{
+			UE_LOG(LogLactose, Error, TEXT("Could not find a Crop with ID: '%s'"),
+				*UserCrop->CropId);
+			
 			continue;
+		}
 
 		CreateUserCrop(Crop.ToSharedRef(), UserCrop);
 	}
@@ -216,7 +221,6 @@ bool ULactoseCropWorldSubsystem::CreateUserCrop(
 
 void ULactoseCropWorldSubsystem::LoadCropActorClasses()
 {
-
 	auto* ConfigSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseConfigCloudServiceSubsystem>();
 	check(ConfigSubsystem);
 

@@ -20,6 +20,13 @@ DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 class ULactoseInteractionComponent;
 
+UENUM()
+enum class ELactoseCharacterItemState
+{
+	None,
+	PlotTool
+};
+
 UCLASS(config=Game)
 class ALactoseGameCharacter : public ACharacter
 {
@@ -40,12 +47,21 @@ class ALactoseGameCharacter : public ACharacter
 	/** Move Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* MoveAction;
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> InteractAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> InteractSecondaryAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> NoneItemAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> PlotToolItemAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> UseItemAction;
 	
 public:
 	ALactoseGameCharacter();
@@ -64,6 +80,7 @@ public:
 
 public:
 	ULactoseInteractionComponent* FindInteractionForAction(const UInputAction& InputAction) const;
+	ELactoseCharacterItemState GetCurrentItemState() const { return CurrentItemState; }
 
 protected:
 	/** Called for movement input */
@@ -74,10 +91,19 @@ protected:
 
 	void InteractPrimary(const FInputActionValue& Value);
 	void InteractSecondary(const FInputActionValue& Value);
-
+	
 	void UpdateClosestInteractions();
 	void ResetAllInteractions();
 	void SetClosestInteraction(const UInputAction& InputAction, ULactoseInteractionComponent* InteractionComponent);
+
+	void RequestSwitchToNoneItem(const FInputActionValue& Value);
+	void RequestSwitchToPlotToolItem(const FInputActionValue& Value);
+	void RequestUseItem(const FInputActionValue& Value);
+	void TryUsePlotTool();
+
+	void SetHoldableItemState(ELactoseCharacterItemState NewState);
+
+	TOptional<FHitResult> PerformPlotToolTrace() const;
 
 protected:
 	// APawn interface
@@ -91,11 +117,17 @@ public:
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
 
+protected:
+	UPROPERTY(EditAnywhere, meta=(Units="cm"))
+	float PlotToolMaxDistance = 100.f * 5.f; // 5m
+	
 private:
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<ULactoseInteractionComponent>> OverlappedInteractions;
 
 	UPROPERTY(Transient)
 	TMap<TObjectPtr<const UInputAction>, TObjectPtr<ULactoseInteractionComponent>> ClosestInteractions;
+
+	ELactoseCharacterItemState CurrentItemState = ELactoseCharacterItemState::None;
 };
 

@@ -13,7 +13,11 @@
 #include "InputActionValue.h"
 #include "LactoseGame.h"
 #include "LactoseInteractionComponent.h"
+#include "Landscape.h"
 #include "Engine/LocalPlayer.h"
+#include "Kismet/GameplayStatics.h"
+#include "LandscapeProxy.h"
+#include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -42,8 +46,15 @@ ALactoseGameCharacter::ALactoseGameCharacter()
 
 	static ConstructorHelpers::FObjectFinder<UInputAction> DefaultInteractInputAction(TEXT("/Game/FirstPerson/Input/Actions/IA_Interact.IA_Interact"));
 	static ConstructorHelpers::FObjectFinder<UInputAction> DefaultInteractSecondaryInputAction(TEXT("/Game/FirstPerson/Input/Actions/IA_InteractSecondary.IA_InteractSecondary"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> DefaultNoItemInputAction(TEXT("/Game/FirstPerson/Input/Actions/IA_NoItem.IA_NoItem"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> DefaultPlotToolInputAction(TEXT("/Game/FirstPerson/Input/Actions/IA_PlotTool.IA_PlotTool"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> DefaultUseItemInputAction(TEXT("/Game/FirstPerson/Input/Actions/IA_Shoot.IA_Shoot"));
+
 	InteractAction = DefaultInteractInputAction.Object;
 	InteractSecondaryAction = DefaultInteractSecondaryInputAction.Object;
+	NoneItemAction = DefaultNoItemInputAction.Object;
+	PlotToolItemAction = DefaultPlotToolInputAction.Object;
+	UseItemAction = DefaultUseItemInputAction.Object;
 }
 
 void ALactoseGameCharacter::BeginPlay()
@@ -57,6 +68,19 @@ void ALactoseGameCharacter::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 	UpdateClosestInteractions();
+
+	if (GetCurrentItemState() == ELactoseCharacterItemState::PlotTool)
+	{
+		TOptional<FHitResult> HitResult = PerformPlotToolTrace();
+		if (!HitResult)
+			return;
+
+		DrawDebugPoint(
+			GetWorld(),
+			HitResult->Location,
+			20.f,
+			FColor::Blue);
+	}
 }
 
 void ALactoseGameCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
@@ -117,6 +141,11 @@ void ALactoseGameCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		// Interaction
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ThisClass::InteractPrimary);
 		EnhancedInputComponent->BindAction(InteractSecondaryAction, ETriggerEvent::Triggered, this, &ThisClass::InteractSecondary);
+
+		// Holdable Items
+		EnhancedInputComponent->BindAction(NoneItemAction, ETriggerEvent::Completed, this, &ThisClass::RequestSwitchToNoneItem);
+		EnhancedInputComponent->BindAction(PlotToolItemAction, ETriggerEvent::Completed, this, &ThisClass::RequestSwitchToPlotToolItem);
+		EnhancedInputComponent->BindAction(UseItemAction, ETriggerEvent::Completed, this, &ThisClass::RequestUseItem);
 	}
 	else
 	{
@@ -184,11 +213,7 @@ void ALactoseGameCharacter::UpdateClosestInteractions()
 {
 	if (OverlappedInteractions.IsEmpty())
 	{
-		for (auto Element : ClosestInteractions)
-		{
-			
-		}
-		ClosestInteractions.Reset();
+		ResetAllInteractions();
 		return;
 	}
 	
@@ -235,7 +260,8 @@ void ALactoseGameCharacter::UpdateClosestInteractions()
 void ALactoseGameCharacter::ResetAllInteractions()
 {
 	for (TTuple<TObjectPtr<const UInputAction>, TObjectPtr<ULactoseInteractionComponent>>& Interaction : ClosestInteractions)
-		SetClosestInteraction(*Interaction.Key, nullptr);
+		if (Interaction.Key)
+			SetClosestInteraction(*Interaction.Key, nullptr);
 
 	ClosestInteractions.Reset();
 }
@@ -260,4 +286,93 @@ void ALactoseGameCharacter::SetClosestInteraction(const UInputAction& InputActio
 		UE_LOG(LogLactose, Verbose, TEXT("Player is no longer interacting with anything for '%s'"),
 			*InputAction.GetName());
 	}
+}
+
+void ALactoseGameCharacter::RequestSwitchToNoneItem(const FInputActionValue& Value)
+{
+	SetHoldableItemState(ELactoseCharacterItemState::None);
+}
+
+void ALactoseGameCharacter::RequestSwitchToPlotToolItem(const FInputActionValue& Value)
+{
+	SetHoldableItemState(ELactoseCharacterItemState::PlotTool);
+}
+
+void ALactoseGameCharacter::RequestUseItem(const FInputActionValue& Value)
+{
+	switch (GetCurrentItemState())
+	{
+		case ELactoseCharacterItemState::None:
+			break;
+		case ELactoseCharacterItemState::PlotTool:
+			TryUsePlotTool();
+			break;
+	}
+}
+
+void ALactoseGameCharacter::TryUsePlotTool()
+{
+	TOptional<FHitResult> HitResult = PerformPlotToolTrace();
+	
+	if (!HitResult)
+		return;
+
+	AActor* HitActor = HitResult->GetActor();
+
+	// If anything but the ground was hit, don't plant.
+	if (!(HitActor && (HitActor->IsA(ALandscapeProxy::StaticClass()) || HitActor->IsA(ALandscape::StaticClass()))))
+		return;
+
+	// TODO: Perform box trace to ensure the plot isn't blocking anything.
+
+	auto* SimulationSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseSimulationServiceSubsystem>();
+	if (!ensure(SimulationSubsystem))
+	{
+		return;
+	}
+
+	const FRotator SpawnRotation = FRotationMatrix::MakeFromZ(HitResult->Normal).Rotator();
+	SimulationSubsystem->CreateEmptyPlot(HitResult->Location, SpawnRotation);
+}
+
+void ALactoseGameCharacter::SetHoldableItemState(ELactoseCharacterItemState NewState)
+{
+	if (CurrentItemState == NewState)
+		return;
+
+	UE_LOG(LogLactose, Log, TEXT("Character's Item State: %s -> %s"),
+		*UEnum::GetValueAsString(CurrentItemState),
+		*UEnum::GetValueAsString(NewState));
+
+	CurrentItemState = NewState;
+}
+
+TOptional<FHitResult> ALactoseGameCharacter::PerformPlotToolTrace() const
+{
+	// Fire raycast from player screen centre to determine if can make a new
+	// plot at location.
+
+	const APlayerController* PlayerController = GetLocalViewingPlayerController();
+	if (!PlayerController)
+		return {};
+	
+	FVector CameraLocation;
+	FRotator CameraRotation;
+	PlayerController->GetPlayerViewPoint(OUT CameraLocation, OUT CameraRotation);
+
+	const FVector TraceEnd = CameraLocation + CameraRotation.Vector() * PlotToolMaxDistance;
+
+	FHitResult HitResult;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		OUT HitResult,
+		CameraLocation,
+		TraceEnd,
+		ECC_Visibility,
+		Params
+	);
+
+	return bHit ? HitResult : TOptional<FHitResult>();
 }

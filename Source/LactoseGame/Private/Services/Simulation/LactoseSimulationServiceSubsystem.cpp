@@ -334,6 +334,40 @@ void ULactoseSimulationServiceSubsystem::DestroyCropInstances(TConstArrayView<FS
 	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Sent a Destroy User Crops request"));
 }
 
+void ULactoseSimulationServiceSubsystem::CreateEmptyPlot(const FVector& Location, const FRotator& Rotation)
+{
+	CreateCrop(TEXT(""), Location, Rotation);
+}
+
+void ULactoseSimulationServiceSubsystem::CreateCrop(const FString& CropId, const FVector& Location, const FRotator& Rotation)
+{
+	auto IdentitySubsystem = GetGameInstance()->GetSubsystem<ULactoseIdentityServiceSubsystem>();
+	if (!IdentitySubsystem)
+		return;
+
+	TSharedPtr<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
+	if (!CurrentUserInfo)
+	{
+		UE_LOG(LogLactoseSimulationService, Error, TEXT("Cannot destroy current user's crops because the user is not logged in"));
+		return;
+	}
+
+	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
+	auto RestRequest = FCreateSimulationUserCropRequest::Create(*RestSubsystem);
+	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
+	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("usercrops/create"));
+	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnCurrentUserCropsCreated);
+
+	auto Request = MakeShared<FLactoseSimulationCreateUserCropRequest>();
+	Request->UserId = CurrentUserInfo->Id;
+	Request->CropId = CropId;
+	Request->CropLocation = Location;
+	Request->CropRotation = FVector(Rotation.Pitch, Rotation.Yaw, Rotation.Roll);
+	RestRequest->SetContentAsJsonAndSendAsync(Request);
+
+	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Sent a Create User Crop request"));
+}
+
 void ULactoseSimulationServiceSubsystem::EnableSimulateTicker()
 {
 	GetGameInstance()->GetTimerManager().SetTimer(
@@ -400,6 +434,15 @@ void ULactoseSimulationServiceSubsystem::OnAllCropsRetrieved(TSharedRef<FGetSimu
 		{
 			AllCrops.Emplace(Crop.Id, MakeShared<FLactoseSimulationCrop>(Crop));
 		}
+	}
+
+	if (!FindCrop(TEXT("")))
+	{
+		// Create the placeholder 'empty' crop to make the rest of the game happy.
+		auto EmptyCrop = MakeShared<FLactoseSimulationCrop>();
+		EmptyCrop->Name = TEXT("Empty");
+		EmptyCrop->Type = Lactose::Simulation::Types::Plot;
+		AllCrops.Add(TEXT(""), EmptyCrop);
 	}
 
 	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Added or updated %d Crops"),
@@ -598,6 +641,23 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsDestroyed(TSharedRef<
 
 	for (const auto& DestroyedCrop : DestroyedCropInstances)
 		DestroyedCrop->OnDestroyed.Broadcast(DestroyedCrop);
+}
+
+void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsCreated(
+	TSharedRef<FCreateSimulationUserCropRequest::FResponseContext> Context)
+{
+	if (!Context->ResponseContent.IsValid())
+		return;
+
+	if (Context->ResponseContent->UserCropInstanceId.IsEmpty())
+	{
+		UE_LOG(LogLactoseSimulationService, Warning, TEXT("No User Crop was created"));
+		return;
+	}
+	
+	Lactose::Simulation::Events::OnCurrentUserCropsCreated.Broadcast(*this, {});
+
+	// TODO: Client-side prediction.
 }
 
 void ULactoseSimulationServiceSubsystem::OnUserLoggedIn(

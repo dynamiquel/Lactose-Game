@@ -26,7 +26,8 @@ public class LactoseGame : ModuleRules
 		{
 			"Json",
 			"JsonSerialization",
-			"JsonUtilities"
+			"JsonUtilities",
+			"Landscape"
 		});
 	}
 }

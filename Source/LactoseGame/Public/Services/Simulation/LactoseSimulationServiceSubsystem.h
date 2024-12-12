@@ -82,7 +82,8 @@ public:
 	void SeedCropInstances(TConstArrayView<FString> CropInstanceIds, const FString& CropId);
 	void FertiliseCropInstances(TConstArrayView<FString> CropInstanceIds);
 	void DestroyCropInstances(TConstArrayView<FString> CropInstanceIds);
-
+	void CreateEmptyPlot(const FVector& Location, const FRotator& Rotation);
+	void CreateCrop(const FString& CropId, const FVector& Location, const FRotator& Rotation);
 	void EnableSimulateTicker();
 	void DisableSimulateTicker();
 	bool IsAutoSimulateTicking() const { return SimulateTicker.IsValid(); }
@@ -99,6 +100,7 @@ protected:
 	void OnCurrentUserCropsSeeded(TSharedRef<FSeedSimulationUserCropsRequest::FResponseContext> Context);
 	void OnCurrentUserCropsFertilised(TSharedRef<FFertiliseSimulationUserCropsRequest::FResponseContext> Context);
 	void OnCurrentUserCropsDestroyed(TSharedRef<FDeleteSimulationUserCropsRequest::FResponseContext> Context);
+	void OnCurrentUserCropsCreated(TSharedRef<FCreateSimulationUserCropRequest::FResponseContext> Context);
 
 	void OnUserLoggedIn(
 		const ULactoseIdentityServiceSubsystem& Sender,
@@ -160,6 +162,7 @@ namespace Lactose::Simulation::Events
 	inline FUserCropsDelegate OnCurrentUserCropsSeeded;
 	inline FUserCropsDelegate OnCurrentUserCropsFertilised;
 	inline FUserCropsDelegate OnCurrentUserCropsDestroyed;
+	inline FUserCropsDelegate OnCurrentUserCropsCreated;
 }
 
 namespace Lactose::Simulation::States
