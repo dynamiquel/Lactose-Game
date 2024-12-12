@@ -95,7 +95,7 @@ protected:
 	TObjectPtr<USoundBase> DestroySound;
 
 	UPROPERTY(EditAnywhere)
-	float DestroySeconds = 3.f;
+	float DestroySeconds = .3f;
 	
 private:
 	TSharedPtr<const FLactoseSimulationCrop> Crop;

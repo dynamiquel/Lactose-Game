@@ -39,9 +39,11 @@ public:
 	bool DeleteCropInstance(const FString& CropInstanceId);
 
 	TArray<TSharedRef<const FLactoseSimulationUserCropInstance>> FindCropInstances(TConstArrayView<FString> CropInstanceIds) const;
+	TArray<TSharedRef<FLactoseSimulationUserCropInstance>> FindMutableCropInstances(TConstArrayView<FString> CropInstanceIds);
+
 	
 private:
-	TSharedPtr<FLactoseSimulationUserCropInstance> FindCropInstance(const FString& CropInstanceId);
+	TSharedPtr<FLactoseSimulationUserCropInstance> FindMutableCropInstance(const FString& CropInstanceId);
 	void EmplaceCropInstance(const TSharedRef<FLactoseSimulationUserCropInstance>& ExistingCropInstance);
 
 private:
@@ -86,6 +88,8 @@ public:
 	bool IsAutoSimulateTicking() const { return SimulateTicker.IsValid(); }
 
 protected:
+	TSharedPtr<FLactoseSimulationUserCrops> GetMutableCurrentUserCrops();
+	
 	void OnAllCropsQueried(TSharedRef<FQuerySimulationCropsRequest::FResponseContext> Context);
 	void OnAllCropsRetrieved(TSharedRef<FGetSimulationCropsRequest::FResponseContext> Context);
 	
@@ -113,6 +117,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Config)
 	bool bRefreshUserCropsOnSimulated = true;
+
+	UPROPERTY(EditAnywhere, Config)
+	bool bClientSidePrediction = true;
 	
 	TFuture<TSharedPtr<FQuerySimulationCropsRequest::FResponseContext>> QueryAllCropsFuture;
 	TFuture<TSharedPtr<FGetSimulationCropsRequest::FResponseContext>> GetAllCropsFuture;
@@ -160,4 +167,11 @@ namespace Lactose::Simulation::States
 	constexpr auto* Empty = TEXT("Empty");
 	constexpr auto* Growing = TEXT("Growing");
 	constexpr auto* Harvestable = TEXT("Harvestable");
+}
+
+namespace Lactose::Simulation::Types
+{
+	constexpr auto* Plot = TEXT("Plot");
+	constexpr auto* Tree = TEXT("Tree");
+	constexpr auto* Animal = TEXT("Animal");
 }
