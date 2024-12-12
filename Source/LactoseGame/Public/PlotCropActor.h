@@ -33,6 +33,7 @@ protected:
 
 	void OnLoaded(const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance) override;
 
+	void SpawnPlantMeshes();
 	void SetPlantScaleBasedOnGrowth();
 
 public:
@@ -58,5 +59,5 @@ public:
 	bool bUsePlantGrowthScale = true;
 	
 	UPROPERTY(Transient)
-	TArray<TObjectPtr<UStaticMeshComponent>> GeneratedPlantMeshes;
+	TArray<TObjectPtr<UInstancedStaticMeshComponent>> GeneratedPlantMeshes;
 };

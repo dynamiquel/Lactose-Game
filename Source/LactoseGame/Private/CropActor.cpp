@@ -81,9 +81,11 @@ ACropActor::ACropActor()
 
 	GroundMesh = CreateDefaultSubobject<UStaticMeshComponent>("GroundMesh");
 	GroundMesh->SetupAttachment(GetRootComponent());
+	GroundMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	PlantMesh = CreateDefaultSubobject<UStaticMeshComponent>("PlantMesh");
 	PlantMesh->SetupAttachment(GetRootComponent());
+	PlantMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	BillboardComponent = CreateDefaultSubobject<USceneComponent>("Billboard");
 	BillboardComponent->SetupAttachment(GetRootComponent());

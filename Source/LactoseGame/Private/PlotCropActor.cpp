@@ -3,7 +3,7 @@
 
 #include "PlotCropActor.h"
 
-#include "Components/StaticMeshComponent.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
 #include "Services/Simulation/LactoseSimulationUserCropsRequests.h"
 
@@ -21,63 +21,7 @@ void APlotCropActor::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	{
-		// Reset any lingering Generated Plant Meshes.
-		for (UStaticMeshComponent* GeneratedPlantMesh : GeneratedPlantMeshes)
-			if (IsValid(GeneratedPlantMesh))
-				GeneratedPlantMesh->DestroyComponent();
-	
-		GeneratedPlantMeshes.Reset();
-	}
-	
-	if (PlantMeshDefinitions.IsEmpty())
-		return;
-
-	// Procedurally spawn in the desired plant meshes based on configuration.
-	// I tried setting up the meshes manually for my first crop and that was a huge time killer.
-	// Never again!
-	
-	const float PlantPaddingX = BoundsRadius / static_cast<float>(NumberOfPlantsX) * 2.f;
-	const float PlantPaddingY = BoundsRadius / static_cast<float>(NumberOfPlantsY) * 2.f;
-
-	const float StartX = -BoundsRadius + PlantPaddingX * .5f;
-	const float StartY = -BoundsRadius + PlantPaddingY * .5f;
-
-	for (int32 PlantXIdx = 0; PlantXIdx < NumberOfPlantsX; PlantXIdx++)
-	{
-		for (int32 PlantYIdx = 0; PlantYIdx < NumberOfPlantsY; PlantYIdx++)
-		{
-			const int32 RandomPlantMeshDefinitionIdx = FMath::RandRange(0, PlantMeshDefinitions.Num() - 1);
-			FLactosePlantMeshDefinition& PlantMeshDefinition = PlantMeshDefinitions[RandomPlantMeshDefinitionIdx];
-
-			const FVector PlantPaddingLocation = FVector(
-				StartX + PlantPaddingX * PlantXIdx,
-				StartY + PlantPaddingY * PlantYIdx,
-				0);
-			
-			const FTransform PlantPaddingTransform = FTransform(PlantPaddingLocation);
-			const FTransform PlantRelativeTransform = PlantMeshDefinition.RelativeTransform * PlantPaddingTransform;
-			
-			UStaticMeshComponent* NewPlantMesh = Cast<UStaticMeshComponent>(AddComponentByClass(
-				UStaticMeshComponent::StaticClass(),
-				/* bManualAttachment */ true,
-				PlantRelativeTransform,
-				/* bDeferredFinish */ true));
-
-			if (!NewPlantMesh)
-				continue;
-
-			NewPlantMesh->SetupAttachment(PlantsComponent);
-			NewPlantMesh->SetStaticMesh(PlantMeshDefinition.StaticMesh);
-
-			FinishAddComponent(
-				NewPlantMesh,
-				true,
-				PlantRelativeTransform);
-
-			GeneratedPlantMeshes.Add(NewPlantMesh);
-		}
-	}
+	SpawnPlantMeshes();
 }
 
 void APlotCropActor::BeginPlay()
@@ -92,6 +36,74 @@ void APlotCropActor::OnLoaded(const TSharedRef<const FLactoseSimulationUserCropI
 
 	if (bUsePlantGrowthScale)
 		SetPlantScaleBasedOnGrowth();
+}
+
+void APlotCropActor::SpawnPlantMeshes()
+{
+	{
+		// Reset any lingering Generated Plant Meshes.
+		for (UInstancedStaticMeshComponent* GeneratedPlantMesh : GeneratedPlantMeshes)
+			if (IsValid(GeneratedPlantMesh))
+				GeneratedPlantMesh->DestroyComponent();
+	
+		GeneratedPlantMeshes.Reset();
+	}
+	
+	if (PlantMeshDefinitions.IsEmpty())
+		return;
+
+	// Procedurally spawn in the desired plant meshes based on configuration.
+	// I tried setting up the meshes manually for my first crop and that was a huge time killer.
+	// Never again!
+
+	for (const FLactosePlantMeshDefinition& PlantMeshDefinition : PlantMeshDefinitions)
+	{
+		// Create an Instanced Mesh Component for every Plant Mesh type.
+		auto* NewPlantMesh = Cast<UInstancedStaticMeshComponent>(AddComponentByClass(
+			UInstancedStaticMeshComponent::StaticClass(),
+			/* bManualAttachment */ true,
+			FTransform(),
+			/* bDeferredFinish */ true));
+
+		NewPlantMesh->bDisableCollision = true;
+		NewPlantMesh->SetupAttachment(PlantsComponent);
+		NewPlantMesh->SetStaticMesh(PlantMeshDefinition.StaticMesh);
+
+		FinishAddComponent(
+			NewPlantMesh,
+			/* bManualAttachment */ true,
+			FTransform());
+		
+		GeneratedPlantMeshes.Add(NewPlantMesh);
+	}
+
+	check(PlantMeshDefinitions.Num() == GeneratedPlantMeshes.Num());
+	
+	const float PlantPaddingX = BoundsRadius / static_cast<float>(NumberOfPlantsX) * 2.f;
+	const float PlantPaddingY = BoundsRadius / static_cast<float>(NumberOfPlantsY) * 2.f;
+
+	const float StartX = -BoundsRadius + PlantPaddingX * .5f;
+	const float StartY = -BoundsRadius + PlantPaddingY * .5f;
+
+	for (int32 PlantXIdx = 0; PlantXIdx < NumberOfPlantsX; PlantXIdx++)
+	{
+		for (int32 PlantYIdx = 0; PlantYIdx < NumberOfPlantsY; PlantYIdx++)
+		{
+			const int32 RandomPlantMeshDefinitionIdx = FMath::RandRange(0, GeneratedPlantMeshes.Num() - 1);
+			FLactosePlantMeshDefinition& PlantMeshDefinition = PlantMeshDefinitions[RandomPlantMeshDefinitionIdx];
+			UInstancedStaticMeshComponent* PlantInstancedMeshComp = GeneratedPlantMeshes[RandomPlantMeshDefinitionIdx];
+			
+			const FVector PlantPaddingLocation = FVector(
+				StartX + PlantPaddingX * PlantXIdx,
+				StartY + PlantPaddingY * PlantYIdx,
+				0);
+			
+			const FTransform PlantPaddingTransform = FTransform(PlantPaddingLocation);
+			const FTransform PlantRelativeTransform = PlantMeshDefinition.RelativeTransform * PlantPaddingTransform;
+			
+			PlantInstancedMeshComp->AddInstance(PlantRelativeTransform);
+		}
+	}
 }
 
 void APlotCropActor::SetPlantScaleBasedOnGrowth()
