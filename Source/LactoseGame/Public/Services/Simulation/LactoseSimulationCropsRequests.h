@@ -28,33 +28,33 @@ struct FLactoseSimulationGetCropsRequest
 	TArray<FString> CropIds;
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FLactoseSimulationCrop
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	FString Id;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	FString Type;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	FString Name;
 
-	UPROPERTY()
-	double HarvestSeconds;
+	UPROPERTY(BlueprintReadOnly)
+	double HarvestSeconds = 0;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	TArray<FLactoseEconomyUserItem> CostItems;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	TArray<FLactoseEconomyUserItem> HarvestItems;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	TArray<FLactoseEconomyUserItem> DestroyItems;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	FString FertiliserItemId;
 };
 

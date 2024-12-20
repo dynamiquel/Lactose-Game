@@ -453,6 +453,8 @@ void ULactoseSimulationServiceSubsystem::OnAllCropsRetrieved(TSharedRef<FGetSimu
 
 void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsRetrieved(TSharedRef<FGetSimulationUserCropsRequest::FResponseContext> Context)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ULactoseSimulationServiceSubsystem::OnCurrentUserCropsRetrieved);
+	
 	GetCurrentUserCropsFuture.Reset();
 
 	if (!Context->ResponseContent.IsValid())
@@ -465,13 +467,19 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsRetrieved(TSharedRef<
 
 	TSet<FString> ExistingCropInstanceIds;
 	for (const TSharedRef<FLactoseSimulationUserCropInstance>& ExistingCrop : GetMutableCurrentUserCrops()->GetAllCropInstances())
-		ExistingCropInstanceIds.Add(ExistingCrop->Id);
-
-	for (const FLactoseSimulationUserCropInstance& CropInstance : Context->ResponseContent->CropInstances)
 	{
-		ExistingCropInstanceIds.Remove(CropInstance.Id);
-		auto SharedCropInstance = CurrentUserCrops->UpdateCropInstance(CropInstance);
-		SharedCropInstance->OnLoaded.Broadcast(SharedCropInstance);
+		ExistingCropInstanceIds.Add(ExistingCrop->Id);
+	}
+	
+	{
+		TRACE_CPUPROFILER_EVENT_SCOPE_STR("Update Crop Instances");
+
+		for (const FLactoseSimulationUserCropInstance& CropInstance : Context->ResponseContent->CropInstances)
+		{
+			ExistingCropInstanceIds.Remove(CropInstance.Id);
+			auto SharedCropInstance = CurrentUserCrops->UpdateCropInstance(CropInstance);
+			SharedCropInstance->OnLoaded.Broadcast(SharedCropInstance);
+		}
 	}
 	
 	if (!ExistingCropInstanceIds.IsEmpty())
@@ -481,7 +489,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsRetrieved(TSharedRef<
 		
 		auto DestroyRequest = MakeShared<FDeleteSimulationUserCropsRequest::FResponseContext>();
 		DestroyRequest->ResponseContent = MakeShared<FLactoseSimulationDeleteUserCropsResponse>();
-		DestroyRequest->ResponseContent->DeletedCropInstanceIds.Append(ExistingCropInstanceIds.Array());
+		DestroyRequest->ResponseContent->DestroyedCropInstanceIds.Append(ExistingCropInstanceIds.Array());
 		OnCurrentUserCropsDestroyed(DestroyRequest);
 	}
 
@@ -619,14 +627,14 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsDestroyed(TSharedRef<
 	if (!Context->ResponseContent.IsValid())
 		return;
 
-	if (Context->ResponseContent->DeletedCropInstanceIds.IsEmpty())
+	if (Context->ResponseContent->DestroyedCropInstanceIds.IsEmpty())
 	{
 		UE_LOG(LogLactoseSimulationService, Warning, TEXT("No User Crops were destroyed"));
 		return;
 	}
 	
 	const TArray<TSharedRef<const FLactoseSimulationUserCropInstance>> DestroyedCropInstances =
-		GetMutableCurrentUserCrops()->FindCropInstances(Context->ResponseContent->DeletedCropInstanceIds);
+		GetMutableCurrentUserCrops()->FindCropInstances(Context->ResponseContent->DestroyedCropInstanceIds);
 
 	for (const auto& DestroyedCropInstance : DestroyedCropInstances)
 	{
@@ -638,9 +646,6 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsDestroyed(TSharedRef<
 		DestroyedCropInstances.Num());
 
 	Lactose::Simulation::Events::OnCurrentUserCropsDestroyed.Broadcast(*this, DestroyedCropInstances);
-
-	for (const auto& DestroyedCrop : DestroyedCropInstances)
-		DestroyedCrop->OnDestroyed.Broadcast(DestroyedCrop);
 }
 
 void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsCreated(

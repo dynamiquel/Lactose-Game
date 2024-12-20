@@ -46,19 +46,19 @@ struct FLactoseSimulationUserCropInstance
 	FString State;
 
 	UPROPERTY()
-	FVector Location;
+	FVector Location = FVector::ZeroVector;
 
 	UPROPERTY()
-	FVector Rotation;
+	FVector Rotation = FVector::ZeroVector;
 
 	UPROPERTY()
 	FDateTime CreationTime;
 
 	UPROPERTY()
-	double RemainingHarvestSeconds;
+	double RemainingHarvestSeconds = 0;
 
 	UPROPERTY()
-	double RemainingFertiliserSeconds;
+	double RemainingFertiliserSeconds = 0;
 
 	mutable FLactoseSimulationUserCropInstanceDelegate OnLoaded;
 	mutable FLactoseSimulationUserCropInstanceDelegate OnHarvested;
@@ -112,10 +112,10 @@ struct FLactoseSimulationCreateUserCropRequest
 	FString CropId;
 
 	UPROPERTY()
-	FVector CropLocation;
+	FVector CropLocation = FVector::ZeroVector;
 
 	UPROPERTY()
-	FVector CropRotation;
+	FVector CropRotation = FVector::ZeroVector;
 };
 
 USTRUCT()
@@ -211,7 +211,7 @@ struct FLactoseSimulationDeleteUserCropsResponse
 	GENERATED_BODY()
 
 	UPROPERTY()
-	TArray<FString> DeletedCropInstanceIds;
+	TArray<FString> DestroyedCropInstanceIds;
 };
 
 using FGetSimulationUserCropsRequest = Lactose::Rest::TRequest<FLactoseSimulationGetUserCropsRequest, FLactoseSimulationGetUserCropsResponse>;

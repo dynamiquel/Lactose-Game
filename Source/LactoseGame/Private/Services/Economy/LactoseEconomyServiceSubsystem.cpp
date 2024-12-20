@@ -110,8 +110,6 @@ void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()
 	if (!IdentitySubsystem)
 		return;
 	
-	CurrentUserItems.Reset();
-
 	const TSharedPtr<FLactoseIdentityGetUserResponse> CurrentUser = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUser)
 	{
@@ -129,17 +127,88 @@ void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()
 		if (!ThisPinned)
 			return;
 
-		ThisPinned->CurrentUserItems.Reset();
 		ThisPinned->GetCurrentUserItemsFuture.Reset();
-		
-		for (const auto& UserItem : Context->ResponseContent->Items)
-			ThisPinned->CurrentUserItems.Emplace(UserItem.ItemId, MakeShared<FLactoseEconomyUserItem>(UserItem));
 
+		TSet<FString> ExistingUserItemsIds;
+		for (const TTuple<FString, TSharedRef<FLactoseEconomyUserItem>>& ExistingUserItem : ThisPinned->GetCurrentUserItems())
+			ExistingUserItemsIds.Add(ExistingUserItem.Key);
+
+		bool bAnyChanged = false;
+
+		{
+			TRACE_CPUPROFILER_EVENT_SCOPE_STR("Update User Items");
+			ThisPinned->CurrentUserItems.Reserve(Context->ResponseContent->Items.Num());
+
+			for (const FLactoseEconomyUserItem& UserItem : Context->ResponseContent->Items)
+			{
+				ExistingUserItemsIds.Remove(UserItem.ItemId);
+
+				if (TSharedRef<FLactoseEconomyUserItem>* FoundExistingUserItem = ThisPinned->CurrentUserItems.Find(UserItem.ItemId))
+				{
+					if (FoundExistingUserItem->Get().Quantity != UserItem.Quantity)
+					{
+						UE_LOG(LogLactoseEconomyService, VeryVerbose, TEXT("Updated Current User dItem '%s' Quantity: %d -> %d"),
+							*UserItem.ItemId,
+							FoundExistingUserItem->Get().Quantity,
+							UserItem.Quantity);
+						
+						FoundExistingUserItem->Get().Quantity = UserItem.Quantity;
+						bAnyChanged = true;
+					}
+				}
+				else
+				{					
+					ThisPinned->CurrentUserItems.Emplace(UserItem.ItemId, MakeShared<FLactoseEconomyUserItem>(UserItem));
+
+					UE_LOG(LogLactoseEconomyService, VeryVerbose, TEXT("Added Current User Item '%s' with Quantity: %d"),
+						*UserItem.ItemId,
+						UserItem.Quantity);
+					
+					bAnyChanged = true;
+				}
+			}
+		}
+
+		if (!ExistingUserItemsIds.IsEmpty())
+		{
+			// Anything in Existing User Items is an item that the player no longer has.
+			for (const auto& ExistingUserItemsId : ExistingUserItemsIds)
+			{
+				ThisPinned->CurrentUserItems.Remove(ExistingUserItemsId);
+
+				UE_LOG(LogLactoseEconomyService, VeryVerbose, TEXT("Removed Current User Item '%s"),
+						*ExistingUserItemsId);
+				
+				bAnyChanged = true;
+			}
+		}
+		
 		UE_LOG(LogLactoseEconomyService, Verbose, TEXT("Loaded All %d User Items"),
 			ThisPinned->CurrentUserItems.Num());
 
-		Lactose::Economy::Events::OnCurrentUserItemsLoaded.Broadcast(*ThisPinned);
+		// Only call the event if anything actually changed, otherwise it's pointless.
+		if (bAnyChanged)
+			Lactose::Economy::Events::OnCurrentUserItemsLoaded.Broadcast(*ThisPinned);
+
+		if (!ThisPinned->GetUserItemsTicker.IsValid())
+			ThisPinned->EnableGetCurrentUserItemsTicker();
 	});
+}
+
+void ULactoseEconomyServiceSubsystem::EnableGetCurrentUserItemsTicker()
+{
+	GetGameInstance()->GetTimerManager().SetTimer(
+		GetUserItemsTicker,
+		this,
+		&ThisClass::OnGetCurrentUserItemsTick,
+		GetUserItemsTickInterval,
+		/* bLoop */ true);
+}
+
+void ULactoseEconomyServiceSubsystem::DisableGetCurrentUserItemsTicker()
+{
+	GetGameInstance()->GetTimerManager().ClearTimer(GetUserItemsTicker);
+	GetUserItemsTicker.Invalidate();
 }
 
 void ULactoseEconomyServiceSubsystem::OnAllItemsQueries(TSharedRef<FQueryEconomyItemsRequest::FResponseContext> Context)
@@ -205,4 +274,9 @@ void ULactoseEconomyServiceSubsystem::OnUserLoggedIn(
 void ULactoseEconomyServiceSubsystem::OnUserLoggedOut(const ULactoseIdentityServiceSubsystem& Sender)
 {
 	CurrentUserItems.Reset();
+}
+
+void ULactoseEconomyServiceSubsystem::OnGetCurrentUserItemsTick()
+{
+	LoadCurrentUserItems();
 }

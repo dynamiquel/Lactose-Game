@@ -19,11 +19,11 @@ public:
 	// End override AGameModeBase
 
 	void ProcessBeginPlayConditions();
-	
+
+	UFUNCTION(BlueprintPure, Category="Lactose Game Mode")
+	const TArray<FString>& GetPendingStartConditions() const { return PendingConditions; }
+
 private:
 	TArray<FString> PendingConditions;
 	FTimerHandle BeginPlayConditionCheckTimer;
 };
-
-
-

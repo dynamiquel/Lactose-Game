@@ -4,9 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "GameplayTagContainer.h"
 #include "LactoseGamePlayerController.generated.h"
 
+struct FGameplayTag;
+
+class UInputAction;
 class UInputMappingContext;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLactoseMenuDelegate,
+	const APlayerController*, PlayerController,
+	const FGameplayTag&, MenuTag);
 
 /**
  *
@@ -15,17 +23,43 @@ UCLASS()
 class LACTOSEGAME_API ALactoseGamePlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	
-protected:
 
+protected:
+	ALactoseGamePlayerController();
+	
+public:
+	UFUNCTION(BlueprintPure, Category="Lactose Player")
+	bool IsMenuOpened(const FGameplayTag& MenuTag, bool bExactMenu = false);
+	
+	UFUNCTION(Blueprintable, Category="Lactose Player")
+	void OpenMenu(const FGameplayTag& MenuTag);
+
+	UFUNCTION(Blueprintable, Category="Lactose Player")
+	void CloseActiveMenu();
+
+protected:
+	void BeginPlay() override;
+	void SetupInputComponent() override;
+
+	void OnPlayerMenuActionPressed();
+
+protected:
 	/** Input Mapping Context to be used for player input */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
-	UInputMappingContext* InputMappingContext;
+	TObjectPtr<UInputMappingContext> CharacterMappingContext;
 
-	// Begin Actor interface
-protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	TObjectPtr<UInputMappingContext> MenuMappingContext;
 
-	virtual void BeginPlay() override;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input)
+	TObjectPtr<UInputAction> PlayerMenuAction;
 
-	// End Actor interface
+	TOptional<FGameplayTag> OpenedMenuTag;
+
+public:
+	UPROPERTY(BlueprintAssignable)
+	FLactoseMenuDelegate OnMenuOpened;
+
+	UPROPERTY(BlueprintAssignable)
+	FLactoseMenuDelegate OnMenuClosed;
 };

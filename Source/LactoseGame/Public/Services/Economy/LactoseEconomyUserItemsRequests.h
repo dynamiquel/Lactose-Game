@@ -13,16 +13,16 @@ struct FLactoseEconomyGetUserItemsRequest
 	FString UserId;
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FLactoseEconomyUserItem
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	FString ItemId;
 
-	UPROPERTY()
-	int32 Quantity;
+	UPROPERTY(BlueprintReadOnly)
+	int32 Quantity = 0;
 };
 
 

@@ -3,7 +3,6 @@
 
 #include "Services/Economy/LactoseEconomyUserItemsTab.h"
 
-#include "PacketHandlers/StatelessConnectHandlerComponent.h"
 #include "Services/Economy/LactoseEconomyDebugApp.h"
 #include "Services/Economy/LactoseEconomyServiceSubsystem.h"
 
@@ -54,6 +53,18 @@ void ULactoseEconomyUserItemsTab::Render()
 				break;
 			default:
 				ImGui::Text("Unknown");
+		}
+
+		ImGui::SameLine();
+		if (EconomySubsystem->IsAutoGetCurrentUserItemsTicking())
+		{
+			if (ImGui::Button("Disable Get Current User Items Tick"))
+				EconomySubsystem->DisableGetCurrentUserItemsTicker();
+		}
+		else
+		{
+			if (ImGui::Button("Enable Get Current User Items Tick"))
+				EconomySubsystem->EnableGetCurrentUserItemsTicker();
 		}
 
 		ImGui::Spacing();

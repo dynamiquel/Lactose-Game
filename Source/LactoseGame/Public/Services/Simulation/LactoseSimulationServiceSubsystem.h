@@ -133,7 +133,6 @@ private:
 	TFuture<TSharedPtr<FSimulateSimulationUserCropsRequest::FResponseContext>> SimulateCurrentUserCropsFuture;
 
 	FDateTime PreviousUserSimulationTime;
-
 	FTimerHandle SimulateTicker;
 };
 

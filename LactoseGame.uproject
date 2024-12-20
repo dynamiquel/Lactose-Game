@@ -184,6 +184,130 @@
 		{
 			"Name": "Fab",
 			"Enabled": true
+		},
+		{
+			"Name": "Paper2D",
+			"Enabled": false
+		},
+		{
+			"Name": "ACLPlugin",
+			"Enabled": false
+		},
+		{
+			"Name": "AnimationModifierLibrary",
+			"Enabled": false
+		},
+		{
+			"Name": "AnimationSharing",
+			"Enabled": false
+		},
+		{
+			"Name": "BackChannel",
+			"Enabled": false
+		},
+		{
+			"Name": "BlueprintHeaderView",
+			"Enabled": false
+		},
+		{
+			"Name": "BlendSpaceMotionAnalysis",
+			"Enabled": false
+		},
+		{
+			"Name": "CableComponent",
+			"Enabled": false
+		},
+		{
+			"Name": "CameraShakePreviewer",
+			"Enabled": false
+		},
+		{
+			"Name": "ChaosCloth",
+			"Enabled": false
+		},
+		{
+			"Name": "ChaosNiagara",
+			"Enabled": false
+		},
+		{
+			"Name": "CharacterAI",
+			"Enabled": false
+		},
+		{
+			"Name": "CLionSourceCodeAccess",
+			"Enabled": false
+		},
+		{
+			"Name": "CmdLinkServer",
+			"Enabled": false
+		},
+		{
+			"Name": "CustomMeshComponent",
+			"Enabled": false
+		},
+		{
+			"Name": "DatasmithContent",
+			"Enabled": false
+		},
+		{
+			"Name": "DiscordGame",
+			"Enabled": false
+		},
+		{
+			"Name": "KDevelopSourceCodeAccess",
+			"Enabled": false
+		},
+		{
+			"Name": "LauncherChunkInstaller",
+			"Enabled": false
+		},
+		{
+			"Name": "LocalizableMessage",
+			"Enabled": false
+		},
+		{
+			"Name": "MacGraphicsSwitching",
+			"Enabled": false
+		},
+		{
+			"Name": "MaterialAnalyzer",
+			"Enabled": false
+		},
+		{
+			"Name": "MediaPlate",
+			"Enabled": false
+		},
+		{
+			"Name": "MediaCompositing",
+			"Enabled": false
+		},
+		{
+			"Name": "LocationServicesBPLibrary",
+			"Enabled": false
+		},
+		{
+			"Name": "MobilePatchingUtils",
+			"Enabled": false
+		},
+		{
+			"Name": "OodleNetwork",
+			"Enabled": false
+		},
+		{
+			"Name": "SubversionSourceControl",
+			"Enabled": false
+		},
+		{
+			"Name": "TcpMessaging",
+			"Enabled": false
+		},
+		{
+			"Name": "UdpMessaging",
+			"Enabled": false
+		},
+		{
+			"Name": "VisualStudioCodeSourceCodeAccess",
+			"Enabled": false
 		}
 	]
 }

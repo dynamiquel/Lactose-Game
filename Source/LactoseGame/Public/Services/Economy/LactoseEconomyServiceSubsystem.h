@@ -55,6 +55,10 @@ public:
 	TSharedPtr<const FLactoseEconomyUserItem> FindCurrentUserItem(const FString& ItemId) const;
 
 	void LoadCurrentUserItems();
+
+	void EnableGetCurrentUserItemsTicker();
+	void DisableGetCurrentUserItemsTicker();
+	bool IsAutoGetCurrentUserItemsTicking() const { return GetUserItemsTicker.IsValid(); }
 	
 protected:
 	void OnAllItemsQueries(TSharedRef<FQueryEconomyItemsRequest::FResponseContext> Context);
@@ -66,9 +70,14 @@ protected:
 
 	void OnUserLoggedOut(const ULactoseIdentityServiceSubsystem& Sender);
 
+	void OnGetCurrentUserItemsTick();
+
 private:
 	UPROPERTY(EditDefaultsOnly, Config)
 	bool bAutoRetrieveItems = true;
+
+	UPROPERTY(EditDefaultsOnly, Config)
+	float GetUserItemsTickInterval = 2.f;
 	
 	TFuture<TSharedPtr<FQueryEconomyItemsRequest::FResponseContext>> QueryAllItemsFuture;
 	TFuture<TSharedPtr<FGetEconomyItemsRequest::FResponseContext>> GetAllItemsFuture;
@@ -76,6 +85,8 @@ private:
 
 	TFuture<TSharedPtr<FGetEconomyUserItemsRequest::FResponseContext>> GetCurrentUserItemsFuture;
 	TMap<FString, TSharedRef<FLactoseEconomyUserItem>> CurrentUserItems;
+
+	FTimerHandle GetUserItemsTicker;
 };
 
 namespace Lactose::Economy::Events

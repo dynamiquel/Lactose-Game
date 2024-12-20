@@ -28,7 +28,7 @@ struct FLactoseServiceInfo
 	FDateTime BuildTime;
 
 	UPROPERTY()
-	int32 Status;
+	int32 Status = 0;
 	
 	UPROPERTY()
 	FString Runtime;
@@ -72,3 +72,17 @@ private:
 	UPROPERTY(EditDefaultsOnly, Config)
 	FString ServiceBaseUrl; 
 };
+
+namespace Lactose
+{
+	template<typename TLactoseService>
+	static TLactoseService& GetService(const UObject& Context)
+	{
+		const UWorld* World = Context.GetWorld();
+		check(World);
+		const UGameInstance* GameInstance = World->GetGameInstance();
+		check(GameInstance);
+		auto* Service = GameInstance->GetSubsystem<TLactoseService>();
+		return *Service;
+	}
+}

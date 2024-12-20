@@ -106,10 +106,10 @@ void ULactoseCropWorldSubsystem::OnUserCropsLoaded(
 	{
 		bWaitingForUserCrops = false;
 		UE_LOG(LogLactose, Verbose, TEXT("Crop Subsystem: Received User Crops"));
-		
-		if (CanCreateCrops())
-			CreateRequiredUserCrops();
 	}
+
+	if (CanCreateCrops())
+		CreateRequiredUserCrops();
 }
 
 void ULactoseCropWorldSubsystem::OnConfigCloudLoaded(
@@ -125,6 +125,9 @@ void ULactoseCropWorldSubsystem::OnConfigCloudLoaded(
 		if (CanCreateCrops())
 			CreateRequiredUserCrops();
 	}
+
+	// Don't care about future events.
+	Lactose::Config::Events::OnConfigLoaded.RemoveAll(this);
 }
 
 void ULactoseCropWorldSubsystem::CreateRequiredUserCrops()

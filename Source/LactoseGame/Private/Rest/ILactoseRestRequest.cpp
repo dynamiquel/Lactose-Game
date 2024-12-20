@@ -108,7 +108,5 @@ void Lactose::Rest::IRequest::OnResponseReceived(
 	GetOnResponseReceived().Broadcast(ResponseContext);
 
 	if (ULactoseRestSubsystem* PinnedRestSubsystem = RestSubsystem.Get())
-	{
 		PinnedRestSubsystem->RemoveRequest(SharedThis(this));
-	}
 }

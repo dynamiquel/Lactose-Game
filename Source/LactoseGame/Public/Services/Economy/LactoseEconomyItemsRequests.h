@@ -29,21 +29,21 @@ struct FLactoseEconomyGetItemsRequest
 	TArray<FString> ItemIds;
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FLactoseEconomyItem
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	FString Id;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	FString Type;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	FString Name;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	FString Description;
 };
 

@@ -114,6 +114,8 @@ namespace Lactose::Rest
 				// Convert request and response from JSON on a background thread before dispatching back to game thread.
 				AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [This = SharedThis(this), Context]
 				{
+					TRACE_CPUPROFILER_EVENT_SCOPE(Lactose::Rest::TRequest::Deserialise);
+
 					if constexpr (Concepts::RequestType<TRequestContent>)
 					{
 						if (Context->HttpRequest && !Context->HttpRequest->GetContent().IsEmpty())
@@ -134,6 +136,8 @@ namespace Lactose::Rest
 
 					AsyncTask(ENamedThreads::GameThread, [This, Context]
 					{
+						TRACE_CPUPROFILER_EVENT_SCOPE(Lactose::Rest::TRequest::Despatch);
+
 						This->ResponsePromise.SetValue(StaticCastSharedRef<IRequest::FResponseContext>(Context));
 						This->GetOnResponseReceived().Broadcast(StaticCastSharedRef<IRequest::FResponseContext>(Context));
 						This->ResponsePromise2.SetValue(Context);

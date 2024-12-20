@@ -2,6 +2,7 @@
 
 #include "LactoseGameGameMode.h"
 #include "LactoseGameCharacter.h"
+#include "UI/LactoseHUD.h"
 #include "Services/ConfigCloud/LactoseConfigCloudServiceSubsystem.h"
 #include "Services/Economy/LactoseEconomyServiceSubsystem.h"
 #include "Services/Identity/LactoseIdentityServiceSubsystem.h"
@@ -11,10 +12,10 @@
 ALactoseGameGameMode::ALactoseGameGameMode()
 	: Super()
 {
-	// set default pawn class to our Blueprinted character
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnClassFinder(TEXT("/Game/FirstPerson/Blueprints/BP_FirstPersonCharacter"));
 	DefaultPawnClass = PlayerPawnClassFinder.Class;
 
+	HUDClass = ALactoseHUD::StaticClass();
 }
 
 void ALactoseGameGameMode::StartPlay()
@@ -123,6 +124,7 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 	if (PendingConditions.IsEmpty())
 	{
 		GetWorldTimerManager().ClearTimer(BeginPlayConditionCheckTimer);
+		UE_LOG(LogGameMode, Log, TEXT("Game started"));
 		Super::StartPlay();
 	}
 	else

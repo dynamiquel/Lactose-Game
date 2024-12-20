@@ -18,7 +18,8 @@ public class LactoseGame : ModuleRules
 			"EnhancedInput", 
 			"DiscordGame",
 			"HTTP",
-			"StructUtils"
+			"StructUtils",
+			"GameplayTags"
         }
         );
 		
@@ -27,7 +28,8 @@ public class LactoseGame : ModuleRules
 			"Json",
 			"JsonSerialization",
 			"JsonUtilities",
-			"Landscape"
+			"Landscape",
+			"UMG"
 		});
 	}
 }
