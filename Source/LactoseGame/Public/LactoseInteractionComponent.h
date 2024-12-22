@@ -6,11 +6,11 @@
 #include "Components/ActorComponent.h"
 #include "LactoseInteractionComponent.generated.h"
 
-
 class UInputAction;
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FLactoseInteractionDelegate,
-	const class ULactoseInteractionComponent& /* Sender */);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FLactoseInteractionDelegate,
+	const class ULactoseInteractionComponent& /* Sender */,
+	class AController* /* Instigator */);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class LACTOSEGAME_API ULactoseInteractionComponent : public UActorComponent
@@ -23,7 +23,7 @@ public:
 	virtual bool CanBeInteracted() const;
 	virtual FString GetInteractionText() const;
 	
-	virtual void Interact();
+	virtual void Interact(AController* Instigator);
 	
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> InputAction;

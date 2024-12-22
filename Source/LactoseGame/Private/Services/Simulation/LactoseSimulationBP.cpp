@@ -3,6 +3,7 @@
 
 #include "Services/Simulation/LactoseSimulationBP.h"
 
+#include "Services/Economy/LactoseEconomyServiceSubsystem.h"
 #include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
 
 TMap<FString, FLactoseSimulationCrop> ULactoseSimulationBP::GetCrops(const ULactoseSimulationServiceSubsystem* Simulation)
@@ -20,11 +21,49 @@ TMap<FString, FLactoseSimulationCrop> ULactoseSimulationBP::GetCrops(const ULact
 	return CopiedCrops;
 }
 
-TOptional<FLactoseSimulationCrop> ULactoseSimulationBP::GetCrop(const ULactoseSimulationServiceSubsystem* Simulation, const FString& CropName)
+FLactoseSimulationCrop ULactoseSimulationBP::GetCrop(const ULactoseSimulationServiceSubsystem* Simulation, const FString& CropName)
 {
 	if (!Simulation)
 		return {};
 
 	const TSharedRef<FLactoseSimulationCrop>* FoundCrop = Simulation->GetAllCrops().Find(CropName);
-	return FoundCrop ? FoundCrop->Get() : TOptional<FLactoseSimulationCrop>();
+	return FoundCrop ? FoundCrop->Get() : FLactoseSimulationCrop();
+}
+
+void ULactoseSimulationBP::SeedCurrentUserCrops(ULactoseSimulationServiceSubsystem* Simulation, const TArray<FString>& CropInstanceIds, const FString& CropId)
+{
+	if (!Simulation)
+		return;
+
+	Simulation->SeedCropInstances(CropInstanceIds, CropId);
+
+}
+
+TArray<FLactoseEconomyUserItem> ULactoseSimulationBP::GetCropCostUserItems(
+	const ULactoseSimulationServiceSubsystem* Simulation, const FString& CropId)
+{
+	TArray<FLactoseEconomyUserItem> UserCropCostItems;
+	if (!Simulation)
+		return UserCropCostItems;
+	
+	const TSharedPtr<const FLactoseSimulationCrop> FoundCrop =  Simulation->FindCrop(CropId);
+	if (!FoundCrop)
+		return UserCropCostItems;
+
+	for (const FLactoseEconomyUserItem& CostItem : FoundCrop->CostItems)
+	{
+		const auto& EconomySubsystem = Lactose::GetService<ULactoseEconomyServiceSubsystem>(*Simulation);
+		TSharedPtr<const FLactoseEconomyUserItem> FoundUserItem = EconomySubsystem.FindCurrentUserItem(CostItem.ItemId);
+		UserCropCostItems.Add(FoundUserItem ? *FoundUserItem : FLactoseEconomyUserItem{.ItemId = CostItem.ItemId});
+	}
+	
+	return UserCropCostItems;
+}
+
+bool ULactoseSimulationBP::CanCurrentUserAffordCrop(const ULactoseSimulationServiceSubsystem* Simulation, const FString& CropId)
+{
+	if (!Simulation)
+		return false;
+
+	return Simulation->CanCurrentUserAffordCrop(CropId);
 }

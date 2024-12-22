@@ -4,6 +4,7 @@
 #include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
 
 #include "Services/LactoseServicesLog.h"
+#include "Services/Economy/LactoseEconomyServiceSubsystem.h"
 #include "Services/Identity/LactoseIdentityServiceSubsystem.h"
 
 TConstArrayView<TSharedRef<FLactoseSimulationUserCropInstance>> FLactoseSimulationUserCrops::GetAllCropInstances() const
@@ -157,6 +158,26 @@ ELactoseSimulationUserCropsStatus ULactoseSimulationServiceSubsystem::GetCurrent
 TSharedPtr<const FLactoseSimulationUserCrops> ULactoseSimulationServiceSubsystem::GetCurrentUserCrops() const
 {
 	return CurrentUserCrops;
+}
+
+bool ULactoseSimulationServiceSubsystem::CanCurrentUserAffordCrop(const FString& CropId) const
+{
+	const TSharedPtr<const FLactoseSimulationCrop> FoundCrop = FindCrop(CropId);
+	if (!FoundCrop)
+		return false;
+
+	for (const FLactoseEconomyUserItem& CostItem : FoundCrop->CostItems)
+	{
+		const auto& EconomySubsystem = Lactose::GetService<ULactoseEconomyServiceSubsystem>(*this);
+		TSharedPtr<const FLactoseEconomyUserItem> FoundUserItem = EconomySubsystem.FindCurrentUserItem(CostItem.ItemId);
+		if (!FoundUserItem)
+			return false;
+
+		if (FoundUserItem->Quantity < CostItem.Quantity)
+			return false;
+	}
+	
+	return true;
 }
 
 TSharedPtr<FLactoseSimulationUserCrops> ULactoseSimulationServiceSubsystem::GetMutableCurrentUserCrops()

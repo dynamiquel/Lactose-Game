@@ -7,6 +7,19 @@
 #include "Blueprint/UserWidget.h"
 #include "LactoseGame/LactoseGame.h"
 #include "LactoseGame/LactoseGamePlayerController.h"
+#include "Core.h"
+
+constexpr auto BaseWidgetShowFunctionName = TEXT("Show");
+constexpr auto BaseWidgetHideFunctionName = TEXT("Hide");
+
+void CallBPFunction(UObject& Object, const TCHAR* FunctionName)
+{
+	auto OutputDeviceNull = FOutputDeviceNull();
+	Object.CallFunctionByNameWithArguments(
+		FunctionName,
+		OutputDeviceNull,
+		nullptr);
+}
 
 ALactoseHUD::ALactoseHUD()
 {
@@ -67,17 +80,24 @@ void ALactoseHUD::OnMenuOpened(const APlayerController* PlayerController, const 
 		if (LIKELY(PlayerMenuWidget))
 		{
 			PlayerMenuWidget->AddToPlayerScreen();
+			CallBPFunction(*PlayerMenuWidget, BaseWidgetShowFunctionName);
 		}
 	}
 	else if (MenuTag.MatchesTag(Lactose::Menus::PlantCrop))
 	{
 		if (LIKELY(PlantCropWidget))
+		{
 			PlantCropWidget->AddToPlayerScreen();
+			CallBPFunction(*PlantCropWidget, BaseWidgetShowFunctionName);
+		}
 	}
 	else if (MenuTag.MatchesTag(Lactose::Menus::SeedCrop))
 	{
 		if (LIKELY(SeedCropWidget))
+		{
 			SeedCropWidget->AddToPlayerScreen();
+			CallBPFunction(*SeedCropWidget, BaseWidgetShowFunctionName);
+		}
 	}
 }
 
@@ -86,16 +106,25 @@ void ALactoseHUD::OnMenuClosed(const APlayerController* PlayerController, const 
 	if (MenuTag.MatchesTag(Lactose::Menus::Player))
 	{
 		if (LIKELY(PlayerMenuWidget))
+		{
+			CallBPFunction(*PlayerMenuWidget, BaseWidgetHideFunctionName);
 			PlayerMenuWidget->RemoveFromParent();
+		}
 	}
 	else if (MenuTag.MatchesTag(Lactose::Menus::PlantCrop))
 	{
 		if (LIKELY(PlantCropWidget))
+		{
+			CallBPFunction(*PlantCropWidget, BaseWidgetHideFunctionName);
 			PlantCropWidget->RemoveFromParent();
+		}
 	}
 	else if (MenuTag.MatchesTag(Lactose::Menus::SeedCrop))
 	{
 		if (LIKELY(SeedCropWidget))
+		{
+			CallBPFunction(*SeedCropWidget, BaseWidgetHideFunctionName);
 			SeedCropWidget->RemoveFromParent();
+		}
 	}
 }

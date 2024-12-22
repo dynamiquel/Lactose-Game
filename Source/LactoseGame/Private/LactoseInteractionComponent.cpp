@@ -31,12 +31,12 @@ FString ULactoseInteractionComponent::GetInteractionText() const
 	return InteractionText;
 }
 
-void ULactoseInteractionComponent::Interact()
+void ULactoseInteractionComponent::Interact(AController* Instigator)
 {
 	if (!GetOwner())
 		return;
 	
-	OnInteractionComplete.Broadcast(*this);
+	OnInteractionComplete.Broadcast(*this, Instigator);
 	
 	UE_LOG(LogLactose, Verbose, TEXT("Actor '%s' Interacted (%s)"),
 		*GetOwner()->GetActorNameOrLabel(),

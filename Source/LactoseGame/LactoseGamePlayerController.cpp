@@ -22,7 +22,7 @@ void ALactoseGamePlayerController::SetupInputComponent()
 
 void ALactoseGamePlayerController::OnPlayerMenuActionPressed()
 {
-	const bool bOpened = IsMenuOpened(Lactose::Menus::Player);
+	const bool bOpened = IsAnyMenuOpened();
 	bOpened ? CloseActiveMenu() : OpenMenu(Lactose::Menus::Player);
 }
 
@@ -37,9 +37,14 @@ ALactoseGamePlayerController::ALactoseGamePlayerController()
 	PlayerMenuAction = DefaultPlayerMenuAction.Object;
 }
 
-bool ALactoseGamePlayerController::IsMenuOpened(const FGameplayTag& MenuTag, const bool bExactMenu)
+bool ALactoseGamePlayerController::IsMenuOpened(const FGameplayTag& MenuTag, const bool bExactMenu) const
 {
 	return OpenedMenuTag && (MenuTag.MatchesTagExact(*OpenedMenuTag) || (!bExactMenu && MenuTag.MatchesTag(*OpenedMenuTag)));
+}
+
+bool ALactoseGamePlayerController::IsAnyMenuOpened() const
+{
+	return OpenedMenuTag.IsSet();
 }
 
 void ALactoseGamePlayerController::OpenMenu(const FGameplayTag& MenuTag)

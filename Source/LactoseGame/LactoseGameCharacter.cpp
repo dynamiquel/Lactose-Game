@@ -185,7 +185,7 @@ void ALactoseGameCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
-void ALactoseGameCharacter::InteractPrimary(const FInputActionValue& Value)
+void ALactoseGameCharacter::InteractPrimary()
 {
 	if (!IsValid(InteractAction))
 		return;
@@ -194,10 +194,10 @@ void ALactoseGameCharacter::InteractPrimary(const FInputActionValue& Value)
 	if (!FoundPrimaryInteraction)
 		return;
 
-	FoundPrimaryInteraction->Interact();
+	FoundPrimaryInteraction->Interact(GetController());
 }
 
-void ALactoseGameCharacter::InteractSecondary(const FInputActionValue& Value)
+void ALactoseGameCharacter::InteractSecondary()
 {
 	if (!IsValid(InteractSecondaryAction))
 		return;
@@ -206,7 +206,7 @@ void ALactoseGameCharacter::InteractSecondary(const FInputActionValue& Value)
 	if (!FoundSecondaryInteraction)
 		return;
 
-	FoundSecondaryInteraction->Interact();
+	FoundSecondaryInteraction->Interact(GetController());
 }
 
 void ALactoseGameCharacter::UpdateClosestInteractions()
@@ -288,17 +288,17 @@ void ALactoseGameCharacter::SetClosestInteraction(const UInputAction& InputActio
 	}
 }
 
-void ALactoseGameCharacter::RequestSwitchToNoneItem(const FInputActionValue& Value)
+void ALactoseGameCharacter::RequestSwitchToNoneItem()
 {
 	SetHoldableItemState(ELactoseCharacterItemState::None);
 }
 
-void ALactoseGameCharacter::RequestSwitchToPlotToolItem(const FInputActionValue& Value)
+void ALactoseGameCharacter::RequestSwitchToPlotToolItem()
 {
 	SetHoldableItemState(ELactoseCharacterItemState::PlotTool);
 }
 
-void ALactoseGameCharacter::RequestUseItem(const FInputActionValue& Value)
+void ALactoseGameCharacter::RequestUseItem()
 {
 	switch (GetCurrentItemState())
 	{

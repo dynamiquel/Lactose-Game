@@ -29,13 +29,22 @@ protected:
 	
 public:
 	UFUNCTION(BlueprintPure, Category="Lactose Player")
-	bool IsMenuOpened(const FGameplayTag& MenuTag, bool bExactMenu = false);
+	bool IsMenuOpened(const FGameplayTag& MenuTag, bool bExactMenu = false) const;
+
+	UFUNCTION(BlueprintPure, Category="Lactose Player")
+	bool IsAnyMenuOpened() const;
 	
-	UFUNCTION(Blueprintable, Category="Lactose Player")
+	UFUNCTION(BlueprintCallable, Category="Lactose Player")
 	void OpenMenu(const FGameplayTag& MenuTag);
 
-	UFUNCTION(Blueprintable, Category="Lactose Player")
+	UFUNCTION(BlueprintCallable, Category="Lactose Player")
 	void CloseActiveMenu();
+
+	const TArray<FString>& GetCropInstanceIdsToSeed() const { return CropInstanceIdsToSeed; }
+
+	UFUNCTION(BlueprintPure, Category="Lactose")
+	TArray<FString>& GetCropInstanceIdsToSeed() { return CropInstanceIdsToSeed; }
+
 
 protected:
 	void BeginPlay() override;
@@ -55,6 +64,8 @@ protected:
 	TObjectPtr<UInputAction> PlayerMenuAction;
 
 	TOptional<FGameplayTag> OpenedMenuTag;
+	
+	TArray<FString> CropInstanceIdsToSeed; 
 
 public:
 	UPROPERTY(BlueprintAssignable)

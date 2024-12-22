@@ -88,6 +88,8 @@ public:
 	void DisableSimulateTicker();
 	bool IsAutoSimulateTicking() const { return SimulateTicker.IsValid(); }
 
+	bool CanCurrentUserAffordCrop(const FString& CropId) const;
+
 protected:
 	TSharedPtr<FLactoseSimulationUserCrops> GetMutableCurrentUserCrops();
 	

@@ -2,6 +2,7 @@
 
 #include "LactoseGameGameMode.h"
 #include "LactoseGameCharacter.h"
+#include "LactoseLog.h"
 #include "UI/LactoseHUD.h"
 #include "Services/ConfigCloud/LactoseConfigCloudServiceSubsystem.h"
 #include "Services/Economy/LactoseEconomyServiceSubsystem.h"
@@ -20,6 +21,8 @@ ALactoseGameGameMode::ALactoseGameGameMode()
 
 void ALactoseGameGameMode::StartPlay()
 {
+	Log::Hello();
+	
 	// Keep ticking until all conditions have been met.
 	GetWorldTimerManager().SetTimer(
 		BeginPlayConditionCheckTimer,

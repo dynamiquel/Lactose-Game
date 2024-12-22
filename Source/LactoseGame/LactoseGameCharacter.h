@@ -89,16 +89,16 @@ protected:
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 
-	void InteractPrimary(const FInputActionValue& Value);
-	void InteractSecondary(const FInputActionValue& Value);
+	void InteractPrimary();
+	void InteractSecondary();
 	
 	void UpdateClosestInteractions();
 	void ResetAllInteractions();
 	void SetClosestInteraction(const UInputAction& InputAction, ULactoseInteractionComponent* InteractionComponent);
 
-	void RequestSwitchToNoneItem(const FInputActionValue& Value);
-	void RequestSwitchToPlotToolItem(const FInputActionValue& Value);
-	void RequestUseItem(const FInputActionValue& Value);
+	void RequestSwitchToNoneItem();
+	void RequestSwitchToPlotToolItem();
+	void RequestUseItem();
 	void TryUsePlotTool();
 
 	void SetHoldableItemState(ELactoseCharacterItemState NewState);

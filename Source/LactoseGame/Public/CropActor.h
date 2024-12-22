@@ -45,8 +45,8 @@ protected:
 	virtual void OnSeeded(const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance);
 	virtual void OnDestroyed(const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance);
 
-	virtual void OnInteracted(const ULactoseInteractionComponent& InteractionComponent);
-	virtual void OnDestroyInteracted(const ULactoseInteractionComponent& InteractionComponent);
+	virtual void OnInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* Instigator);
+	virtual void OnDestroyInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* Instigator);
 
 	void UpdateBillboard();
 	void UpdateBillboardText();

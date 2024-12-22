@@ -8,6 +8,8 @@
 #include "Services/Economy/LactoseEconomyServiceSubsystem.h"
 #include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
 #include "InputAction.h"
+#include "LactoseMenuTags.h"
+#include "LactoseGame/LactoseGamePlayerController.h"
 
 ACropActor::ACropActor()
 {
@@ -200,26 +202,33 @@ void ACropActor::OnDestroyed(const TSharedRef<const FLactoseSimulationUserCropIn
 		/* bLoop */ false);
 }
 
-void ACropActor::OnInteracted(const ULactoseInteractionComponent& InteractionComponent)
+void ACropActor::OnInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* Instigator)
 {
 	auto* SimulationSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseSimulationServiceSubsystem>();
 	if (!ensure(SimulationSubsystem))
 	{
 		return;
 	}
-
+	
 	if (!Crop || !CropInstance)
 		return;
 	
-	if (CropInstance->State == Lactose::Simulation::States::Empty)
-		SimulationSubsystem->SeedCropInstances({ CropInstance->Id }, Crop->Id);
-	else if (CropInstance->State == Lactose::Simulation::States::Harvestable)
+	if (CropInstance->State == Lactose::Simulation::States::Harvestable)
 		SimulationSubsystem->HarvestCropInstances({ CropInstance->Id });
 	else if (CropInstance->State == Lactose::Simulation::States::Growing)
 		SimulationSubsystem->FertiliseCropInstances({ CropInstance->Id });
+	else if (CropInstance->State == Lactose::Simulation::States::Empty)
+	{
+		if (auto* LactosePC = Cast<ALactoseGamePlayerController>(Instigator))
+		{
+			LactosePC->GetCropInstanceIdsToSeed().Reset();
+			LactosePC->GetCropInstanceIdsToSeed().Add(CropInstance->Id);
+			LactosePC->OpenMenu(Lactose::Menus::SeedCrop);
+		}
+	}
 }
 
-void ACropActor::OnDestroyInteracted(const ULactoseInteractionComponent& InteractionComponent)
+void ACropActor::OnDestroyInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* Instigator)
 {
 	auto* SimulationSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseSimulationServiceSubsystem>();
 	if (!ensure(SimulationSubsystem))
