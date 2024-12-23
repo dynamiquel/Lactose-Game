@@ -416,11 +416,14 @@ void ALactoseGameCharacter::SetHoldableItemState(ELactoseCharacterItemState NewS
 	if (CurrentItemState == NewState)
 		return;
 
+	const ELactoseCharacterItemState OldState = CurrentItemState;
+	CurrentItemState = NewState;
+
 	UE_LOG(LogLactose, Log, TEXT("Character's Item State: %s -> %s"),
 		*UEnum::GetValueAsString(CurrentItemState),
-		*UEnum::GetValueAsString(NewState));
+		*UEnum::GetValueAsString(OldState));
 
-	CurrentItemState = NewState;
+	ItemStateChanged.Broadcast(this, CurrentItemState, OldState);
 }
 
 TOptional<FHitResult> ALactoseGameCharacter::PerformPlotToolTrace() const

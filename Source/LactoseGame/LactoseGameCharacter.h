@@ -28,6 +28,11 @@ enum class ELactoseCharacterItemState
 	TreeTool
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FLactoseCharacterItemStateChangedDelegate,
+	class ALactoseGameCharacter*, Sender,
+	ELactoseCharacterItemState, NewItemState,
+	ELactoseCharacterItemState, OldItemState);
+
 UCLASS(config=Game)
 class ALactoseGameCharacter : public ACharacter
 {
@@ -88,6 +93,7 @@ public:
 public:
 	ULactoseInteractionComponent* FindInteractionForAction(const UInputAction& InputAction) const;
 	ELactoseCharacterItemState GetCurrentItemState() const { return CurrentItemState; }
+	FLactoseCharacterItemStateChangedDelegate& GetItemStateChanged() { return ItemStateChanged; }
 
 protected:
 	/** Called for movement input */
@@ -139,5 +145,8 @@ private:
 	TMap<TObjectPtr<const UInputAction>, TObjectPtr<ULactoseInteractionComponent>> ClosestInteractions;
 
 	ELactoseCharacterItemState CurrentItemState = ELactoseCharacterItemState::None;
+
+	UPROPERTY(BlueprintAssignable, meta=(AllowPrivateAccess="true"))
+	FLactoseCharacterItemStateChangedDelegate ItemStateChanged;
 };
 

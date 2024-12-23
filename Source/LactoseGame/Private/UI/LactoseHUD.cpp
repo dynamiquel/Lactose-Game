@@ -8,6 +8,7 @@
 #include "LactoseGame/LactoseGame.h"
 #include "LactoseGame/LactoseGamePlayerController.h"
 #include "Core.h"
+#include "LactoseGame/LactoseGameCharacter.h"
 
 constexpr auto BaseWidgetShowFunctionName = TEXT("Show");
 constexpr auto BaseWidgetHideFunctionName = TEXT("Hide");
@@ -30,6 +31,12 @@ ALactoseHUD::ALactoseHUD()
 	PlayerMenuWidgetClass = PauseWidgetClassFinder.Class;
 	PlantCropWidgetClass = PlantCropWidgetClassFinder.Class;
 	SeedCropWidgetClass = SeedCropWidgetClassFinder.Class;
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> NoneToolWidgetClassFinder(TEXT("/Game/UI/HUD/WBP_NoneTool"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> SeedToolWidgetClassFinder(TEXT("/Game/UI/HUD/WBP_SeedTool"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> CropToolWidgetClassFinder(TEXT("/Game/UI/HUD/WBP_CropTool"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> AnimalToolWidgetClassFinder(TEXT("/Game/UI/HUD/WBP_AnimalTool"));
+
 }
 
 void ALactoseHUD::PostInitializeComponents()
@@ -63,6 +70,42 @@ void ALactoseHUD::PostInitializeComponents()
 		UE_LOG(LogLactose, Error, TEXT("HUD Seed Crop Widget Class was not set"));
 	}
 
+	if (LIKELY(NoneToolWidgetClass))
+	{
+		NoneToolWidget = CreateWidget(GetOwningPlayerController(), NoneToolWidgetClass);
+	}
+	else
+	{
+		UE_LOG(LogLactose, Error, TEXT("HUD None Tool Widget Class was not set"));
+	}
+
+	if (LIKELY(SeedToolWidgetClass))
+	{
+		SeedToolWidget = CreateWidget(GetOwningPlayerController(), SeedToolWidgetClass);
+	}
+	else
+	{
+		UE_LOG(LogLactose, Error, TEXT("HUD Seed Tool Widget Class was not set"));
+	}
+
+	if (LIKELY(CropToolWidgetClass))
+	{
+		TreeToolWidget = CreateWidget(GetOwningPlayerController(), CropToolWidgetClass);
+	}
+	else
+	{
+		UE_LOG(LogLactose, Error, TEXT("HUD Crop Tool Widget Class was not set"));
+	}
+
+	if (LIKELY(AnimalToolWidgetClass))
+	{
+		AnimalToolWidget = CreateWidget(GetOwningPlayerController(), AnimalToolWidgetClass);
+	}
+	else
+	{
+		UE_LOG(LogLactose, Error, TEXT("HUD Animal Tool Widget Class was not set"));
+	}
+
 	auto* LactosePC = Cast<ALactoseGamePlayerController>(GetOwningPlayerController());
 	if (!ensure(LactosePC))
 	{
@@ -71,6 +114,14 @@ void ALactoseHUD::PostInitializeComponents()
 
 	LactosePC->OnMenuOpened.AddUniqueDynamic(this, &ThisClass::OnMenuOpened);
 	LactosePC->OnMenuClosed.AddUniqueDynamic(this, &ThisClass::OnMenuClosed);
+
+	auto* LactoseChar = Cast<ALactoseGameCharacter>(LactosePC->GetPawn());
+	if (!ensure(LactoseChar))
+	{
+		return;
+	}
+	
+	LactoseChar->GetItemStateChanged().AddUniqueDynamic(this, &ThisClass::OnItemStateChanged);
 }
 
 void ALactoseHUD::OnMenuOpened(const APlayerController* PlayerController, const FGameplayTag& MenuTag)
@@ -126,5 +177,32 @@ void ALactoseHUD::OnMenuClosed(const APlayerController* PlayerController, const 
 			CallBPFunction(*SeedCropWidget, BaseWidgetHideFunctionName);
 			SeedCropWidget->RemoveFromParent();
 		}
+	}
+}
+
+void ALactoseHUD::OnItemStateChanged(
+	ALactoseGameCharacter* Sender,
+	const ELactoseCharacterItemState NewItemState,
+	const ELactoseCharacterItemState OldItemState)
+{
+	if (UUserWidget* WidgetToRemove = GetToolWidgetFromToolType(OldItemState))
+		WidgetToRemove->RemoveFromParent();
+
+	if (UUserWidget* WidgetToAdd = GetToolWidgetFromToolType(NewItemState))
+		WidgetToAdd->AddToPlayerScreen();
+}
+
+UUserWidget* ALactoseHUD::GetToolWidgetFromToolType(const ELactoseCharacterItemState ItemState) const
+{
+	switch (ItemState)
+	{
+		case ELactoseCharacterItemState::None:
+			return NoneToolWidget;
+		case ELactoseCharacterItemState::PlotTool:
+			return SeedToolWidget;
+		case ELactoseCharacterItemState::TreeTool:
+			return TreeToolWidget;
+		default:
+			return nullptr;
 	}
 }
