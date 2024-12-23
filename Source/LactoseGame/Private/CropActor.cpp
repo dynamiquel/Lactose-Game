@@ -260,13 +260,19 @@ void ACropActor::UpdateBillboard()
 
 void ACropActor::UpdateBillboardText()
 {
-	CropNameTextComponent->SetText(Crop.IsValid()
-		? FText::FromString(Crop->Name)
-		: INVTEXT("Crop Not Found"));
+	if (!CropInstance)
+		return;
 
+	if (!Crop.IsValid())
+		CropNameTextComponent->SetText(FText::FromString(CropInstance->CropId));
+	else if (CropInstance->State == Lactose::Simulation::States::Empty)
+		CropNameTextComponent->SetText(FText::GetEmpty());
+	else
+		CropNameTextComponent->SetText(FText::FromString(Crop->Name));
+	
 	CropStateTextComponent->SetText(FText::FromString(CropInstance->State));
 
-	CropHarvestTimeTextComponent->SetText(CropInstance->RemainingHarvestSeconds > 0 && CropInstance->State != TEXT("Empty")
+	CropHarvestTimeTextComponent->SetText(CropInstance->RemainingHarvestSeconds > 0 && CropInstance->State != Lactose::Simulation::States::Empty
 		? FText::AsTimespan(FTimespan::FromSeconds(CropInstance->RemainingHarvestSeconds))
 		: FText());
 

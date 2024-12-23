@@ -24,8 +24,8 @@ void CallBPFunction(UObject& Object, const TCHAR* FunctionName)
 ALactoseHUD::ALactoseHUD()
 {
 	static ConstructorHelpers::FClassFinder<UUserWidget> PauseWidgetClassFinder(TEXT("/Game/UI/WBP_PlayerMenu"));
-	static ConstructorHelpers::FClassFinder<UUserWidget> PlantCropWidgetClassFinder(TEXT("/Game/UI/WBP_PlantCrop"));
-	static ConstructorHelpers::FClassFinder<UUserWidget> SeedCropWidgetClassFinder(TEXT("/Game/UI/WBP_SeedCrop"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> PlantCropWidgetClassFinder(TEXT("/Game/UI/WBP_SeedTreeCrop"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> SeedCropWidgetClassFinder(TEXT("/Game/UI/WBP_SeedPlotCrop"));
 
 	PlayerMenuWidgetClass = PauseWidgetClassFinder.Class;
 	PlantCropWidgetClass = PlantCropWidgetClassFinder.Class;

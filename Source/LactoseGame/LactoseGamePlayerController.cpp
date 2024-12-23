@@ -111,6 +111,31 @@ void ALactoseGamePlayerController::CloseActiveMenu()
 	UE_LOG(LogLactose, Log, TEXT("Menu Closed: '%s'"), *CopiedTag.ToString());
 }
 
+bool ALactoseGamePlayerController::GetTreeCropIdToPlant(FString& CropId) const
+{
+	if (const TOptional<FString>& FoundCropId = GetTreeCropIdToPlant())
+	{
+		CropId = *FoundCropId;
+		return true;
+	}
+
+	return false;
+}
+
+void ALactoseGamePlayerController::SetTreeCropIdToPlant(const FString& CropId)
+{
+	TreeCropIdToPlant = CropId;
+
+	UE_LOG(LogLactose, Log, TEXT("Player has selected Tree Crop '%s' to plant"), *CropId);
+}
+
+void ALactoseGamePlayerController::ResetTreeCropIdToPlant()
+{
+	TreeCropIdToPlant.Reset();
+
+	UE_LOG(LogLactose, Log, TEXT("Player has unselected Tree to plant"));
+}
+
 void ALactoseGamePlayerController::BeginPlay()
 {
 	Super::BeginPlay();

@@ -24,7 +24,8 @@ UENUM()
 enum class ELactoseCharacterItemState
 {
 	None,
-	PlotTool
+	PlotTool,
+	TreeTool
 };
 
 UCLASS(config=Game)
@@ -60,6 +61,12 @@ class ALactoseGameCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> PlotToolItemAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> TreeToolItemAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> ChangeCropAction;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> UseItemAction;
 	
@@ -98,8 +105,11 @@ protected:
 
 	void RequestSwitchToNoneItem();
 	void RequestSwitchToPlotToolItem();
+	void RequestSwitchToTreeToolItem();
 	void RequestUseItem();
+	void RequestChangeCrop();
 	void TryUsePlotTool();
+	void TryUseTreeTool();
 
 	void SetHoldableItemState(ELactoseCharacterItemState NewState);
 

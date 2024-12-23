@@ -12,11 +12,14 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "LactoseGame.h"
+#include "LactoseGamePlayerController.h"
 #include "LactoseInteractionComponent.h"
+#include "LactoseMenuTags.h"
 #include "Landscape.h"
 #include "Engine/LocalPlayer.h"
 #include "Kismet/GameplayStatics.h"
 #include "LandscapeProxy.h"
+#include "Services/Economy/LactoseEconomyServiceSubsystem.h"
 #include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -48,13 +51,17 @@ ALactoseGameCharacter::ALactoseGameCharacter()
 	static ConstructorHelpers::FObjectFinder<UInputAction> DefaultInteractSecondaryInputAction(TEXT("/Game/FirstPerson/Input/Actions/IA_InteractSecondary.IA_InteractSecondary"));
 	static ConstructorHelpers::FObjectFinder<UInputAction> DefaultNoItemInputAction(TEXT("/Game/FirstPerson/Input/Actions/IA_NoItem.IA_NoItem"));
 	static ConstructorHelpers::FObjectFinder<UInputAction> DefaultPlotToolInputAction(TEXT("/Game/FirstPerson/Input/Actions/IA_PlotTool.IA_PlotTool"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> DefaultTreeToolInputAction(TEXT("/Game/FirstPerson/Input/Actions/IA_TreeTool.IA_TreeTool"));
 	static ConstructorHelpers::FObjectFinder<UInputAction> DefaultUseItemInputAction(TEXT("/Game/FirstPerson/Input/Actions/IA_Shoot.IA_Shoot"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> DefaultChangeCropInputAction(TEXT("/Game/FirstPerson/Input/Actions/IA_ChangeCrop.IA_ChangeCrop"));
 
 	InteractAction = DefaultInteractInputAction.Object;
 	InteractSecondaryAction = DefaultInteractSecondaryInputAction.Object;
 	NoneItemAction = DefaultNoItemInputAction.Object;
 	PlotToolItemAction = DefaultPlotToolInputAction.Object;
+	TreeToolItemAction = DefaultTreeToolInputAction.Object;
 	UseItemAction = DefaultUseItemInputAction.Object;
+	ChangeCropAction = DefaultChangeCropInputAction.Object;
 }
 
 void ALactoseGameCharacter::BeginPlay()
@@ -69,8 +76,20 @@ void ALactoseGameCharacter::Tick(float DeltaSeconds)
 
 	UpdateClosestInteractions();
 
-	if (GetCurrentItemState() == ELactoseCharacterItemState::PlotTool)
+	if (GetCurrentItemState() == ELactoseCharacterItemState::PlotTool || GetCurrentItemState() == ELactoseCharacterItemState::TreeTool)
 	{
+		if (GetCurrentItemState() == ELactoseCharacterItemState::TreeTool)
+		{
+			auto* PC = Cast<ALactoseGamePlayerController>(GetController());
+			if (!ensure(PC))
+			{
+				return;
+			}
+
+			if (!PC->GetTreeCropIdToPlant().IsSet())
+				return;
+		}
+		
 		TOptional<FHitResult> HitResult = PerformPlotToolTrace();
 		if (!HitResult)
 			return;
@@ -145,7 +164,9 @@ void ALactoseGameCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		// Holdable Items
 		EnhancedInputComponent->BindAction(NoneItemAction, ETriggerEvent::Completed, this, &ThisClass::RequestSwitchToNoneItem);
 		EnhancedInputComponent->BindAction(PlotToolItemAction, ETriggerEvent::Completed, this, &ThisClass::RequestSwitchToPlotToolItem);
+		EnhancedInputComponent->BindAction(TreeToolItemAction, ETriggerEvent::Completed, this, &ThisClass::RequestSwitchToTreeToolItem);
 		EnhancedInputComponent->BindAction(UseItemAction, ETriggerEvent::Completed, this, &ThisClass::RequestUseItem);
+		EnhancedInputComponent->BindAction(ChangeCropAction, ETriggerEvent::Completed, this, &ThisClass::RequestChangeCrop);
 	}
 	else
 	{
@@ -298,6 +319,11 @@ void ALactoseGameCharacter::RequestSwitchToPlotToolItem()
 	SetHoldableItemState(ELactoseCharacterItemState::PlotTool);
 }
 
+void ALactoseGameCharacter::RequestSwitchToTreeToolItem()
+{
+	SetHoldableItemState(ELactoseCharacterItemState::TreeTool);
+}
+
 void ALactoseGameCharacter::RequestUseItem()
 {
 	switch (GetCurrentItemState())
@@ -307,6 +333,20 @@ void ALactoseGameCharacter::RequestUseItem()
 		case ELactoseCharacterItemState::PlotTool:
 			TryUsePlotTool();
 			break;
+		case ELactoseCharacterItemState::TreeTool:
+			TryUseTreeTool();
+	}
+}
+
+void ALactoseGameCharacter::RequestChangeCrop()
+{
+	if (GetCurrentItemState() == ELactoseCharacterItemState::TreeTool)
+	{
+		auto* PC = Cast<ALactoseGamePlayerController>(GetController());
+		if (!ensure(PC))
+			return;
+
+		PC->OpenMenu(Lactose::Menus::PlantCrop);
 	}
 }
 
@@ -324,6 +364,7 @@ void ALactoseGameCharacter::TryUsePlotTool()
 		return;
 
 	// TODO: Perform box trace to ensure the plot isn't blocking anything.
+	// TODO: If near an existing crop, lock on to it.
 
 	auto* SimulationSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseSimulationServiceSubsystem>();
 	if (!ensure(SimulationSubsystem))
@@ -333,6 +374,41 @@ void ALactoseGameCharacter::TryUsePlotTool()
 
 	const FRotator SpawnRotation = FRotationMatrix::MakeFromZ(HitResult->Normal).Rotator();
 	SimulationSubsystem->CreateEmptyPlot(HitResult->Location, SpawnRotation);
+}
+
+void ALactoseGameCharacter::TryUseTreeTool()
+{
+	auto* PC = Cast<ALactoseGamePlayerController>(GetController());
+	if (!ensure(PC))
+		return;
+
+	const TOptional<FString>& TreeCropToPlant = PC->GetTreeCropIdToPlant();
+	if (!TreeCropToPlant.IsSet())
+		return;
+
+	auto& Simulation = Lactose::GetService<ULactoseSimulationServiceSubsystem>(*this);
+	if (!Simulation.CanCurrentUserAffordCrop(*TreeCropToPlant))
+	{
+		PC->ResetTreeCropIdToPlant();
+		return;
+	}
+	
+	TOptional<FHitResult> HitResult = PerformPlotToolTrace();
+	
+	if (!HitResult)
+		return;
+
+	AActor* HitActor = HitResult->GetActor();
+
+	// If anything but the ground was hit, don't plant.
+	if (!(HitActor && (HitActor->IsA(ALandscapeProxy::StaticClass()) || HitActor->IsA(ALandscape::StaticClass()))))
+		return;
+
+	// TODO: Perform box trace to ensure the plot isn't blocking anything.
+	// TODO: If near an existing crop, lock on to it.
+
+	const FRotator SpawnRotation = FRotationMatrix::MakeFromZ(HitResult->Normal).Rotator();
+	Simulation.CreateCrop(*TreeCropToPlant, HitResult->Location, SpawnRotation);
 }
 
 void ALactoseGameCharacter::SetHoldableItemState(ELactoseCharacterItemState NewState)

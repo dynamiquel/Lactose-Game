@@ -577,6 +577,8 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsHarvested(TSharedRef<
 				HarvestedCropInstance->State = Lactose::Simulation::States::Growing;
 				HarvestedCropInstance->RemainingHarvestSeconds = FoundCrop->HarvestSeconds;
 			}
+
+			HarvestedCropInstance->OnLoaded.Broadcast(HarvestedCropInstance);
 		}
 	}
 }
@@ -616,6 +618,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSeeded(TSharedRef<FSe
 			
 			SeededCropInstance->State = Lactose::Simulation::States::Growing;
 			SeededCropInstance->RemainingHarvestSeconds = FoundCrop->HarvestSeconds;
+			SeededCropInstance->OnLoaded.Broadcast(SeededCropInstance);
 		}
 	}
 }

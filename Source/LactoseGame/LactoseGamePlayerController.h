@@ -45,6 +45,16 @@ public:
 	UFUNCTION(BlueprintPure, Category="Lactose")
 	TArray<FString>& GetCropInstanceIdsToSeed() { return CropInstanceIdsToSeed; }
 
+	const TOptional<FString>& GetTreeCropIdToPlant() const { return TreeCropIdToPlant; }
+	
+	UFUNCTION(BlueprintPure, Category="Lactose")
+	bool GetTreeCropIdToPlant(UPARAM() FString& CropId) const;
+
+	UFUNCTION(BlueprintCallable, Category="Lactose")
+	void SetTreeCropIdToPlant(const FString& CropId);
+
+	UFUNCTION(BlueprintCallable, Category="Lactose")
+	void ResetTreeCropIdToPlant();
 
 protected:
 	void BeginPlay() override;
@@ -53,7 +63,6 @@ protected:
 	void OnPlayerMenuActionPressed();
 
 protected:
-	/** Input Mapping Context to be used for player input */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	TObjectPtr<UInputMappingContext> CharacterMappingContext;
 
@@ -65,7 +74,8 @@ protected:
 
 	TOptional<FGameplayTag> OpenedMenuTag;
 	
-	TArray<FString> CropInstanceIdsToSeed; 
+	TArray<FString> CropInstanceIdsToSeed;
+	TOptional<FString> TreeCropIdToPlant;
 
 public:
 	UPROPERTY(BlueprintAssignable)
