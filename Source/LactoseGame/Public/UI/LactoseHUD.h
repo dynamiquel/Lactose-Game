@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <GameplayTagContainer.h>
+
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 #include "LactoseGame/LactoseGameCharacter.h"
@@ -19,10 +21,14 @@ class LACTOSEGAME_API ALactoseHUD : public AHUD
 {
 	GENERATED_BODY()
 
+public:
+	void SetToolHUD(const FGameplayTag& ToolHUD);
+
 protected:
 	ALactoseHUD();
 	
 	void PostInitializeComponents() override;
+	void BeginPlay() override;
 
 	UFUNCTION()
 	void OnMenuOpened(const APlayerController* PlayerController, const FGameplayTag& MenuTag);
@@ -36,9 +42,11 @@ protected:
 		ELactoseCharacterItemState NewItemState,
 		ELactoseCharacterItemState OldItemState);
 
-	UUserWidget* GetToolWidgetFromToolType(ELactoseCharacterItemState ItemState) const;
+	static FGameplayTag GetToolTypeFromItemState(ELactoseCharacterItemState ItemState);
+	UUserWidget* GetToolWidgetFromToolType(const FGameplayTag& ToolHUD) const;
 
 public:
+// Menu widgets
 	UPROPERTY()
 	TSubclassOf<UUserWidget> PlayerMenuWidgetClass;
 
@@ -48,14 +56,15 @@ public:
 	UPROPERTY()
 	TSubclassOf<UUserWidget> SeedCropWidgetClass;
 
+// Tool HUD widgets
 	UPROPERTY()
 	TSubclassOf<UUserWidget> NoneToolWidgetClass;
+	
+	UPROPERTY()
+	TSubclassOf<UUserWidget> PlotToolWidgetClass;
 
 	UPROPERTY()
-	TSubclassOf<UUserWidget> SeedToolWidgetClass;
-
-	UPROPERTY()
-	TSubclassOf<UUserWidget> CropToolWidgetClass;
+	TSubclassOf<UUserWidget> TreeToolWidgetClass;
 
 	UPROPERTY()
 	TSubclassOf<UUserWidget> AnimalToolWidgetClass;
@@ -77,11 +86,13 @@ protected:
 	TObjectPtr<UUserWidget> NoneToolWidget;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UUserWidget> SeedToolWidget;
+	TObjectPtr<UUserWidget> PlotToolWidget;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UUserWidget> TreeToolWidget;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UUserWidget> AnimalToolWidget;
+
+	FGameplayTag ActiveToolHUD;
 };

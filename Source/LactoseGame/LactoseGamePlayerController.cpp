@@ -119,6 +119,10 @@ bool ALactoseGamePlayerController::GetTreeCropIdToPlant(FString& CropId) const
 		return true;
 	}
 
+	// Reset the Crop ID string because BP is a bit weird when it comes to out parameters.
+	// It's as if the out parameter is treated as an actual persistent variable by the caller.
+	// This means even if no value is set here, the BP will remember the last set value.
+	CropId.Reset();
 	return false;
 }
 

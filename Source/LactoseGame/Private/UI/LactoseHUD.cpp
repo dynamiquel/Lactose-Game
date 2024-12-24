@@ -3,12 +3,13 @@
 
 #include "UI/LactoseHUD.h"
 
+#include "Core.h"
 #include "LactoseMenuTags.h"
 #include "Blueprint/UserWidget.h"
 #include "LactoseGame/LactoseGame.h"
 #include "LactoseGame/LactoseGamePlayerController.h"
-#include "Core.h"
 #include "LactoseGame/LactoseGameCharacter.h"
+#include "LactoseGame/LactoseHUDTags.h"
 
 constexpr auto BaseWidgetShowFunctionName = TEXT("Show");
 constexpr auto BaseWidgetHideFunctionName = TEXT("Hide");
@@ -22,6 +23,20 @@ void CallBPFunction(UObject& Object, const TCHAR* FunctionName)
 		nullptr);
 }
 
+void ALactoseHUD::SetToolHUD(const FGameplayTag& ToolHUD)
+{
+	if (ToolHUD == ActiveToolHUD)
+		return;
+
+	if (UUserWidget* CurrentToolHUD = GetToolWidgetFromToolType(ActiveToolHUD))
+		CurrentToolHUD->RemoveFromParent();
+
+	if (UUserWidget* NewToolHUD = GetToolWidgetFromToolType(ToolHUD))
+		NewToolHUD->AddToPlayerScreen();
+	
+	ActiveToolHUD = ToolHUD;
+}
+
 ALactoseHUD::ALactoseHUD()
 {
 	static ConstructorHelpers::FClassFinder<UUserWidget> PauseWidgetClassFinder(TEXT("/Game/UI/WBP_PlayerMenu"));
@@ -33,10 +48,14 @@ ALactoseHUD::ALactoseHUD()
 	SeedCropWidgetClass = SeedCropWidgetClassFinder.Class;
 
 	static ConstructorHelpers::FClassFinder<UUserWidget> NoneToolWidgetClassFinder(TEXT("/Game/UI/HUD/WBP_NoneTool"));
-	static ConstructorHelpers::FClassFinder<UUserWidget> SeedToolWidgetClassFinder(TEXT("/Game/UI/HUD/WBP_SeedTool"));
-	static ConstructorHelpers::FClassFinder<UUserWidget> CropToolWidgetClassFinder(TEXT("/Game/UI/HUD/WBP_CropTool"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> PlotToolWidgetClassFinder(TEXT("/Game/UI/HUD/WBP_PlotTool"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> TreeToolWidgetClassFinder(TEXT("/Game/UI/HUD/WBP_TreeTool"));
 	static ConstructorHelpers::FClassFinder<UUserWidget> AnimalToolWidgetClassFinder(TEXT("/Game/UI/HUD/WBP_AnimalTool"));
 
+	NoneToolWidgetClass = NoneToolWidgetClassFinder.Class;
+	PlotToolWidgetClass = PlotToolWidgetClassFinder.Class;
+	TreeToolWidgetClass = TreeToolWidgetClassFinder.Class;
+	AnimalToolWidgetClass = AnimalToolWidgetClassFinder.Class;
 }
 
 void ALactoseHUD::PostInitializeComponents()
@@ -79,22 +98,22 @@ void ALactoseHUD::PostInitializeComponents()
 		UE_LOG(LogLactose, Error, TEXT("HUD None Tool Widget Class was not set"));
 	}
 
-	if (LIKELY(SeedToolWidgetClass))
+	if (LIKELY(PlotToolWidgetClass))
 	{
-		SeedToolWidget = CreateWidget(GetOwningPlayerController(), SeedToolWidgetClass);
+		PlotToolWidget = CreateWidget(GetOwningPlayerController(), PlotToolWidgetClass);
 	}
 	else
 	{
-		UE_LOG(LogLactose, Error, TEXT("HUD Seed Tool Widget Class was not set"));
+		UE_LOG(LogLactose, Error, TEXT("HUD Plot Tool Widget Class was not set"));
 	}
 
-	if (LIKELY(CropToolWidgetClass))
+	if (LIKELY(TreeToolWidgetClass))
 	{
-		TreeToolWidget = CreateWidget(GetOwningPlayerController(), CropToolWidgetClass);
+		TreeToolWidget = CreateWidget(GetOwningPlayerController(), TreeToolWidgetClass);
 	}
 	else
 	{
-		UE_LOG(LogLactose, Error, TEXT("HUD Crop Tool Widget Class was not set"));
+		UE_LOG(LogLactose, Error, TEXT("HUD Tree Tool Widget Class was not set"));
 	}
 
 	if (LIKELY(AnimalToolWidgetClass))
@@ -114,14 +133,23 @@ void ALactoseHUD::PostInitializeComponents()
 
 	LactosePC->OnMenuOpened.AddUniqueDynamic(this, &ThisClass::OnMenuOpened);
 	LactosePC->OnMenuClosed.AddUniqueDynamic(this, &ThisClass::OnMenuClosed);
+}
 
-	auto* LactoseChar = Cast<ALactoseGameCharacter>(LactosePC->GetPawn());
+void ALactoseHUD::BeginPlay()
+{
+	Super::BeginPlay();
+
+	auto* LactoseChar = Cast<ALactoseGameCharacter>(GetOwningPawn());
 	if (!ensure(LactoseChar))
 	{
 		return;
 	}
 	
 	LactoseChar->GetItemStateChanged().AddUniqueDynamic(this, &ThisClass::OnItemStateChanged);
+
+	const ELactoseCharacterItemState CharItemState = LactoseChar->GetCurrentItemState();
+	const FGameplayTag DesiredToolHUD = GetToolTypeFromItemState(CharItemState);
+	SetToolHUD(DesiredToolHUD);
 }
 
 void ALactoseHUD::OnMenuOpened(const APlayerController* PlayerController, const FGameplayTag& MenuTag)
@@ -185,24 +213,38 @@ void ALactoseHUD::OnItemStateChanged(
 	const ELactoseCharacterItemState NewItemState,
 	const ELactoseCharacterItemState OldItemState)
 {
-	if (UUserWidget* WidgetToRemove = GetToolWidgetFromToolType(OldItemState))
-		WidgetToRemove->RemoveFromParent();
-
-	if (UUserWidget* WidgetToAdd = GetToolWidgetFromToolType(NewItemState))
-		WidgetToAdd->AddToPlayerScreen();
+	const FGameplayTag ToolHUDType = GetToolTypeFromItemState(NewItemState);
+	if (!ensure(ToolHUDType.IsValid()))
+		return;
+	
+	SetToolHUD(ToolHUDType);
 }
 
-UUserWidget* ALactoseHUD::GetToolWidgetFromToolType(const ELactoseCharacterItemState ItemState) const
+FGameplayTag ALactoseHUD::GetToolTypeFromItemState(const ELactoseCharacterItemState ItemState)
 {
 	switch (ItemState)
 	{
 		case ELactoseCharacterItemState::None:
-			return NoneToolWidget;
+			return Lactose::HUD::Tool::None;
 		case ELactoseCharacterItemState::PlotTool:
-			return SeedToolWidget;
+			return Lactose::HUD::Tool::Plot;
 		case ELactoseCharacterItemState::TreeTool:
-			return TreeToolWidget;
+			return Lactose::HUD::Tool::Tree;
 		default:
-			return nullptr;
+			return FGameplayTag();
 	}
+}
+
+UUserWidget* ALactoseHUD::GetToolWidgetFromToolType(const FGameplayTag& ToolHUD) const
+{
+	if (ToolHUD.MatchesTag(Lactose::HUD::Tool::None))
+		return NoneToolWidget;
+	if (ToolHUD.MatchesTag(Lactose::HUD::Tool::Plot))
+		return PlotToolWidget;
+	if (ToolHUD.MatchesTag(Lactose::HUD::Tool::Tree))
+		return TreeToolWidget;
+	if (ToolHUD.MatchesTag(Lactose::HUD::Tool::Animal))
+		return AnimalToolWidget;
+
+	return nullptr;
 }
