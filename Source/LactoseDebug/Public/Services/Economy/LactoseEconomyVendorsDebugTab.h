@@ -7,6 +7,7 @@
 #include "DebugImGuiHelpers.h"
 #include "LactoseEconomyVendorsDebugTab.generated.h"
 
+struct FLactoseEconomyGetUserShopItemsResponse;
 struct FLactoseEconomyGetUserItemsResponse;
 class ULactoseEconomyServiceSubsystem;
 /**
@@ -26,12 +27,20 @@ class LACTOSEDEBUG_API ULactoseEconomyVendorsDebugTab : public UDebugAppTab
 
 	void DrawVendorItems(
 		const FString& VendorId,
-		const TSharedRef<FLactoseEconomyGetUserItemsResponse>& VendorItems);
+		const TSharedRef<FLactoseEconomyGetUserShopItemsResponse>& VendorItems);
+
+	void DrawBuySection(
+		const FString& VendorId,
+		const TSharedRef<FLactoseEconomyGetUserShopItemsResponse>& VendorItems);
+
+	void DrawSellSection(
+		const FString& VendorId,
+		const TSharedRef<FLactoseEconomyGetUserShopItemsResponse>& VendorItems);
 	
 	UPROPERTY(Transient)
 	TObjectPtr<ULactoseEconomyServiceSubsystem> EconomySubsystem;
 	
 	Debug::ImGui::FSearchBox ItemsSearchBox { TEXT("###VendorItemsSearchBox") };
 
-	TMap<FString, TSharedRef<FLactoseEconomyGetUserItemsResponse>> VendorsItems;
+	TMap<FString, TSharedRef<FLactoseEconomyGetUserShopItemsResponse>> VendorsItems;
 };

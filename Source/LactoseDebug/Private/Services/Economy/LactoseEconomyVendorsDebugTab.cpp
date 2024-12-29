@@ -26,6 +26,11 @@ void ULactoseEconomyVendorsDebugTab::Render()
 	// TODO: Move Vendors to Config Cloud or something.
 	TArray<FString> StaticVendors;
 	StaticVendors.Emplace(TEXT("vendor-test"));
+	StaticVendors.Emplace(TEXT("vendor-basic"));
+	StaticVendors.Emplace(TEXT("vendor-warm"));
+	StaticVendors.Emplace(TEXT("vendor-animals"));
+	StaticVendors.Emplace(TEXT("vendor-misc"));
+	StaticVendors.Emplace(TEXT(""));
 
 	if (ImGui::Button("Refresh"))
 	{
@@ -33,8 +38,14 @@ void ULactoseEconomyVendorsDebugTab::Render()
 		
 		for (const auto& StaticVendor : StaticVendors)
 		{
-			EconomySubsystem->GetUserItems(StaticVendor).Next([WeakThis = MakeWeakObjectPtr(this)]
-				(TSharedPtr<FGetEconomyUserItemsRequest::FResponseContext> Context)
+			auto ShopRequest = FLactoseEconomyGetUserShopItemsRequest
+			{
+				.UserId = StaticVendor,
+				.RetrieveUserQuantity = true
+			};
+			
+			EconomySubsystem->GetUserShopItems(ShopRequest).Next([WeakThis = MakeWeakObjectPtr(this)]
+				(TSharedPtr<FGetEconomyUserShopItemsRequest::FResponseContext> Context)
 			{
 				if (!Context)
 					return;
@@ -58,20 +69,118 @@ void ULactoseEconomyVendorsDebugTab::Render()
 
 	ItemsSearchBox.Draw();
 	
-	for (const TTuple<FString, TSharedRef<FLactoseEconomyGetUserItemsResponse>>& VendorItems : VendorsItems)
+	for (const TTuple<FString, TSharedRef<FLactoseEconomyGetUserShopItemsResponse>>& VendorItems : VendorsItems)
 		DrawVendorItems(VendorItems.Key, VendorItems.Value);
 }
 
 void ULactoseEconomyVendorsDebugTab::DrawVendorItems(
 	const FString& VendorId,
-	const TSharedRef<FLactoseEconomyGetUserItemsResponse>& VendorItems)
+	const TSharedRef<FLactoseEconomyGetUserShopItemsResponse>& VendorItems)
 {
 	if (!ImGui::CollapsingHeader(STR_TO_ANSI(VendorId)))
 		return;
 
-	const FString VendorTableId = VendorId + TEXT("Table");
+	DrawSellSection(VendorId, VendorItems);
+	DrawBuySection(VendorId, VendorItems);
+}
 
-	constexpr int32 Columns = 3;
+void ULactoseEconomyVendorsDebugTab::DrawBuySection(
+	const FString& VendorId,
+	const TSharedRef<FLactoseEconomyGetUserShopItemsResponse>& VendorItems)
+{
+	const FString VendorSectionId = VendorId + TEXT("BuySection");
+	constexpr int32 NodeFlags = 0;
+	if (!ImGui::TreeNodeEx(STR_TO_ANSI(VendorSectionId), NodeFlags, "Buying"))
+		return;
+
+	const FString VendorTableId = VendorId + TEXT("BuyTable");
+
+	constexpr int32 Columns = 4;
+	constexpr int32 TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY;
+	if (!ImGui::BeginTable(STR_TO_ANSI(VendorTableId), Columns, TableFlags))
+		return;
+
+	ImGui::TableSetupColumn("Item ID");
+	ImGui::TableSetupColumn("Item Name");
+	ImGui::TableSetupColumn("Receive");
+	ImGui::TableSetupColumn("Sell");
+	ImGui::TableHeadersRow();
+	
+	for (const FLactoseEconomyShopItem& VendorItem : VendorItems->ShopItems)
+	{
+		if (VendorItem.TransactionType != Lactose::Economy::Types::Buy)
+			continue;
+		
+		FString ItemLabel = VendorItem.ItemId;
+		const TSharedPtr<const FLactoseEconomyItem> FoundItem = EconomySubsystem->GetItem(VendorItem.ItemId);
+		
+		if (FoundItem)
+			ItemLabel += FString::Printf(TEXT(" (%s)"), *FoundItem->Name);
+
+		if (!ItemsSearchBox.PassesFilter(ItemLabel))
+			continue;
+
+		if (ImGui::TableNextColumn())
+		{
+			ImGui::Text("%s", STR_TO_ANSI(VendorItem.ItemId));
+		}
+
+		if (ImGui::TableNextColumn())
+		{
+			ImGui::Text("%s", FoundItem ? STR_TO_ANSI(FoundItem->Name) : "Not Found");
+		}
+
+		if (ImGui::TableNextColumn())
+		{
+			for (const FLactoseEconomyUserItem& TransactionItem : VendorItem.TransactionItems)
+			{
+				FString TransactionItemLabel = VendorItem.ItemId;
+				if (const TSharedPtr<const FLactoseEconomyItem> TransactionFoundItem = EconomySubsystem->GetItem(TransactionItem.ItemId))
+					TransactionItemLabel = TransactionFoundItem->Name;
+				
+				ImGui::BulletText("%d x %s", TransactionItem.Quantity, STR_TO_ANSI(TransactionItemLabel));
+			}
+		}
+
+		if (ImGui::TableNextColumn())
+		{
+			check(EconomySubsystem);
+			const int32 CurrentUserQuantity = EconomySubsystem->GetCurrentUserItemQuantity(VendorItem.ItemId);
+			const bool bCanSell = CurrentUserQuantity > 0;
+
+			bool bTrySell = false;
+			if (bCanSell)
+			{
+				bTrySell = ImGui::Button("Sell");
+			}
+			else
+			{
+				ImGui::Text("You are missing the Item");
+				bTrySell = ImGui::Button("Try Sell Anyways");
+			}
+
+			if (bTrySell)
+			{
+				// TODO: Perform trade.
+			}
+		}
+	}
+
+	ImGui::EndTable();
+	ImGui::TreePop();
+}
+
+void ULactoseEconomyVendorsDebugTab::DrawSellSection(const FString& VendorId,
+	const TSharedRef<FLactoseEconomyGetUserShopItemsResponse>& VendorItems)
+{
+	const FString VendorSectionId = VendorId + TEXT("SellSection");
+	constexpr int32 NodeFlags = 0;
+	if (!ImGui::TreeNodeEx(STR_TO_ANSI(VendorSectionId), NodeFlags, "Selling"))
+		return;
+	
+	const FString VendorTableId = VendorId + TEXT("SellTable");
+
+	constexpr int32 Columns = 5;
 	constexpr int32 TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY;
 	if (!ImGui::BeginTable(STR_TO_ANSI(VendorTableId), Columns, TableFlags))
 		return;
@@ -79,11 +188,15 @@ void ULactoseEconomyVendorsDebugTab::DrawVendorItems(
 	ImGui::TableSetupColumn("Item ID");
 	ImGui::TableSetupColumn("Item Name");
 	ImGui::TableSetupColumn("Quantity");
+	ImGui::TableSetupColumn("Cost");
 	ImGui::TableSetupColumn("Buy");
 	ImGui::TableHeadersRow();
 	
-	for (const FLactoseEconomyUserItem& VendorItem : VendorItems->Items)
+	for (const FLactoseEconomyShopItem& VendorItem : VendorItems->ShopItems)
 	{
+		if (VendorItem.TransactionType != Lactose::Economy::Types::Sell)
+			continue;
+		
 		FString ItemLabel = VendorItem.ItemId;
 		const TSharedPtr<const FLactoseEconomyItem> FoundItem = EconomySubsystem->GetItem(VendorItem.ItemId);
 		
@@ -113,9 +226,64 @@ void ULactoseEconomyVendorsDebugTab::DrawVendorItems(
 
 		if (ImGui::TableNextColumn())
 		{
-			// TODO: Hook into Lactose Simulation to know the cost of things.
+			for (const FLactoseEconomyUserItem& TransactionItem : VendorItem.TransactionItems)
+			{
+				FString TransactionItemLabel = VendorItem.ItemId;
+				if (const TSharedPtr<const FLactoseEconomyItem> TransactionFoundItem = EconomySubsystem->GetItem(TransactionItem.ItemId))
+					TransactionItemLabel = TransactionFoundItem->Name;
+				
+				ImGui::BulletText("%d x %s", TransactionItem.Quantity, STR_TO_ANSI(TransactionItemLabel));
+			}
+		}
+
+		if (ImGui::TableNextColumn())
+		{
+			TArray<FLactoseEconomyUserItem> MissingItems;
+			
+			check(EconomySubsystem);
+			for (const FLactoseEconomyUserItem& TransactionItem : VendorItem.TransactionItems)
+			{
+				const int32 CurrentUserQuantity = EconomySubsystem->GetCurrentUserItemQuantity(TransactionItem.ItemId);
+				if (CurrentUserQuantity < TransactionItem.Quantity)
+				{
+					MissingItems.Add(FLactoseEconomyUserItem
+					{
+						.ItemId = TransactionItem.ItemId,
+						.Quantity = TransactionItem.Quantity - CurrentUserQuantity,
+					});
+				}
+			}
+
+			bool bTryBuy = false;
+			if (MissingItems.IsEmpty())
+			{
+				bTryBuy = ImGui::Button("Buy");
+			}
+			else 
+			{
+				ImGui::Text("You are missing:");
+				for (const auto& MissingItem : MissingItems)
+				{
+					FString TransactionItemLabel = VendorItem.ItemId;
+					if (const TSharedPtr<const FLactoseEconomyItem> TransactionFoundItem = EconomySubsystem->GetItem(MissingItem.ItemId))
+						TransactionItemLabel = TransactionFoundItem->Name;
+				
+					ImGui::BulletText("%d x %s", MissingItem.Quantity, STR_TO_ANSI(TransactionItemLabel));
+				}
+				
+				if (ImGui::Button("Try Buy Anyways"))
+				{
+					bTryBuy = true;
+				}
+			}
+
+			if (bTryBuy)
+			{
+				// TODO: Perform trade.
+			}
 		}
 	}
 
 	ImGui::EndTable();
+	ImGui::TreePop();
 }

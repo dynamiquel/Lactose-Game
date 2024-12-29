@@ -1,6 +1,7 @@
 #include "Rest/ILactoseRestRequest.h"
 
 #include "Interfaces/IHttpResponse.h"
+#include "Rest/LactoseRestLog.h"
 #include "Rest/LactoseRestSubsystem.h"
 
 bool Lactose::Rest::IRequest::FResponseContext::IsSuccessful() const
@@ -35,6 +36,13 @@ Lactose::Rest::IRequest::~IRequest()
 	}
 }
 
+FString Lactose::Rest::IRequest::GetContentString() const
+{
+	return FString(StringCast<TCHAR>(
+		reinterpret_cast<const UTF8CHAR*>(GetInternal()->GetContent().GetData()),
+		GetInternal()->GetContent().Num()));
+}
+
 Lactose::Rest::IRequest& Lactose::Rest::IRequest::SetVerb(const FString& Verb)
 {
 	GetInternal()->SetVerb(Verb);
@@ -57,7 +65,7 @@ TFuture<TSharedPtr<Lactose::Rest::IRequest::FResponseContext>> Lactose::Rest::IR
 {
 	if (HasBeenSent())
 	{
-		UE_LOG(LogTemp, Error, TEXT("Attempted to send a Request to '%s' but it has already been sent"),
+		UE_LOG(LogLactoseRest, Error, TEXT("Attempted to send a Request to '%s' but it has already been sent"),
 			*GetInternal()->GetURL());
 		
 		return {};
@@ -99,7 +107,7 @@ void Lactose::Rest::IRequest::OnResponseReceived(
 
 	if (!ResponseContext->IsSuccessful())
 	{
-		UE_CLOG(ResponseContext->HttpResponse, LogTemp, Error, TEXT("Received an unsuccessful response. Code %d; Reason: %d"),
+		UE_CLOG(ResponseContext->HttpResponse, LogLactoseRest, Error, TEXT("Received an unsuccessful response. Code %d; Reason: %d"),
 			Response->GetResponseCode(),
 			Response->GetFailureReason());
 	}

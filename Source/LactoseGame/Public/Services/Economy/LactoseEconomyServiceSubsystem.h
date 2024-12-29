@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Services/LactoseServiceSubsystem.h"
 #include "LactoseEconomyItemsRequests.h"
+#include "LactoseEconomyShopItemsRequests.h"
 #include "LactoseEconomyUserItemsRequests.h"
 #include "LactoseEconomyServiceSubsystem.generated.h"
 
@@ -53,12 +54,16 @@ public:
 	ELactoseEconomyUserItemsStatus GetCurrentUserItemsStatus() const;
 
 	TSharedPtr<const FLactoseEconomyUserItem> FindCurrentUserItem(const FString& ItemId) const;
+	int32 GetCurrentUserItemQuantity(const FString& ItemId) const;
 
 	void LoadCurrentUserItems();
 
 	void EnableGetCurrentUserItemsTicker();
 	void DisableGetCurrentUserItemsTicker();
 	bool IsAutoGetCurrentUserItemsTicking() const { return GetUserItemsTicker.IsValid(); }
+
+	TFuture<TSharedPtr<FGetEconomyUserShopItemsRequest::FResponseContext>> GetUserShopItems(const FLactoseEconomyGetUserShopItemsRequest& Request) const;
+	void PerformShopItemTrade(const FString& ShopItemId);
 	
 protected:
 	void OnAllItemsQueries(TSharedRef<FQueryEconomyItemsRequest::FResponseContext> Context);
@@ -99,4 +104,11 @@ namespace Lactose::Economy::Events
 
 	inline FAllItemsLoaded OnAllItemsLoaded;
 	inline FCurrentUserItemsLoaded OnCurrentUserItemsLoaded;
+}
+
+namespace Lactose::Economy::Types
+{
+	constexpr auto* Buy = TEXT("Buy");
+	constexpr auto* Sell = TEXT("Sell");
+	constexpr auto* Animal = TEXT("Animal");
 }

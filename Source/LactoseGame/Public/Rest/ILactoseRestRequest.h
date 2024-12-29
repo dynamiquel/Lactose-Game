@@ -39,6 +39,7 @@ namespace Lactose::Rest
 		FDateTime GetRequestTime() const { return TimeRequestSent; }
 		bool HasBeenSent() const { return TimeRequestSent > 0; }
 		FLactoseRestResponseReceivedDelegate& GetOnResponseReceived() { return ResponseReceived; }
+		FString GetContentString() const;
 		
 		IRequest& SetVerb(const FString& Verb);
 		IRequest& SetUrl(const FString& Url);

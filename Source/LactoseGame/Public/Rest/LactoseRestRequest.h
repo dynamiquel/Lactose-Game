@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ILactoseRestRequest.h"
+#include "LactoseRestLog.h"
 #include "LactoseRestSubsystem.h"
 #include "Interfaces/IHttpResponse.h"
 #include "Serialisation/LactoseJsonSerialisationUtils.h"
@@ -102,7 +103,7 @@ namespace Lactose::Rest
 
 			if (!Context->IsSuccessful())
 			{
-				UE_CLOG(Context->HttpResponse, LogTemp, Error, TEXT("Received an unsuccessful response. Code %d; Reason: %d"),
+				UE_CLOG(Context->HttpResponse, LogLactoseRest, Error, TEXT("Received an unsuccessful response. Code %d; Reason: %d"),
 					Response->GetResponseCode(),
 					Response->GetFailureReason());
 

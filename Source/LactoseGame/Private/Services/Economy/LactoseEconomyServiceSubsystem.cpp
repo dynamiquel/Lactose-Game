@@ -104,6 +104,12 @@ TSharedPtr<const FLactoseEconomyUserItem> ULactoseEconomyServiceSubsystem::FindC
 	return FoundUserItem ? TSharedPtr<const FLactoseEconomyUserItem>(*FoundUserItem) : TSharedPtr<const FLactoseEconomyUserItem>(nullptr);
 }
 
+int32 ULactoseEconomyServiceSubsystem::GetCurrentUserItemQuantity(const FString& ItemId) const
+{
+	const TSharedRef<FLactoseEconomyUserItem>* FoundCurrentUserItem = GetCurrentUserItems().Find(ItemId);
+	return FoundCurrentUserItem ? FoundCurrentUserItem->Get().Quantity : 0;
+}
+
 void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()
 {
 	auto* IdentitySubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseIdentityServiceSubsystem>();
@@ -209,6 +215,48 @@ void ULactoseEconomyServiceSubsystem::DisableGetCurrentUserItemsTicker()
 {
 	GetGameInstance()->GetTimerManager().ClearTimer(GetUserItemsTicker);
 	GetUserItemsTicker.Invalidate();
+}
+
+TFuture<TSharedPtr<FGetEconomyUserShopItemsRequest::FResponseContext>> ULactoseEconomyServiceSubsystem::GetUserShopItems(const FLactoseEconomyGetUserShopItemsRequest& Request) const
+{
+	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
+	auto RestRequest = FGetEconomyUserShopItemsRequest::Create(*RestSubsystem);
+	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
+	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("shopitems/usershop"));
+
+	auto GetUserShopItemsRequest = MakeShared<FLactoseEconomyGetUserShopItemsRequest>(Request);
+	auto Future = RestRequest->SetContentAsJsonAndSendAsync(GetUserShopItemsRequest);
+
+	UE_LOG(LogLactoseEconomyService, Verbose, TEXT("Sent a Get User Shop Items request for User ID '%s'"),
+		*Request.UserId);
+
+	return Future;
+}
+
+void ULactoseEconomyServiceSubsystem::PerformShopItemTrade(const FString& ShopItemId)
+{
+	auto* IdentitySubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseIdentityServiceSubsystem>();
+	if (!IdentitySubsystem)
+		return;
+	
+	const TSharedPtr<FLactoseIdentityGetUserResponse> CurrentUser = IdentitySubsystem->GetLoggedInUserInfo();
+	if (!CurrentUser)
+	{
+		UE_LOG(LogLactoseEconomyService, Error, TEXT("Cannot load current user's items because the user is not logged in"));
+		return;
+	}
+	
+	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
+	auto RestRequest = FEconomyShopItemTradeRequest::Create(*RestSubsystem);
+	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
+	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("shopitems/trade"));
+
+	auto ShopItemTradeRequest = MakeShared<FLactoseEconomyShopItemTradeRequest>(CurrentUser->Id, ShopItemId);
+	auto Future = RestRequest->SetContentAsJsonAndSendAsync(ShopItemTradeRequest);
+
+	UE_LOG(LogLactoseEconomyService, Verbose, TEXT("Sent a Shop Item Trade request for User ID '%s' and Shop Item ID '%s'"),
+		*CurrentUser->Id,
+		*ShopItemId);
 }
 
 void ULactoseEconomyServiceSubsystem::OnAllItemsQueries(TSharedRef<FQueryEconomyItemsRequest::FResponseContext> Context)
