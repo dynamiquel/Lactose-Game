@@ -19,7 +19,8 @@ public class LactoseGame : ModuleRules
 			"DiscordGame",
 			"HTTP",
 			"StructUtils",
-			"GameplayTags"
+			"GameplayTags",
+			"SimpLibrary"
         }
         );
 		
@@ -29,7 +30,8 @@ public class LactoseGame : ModuleRules
 			"JsonSerialization",
 			"JsonUtilities",
 			"Landscape",
-			"UMG"
+			"UMG", 
+			"SimpLibrary"
 		});
 	}
 }
