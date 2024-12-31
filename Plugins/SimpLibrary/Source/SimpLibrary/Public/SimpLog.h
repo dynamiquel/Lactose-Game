@@ -1,11 +1,22 @@
 #pragma once
 
 /**
- * Reimplementation of Unreal's Logging Macros using C++ templates instead.
+ * Replacement for Unreal's Logging Macros by relying on C++ templates
+ * and compiler optimisations instead.
+ * 
  * It's designed to be an easier to read and more standardised API.
  */
 namespace Log
 {
+	/**
+	 * Alternative approach to creating new Log Categories.
+	 * It only needs to be defined in the header.
+	 *
+	 * Example usage:
+	 * @code static inline TCategory<> MyNewLogCategory("LogMyNewCategory");@endcode.
+	 * @note This approach does create multiple instances of the specified Log Category
+	 * but you probably don't need to worry about it.
+	 */
 	template<ELogVerbosity::Type DefaultVerbosity = ELogVerbosity::Type::Log, ELogVerbosity::Type CompiledVerbosity = ELogVerbosity::Type::All>
 	using TCategory = FLogCategory<DefaultVerbosity, CompiledVerbosity>;
 	
@@ -31,13 +42,15 @@ namespace Log
 	template<LogCategory TCategory, ELogVerbosity::Type EVerbosity, typename... TArgs>
 	static void Log(const TCategory& Category, const TCHAR* Format, TArgs&&... Args)
 	{
+		static_assert((TIsValidVariadicFunctionArg<TArgs>::Value && ...), "Invalid argument(s) passed to Log");
+
 #if NO_LOGGING
 	return;
 #else
 		static UE::Logging::Private::FStaticBasicLogDynamicData LOG_Dynamic;
 		static UE::Logging::Private::FStaticBasicLogRecord LOG_Static(
 			Format, __builtin_FILE(), __builtin_LINE(), EVerbosity, LOG_Dynamic);
-
+		
 		if constexpr ((EVerbosity & ELogVerbosity::VerbosityMask) == ELogVerbosity::Fatal)
 		{
 			UE::Logging::Private::BasicFatalLog(Category, &LOG_Static, std::forward<TArgs>(Args)...);
@@ -83,6 +96,21 @@ namespace Log
 
 	inline void Hello()
 	{
-		Log(LogTemp, TEXT("Hello"));
+		Log(LogTemp, TEXT("Hello, World!\nThe time is: %s"), *FDateTime::Now().ToString());
 	}
 }
+
+/**
+ * Shorter way of declaring a Log Category.
+ * 
+ * Equivalent to @code DECLARE_LOG_CATEGORY_EXTERN(CategoryName, Log, All)@endcode.
+ */
+#define DECLARE_BASIC_LOG(CategoryName) DECLARE_LOG_CATEGORY_EXTERN(CategoryName, Log, All)
+
+/**
+ * Quickest way to create a simple log. It only needs to be defined in the header.
+ * 
+ * @note This approach does create multiple instances of the specified Log Category
+ * but you probably don't need to worry about it.
+ */
+#define CREATE_BASIC_LOG(CategoryName) static inline TCategory<> FLogCategory##CategoryName(TEXT(#CategoryName));
