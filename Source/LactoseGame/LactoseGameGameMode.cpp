@@ -1,8 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "LactoseGameGameMode.h"
-#include "LactoseGameCharacter.h"
-#include "LactoseLog.h"
+#include "SimpLog.h"
 #include "UI/LactoseHUD.h"
 #include "Services/ConfigCloud/LactoseConfigCloudServiceSubsystem.h"
 #include "Services/Economy/LactoseEconomyServiceSubsystem.h"

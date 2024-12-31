@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Templates/SharedPointer.h"
+
 /*
  * Simp is a single-header library that is used to help reduce the verbosity for common
  * C++ operations.
@@ -181,3 +183,16 @@ using Rc = Simp::TRefCounted<T, Simp::ERefCountMode::NotAtomic>;
  */
 template<typename T>
 using Arc = Simp::TRefCounted<T, Simp::ERefCountMode::Atomic>;
+
+
+/**
+ * Creates an Unreal Shared Reference using a standard struct initialiser.
+ * This allows for usages such as:
+ * 
+ * @code auto MySharedStruct = MakeShared(MyStruct{.Var1 = 1, .Var2 = 4});@endcode.
+ */
+template <typename InObjectType, ESPMode InMode = ESPMode::ThreadSafe>
+[[nodiscard]] TSharedRef<InObjectType, InMode> MakeShared(InObjectType&& TempType)
+{
+	return TSharedRef<InObjectType, InMode>(new InObjectType(Forward<InObjectType>(TempType)));
+}

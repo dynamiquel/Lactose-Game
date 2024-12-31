@@ -1,39 +1,54 @@
 #pragma once
 
+/**
+ * Reimplementation of Unreal's Logging Macros using C++ templates instead.
+ * It's designed to be an easier to read and more standardised API.
+ */
 namespace Log
 {
+	template<ELogVerbosity::Type DefaultVerbosity = ELogVerbosity::Type::Log, ELogVerbosity::Type CompiledVerbosity = ELogVerbosity::Type::All>
+	using TCategory = FLogCategory<DefaultVerbosity, CompiledVerbosity>;
+	
 	template<typename T>
 	concept LogCategory = std::is_base_of_v<FLogCategoryBase, T>;
 
 	template<LogCategory TCategory, ELogVerbosity::Type EVerbosity>
-	constexpr bool IsLogCompiledOut()
+	constexpr bool IsCompiledOut()
 	{
-		return (EVerbosity & ELogVerbosity::VerbosityMask) <= TCategory::CompileTimeVerbosity
-			&& (EVerbosity & ELogVerbosity::VerbosityMask) <= ELogVerbosity::COMPILED_IN_MINIMUM_VERBOSITY;
+		return (EVerbosity & ELogVerbosity::VerbosityMask) > TCategory::CompileTimeVerbosity
+			|| (EVerbosity & ELogVerbosity::VerbosityMask) > ELogVerbosity::COMPILED_IN_MINIMUM_VERBOSITY;
+	}
+
+	template<ELogVerbosity::Type EVerbosity, LogCategory TCategory>
+	bool IsActive(const TCategory& Category)
+	{
+		if constexpr (IsCompiledOut<TCategory, EVerbosity>())
+			return false;
+
+		return !Category.IsSuppressed(EVerbosity);
 	}
 	
 	template<LogCategory TCategory, ELogVerbosity::Type EVerbosity, typename... TArgs>
 	static void Log(const TCategory& Category, const TCHAR* Format, TArgs&&... Args)
 	{
+#if NO_LOGGING
+	return;
+#else
 		static UE::Logging::Private::FStaticBasicLogDynamicData LOG_Dynamic;
 		static UE::Logging::Private::FStaticBasicLogRecord LOG_Static(
-			Format, nullptr, 0, EVerbosity, LOG_Dynamic);
+			Format, __builtin_FILE(), __builtin_LINE(), EVerbosity, LOG_Dynamic);
 
 		if constexpr ((EVerbosity & ELogVerbosity::VerbosityMask) == ELogVerbosity::Fatal)
 		{
 			UE::Logging::Private::BasicFatalLog(Category, &LOG_Static, std::forward<TArgs>(Args)...);
 			return;
 		}
-	
-		if constexpr (IsLogCompiledOut<TCategory, EVerbosity>())
+		
+		if (!IsActive<EVerbosity>(Category))
 			return;
-
-		if (Category.IsSuppressed(EVerbosity))
-			return;
-	
+		
 		UE::Logging::Private::BasicLog(Category, &LOG_Static, std::forward<TArgs>(Args)...);
-	
-		UE_LOG(LogTemp, Log, TEXT("%s"), TEXT("Hi"));
+#endif
 	}
 
 	template<LogCategory TCategory, typename... TArgs>
@@ -68,7 +83,6 @@ namespace Log
 
 	inline void Hello()
 	{
-		Log(LogTemp, TEXT("%s"), TEXT("Hello, World!"));
-		Warning(LogTemp, TEXT("Hello, World!"));
+		Log(LogTemp, TEXT("Hello"));
 	}
 }

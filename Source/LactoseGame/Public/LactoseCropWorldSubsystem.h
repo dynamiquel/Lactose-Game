@@ -39,6 +39,8 @@ public:
 	TSubclassOf<ACropActor> FindCropActorClassForCrop(const FString& CropId) const;
 	
 protected:
+	bool ShouldCreateSubsystem(UObject* Outer) const override;
+
 	// Begin override UWorldSubsystem
 	void OnWorldBeginPlay(UWorld& InWorld) override;
 	// End override UWorldSubsystem

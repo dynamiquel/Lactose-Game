@@ -60,6 +60,9 @@ struct FLactoseEconomyShopItemTradeRequest
 
 	UPROPERTY()
 	FString ShopItemId;
+
+	UPROPERTY()
+	int32 Quantity = 1;
 };
 
 USTRUCT()

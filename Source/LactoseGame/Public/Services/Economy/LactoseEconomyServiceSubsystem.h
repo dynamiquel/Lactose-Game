@@ -63,7 +63,7 @@ public:
 	bool IsAutoGetCurrentUserItemsTicking() const { return GetUserItemsTicker.IsValid(); }
 
 	TFuture<TSharedPtr<FGetEconomyUserShopItemsRequest::FResponseContext>> GetUserShopItems(const FLactoseEconomyGetUserShopItemsRequest& Request) const;
-	void PerformShopItemTrade(const FString& ShopItemId);
+	void PerformShopItemTrade(const FString& ShopItemId, int32 Quantity = 1);
 	
 protected:
 	void OnAllItemsQueries(TSharedRef<FQueryEconomyItemsRequest::FResponseContext> Context);

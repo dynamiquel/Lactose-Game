@@ -107,9 +107,19 @@ void Lactose::Rest::IRequest::OnResponseReceived(
 
 	if (!ResponseContext->IsSuccessful())
 	{
-		UE_CLOG(ResponseContext->HttpResponse, LogLactoseRest, Error, TEXT("Received an unsuccessful response. Code %d; Reason: %d"),
+		UE_LOG(LogLactoseRest, Error, TEXT("Received an unsuccessful response from %s. Code %d; Reason: %d"),
+			*Response->GetURL(),
 			Response->GetResponseCode(),
 			Response->GetFailureReason());
+	}
+	else
+	{
+		UE_LOG(LogLactoseRest, Verbose, TEXT("Received a succesful response from %s. Code: %d"),
+			*Response->GetURL(),
+			Response->GetResponseCode());
+				
+		UE_LOG(LogLactoseRest, VeryVerbose, TEXT("Content: %s"),
+			*Response->GetContentAsString());
 	}
 	
 	ResponsePromise.SetValue(ResponseContext);

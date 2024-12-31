@@ -1,12 +1,17 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "LactoseCropWorldSubsystem.h"
 
+#include "HAL/IConsoleManager.h"
 #include "CropActor.h"
 #include "LactoseGame/LactoseGame.h"
 #include "Services/ConfigCloud/LactoseConfigCloudServiceSubsystem.h"
 #include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
+
+TAutoConsoleVariable CVarEnableCropWorldSubsystem
+(
+	TEXT("Lactose.EnableCropWorldSubsystem"),
+	true,
+	TEXT("")
+);
 
 bool ULactoseCropWorldSubsystem::CanCreateCrops() const
 {
@@ -43,6 +48,11 @@ ACropActor* ULactoseCropWorldSubsystem::FindCropActorForCropInstance(const FStri
 TSubclassOf<ACropActor> ULactoseCropWorldSubsystem::FindCropActorClassForCrop(const FString& CropId) const
 {
 	return CropIdToCropActorMap.FindRef(CropId);
+}
+
+bool ULactoseCropWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
+{
+	return Super::ShouldCreateSubsystem(Outer) && CVarEnableCropWorldSubsystem.GetValueOnGameThread() == true;
 }
 
 void ULactoseCropWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)

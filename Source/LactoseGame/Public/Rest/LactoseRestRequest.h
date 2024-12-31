@@ -103,7 +103,8 @@ namespace Lactose::Rest
 
 			if (!Context->IsSuccessful())
 			{
-				UE_CLOG(Context->HttpResponse, LogLactoseRest, Error, TEXT("Received an unsuccessful response. Code %d; Reason: %d"),
+				UE_LOG(LogLactoseRest, Error, TEXT("Received an unsuccessful response from %s. Code %d; Reason: %d"),
+					*Response->GetURL(),
 					Response->GetResponseCode(),
 					Response->GetFailureReason());
 
@@ -112,6 +113,13 @@ namespace Lactose::Rest
 			}
 			else
 			{
+				UE_LOG(LogLactoseRest, Verbose, TEXT("Received a succesful response from %s. Code: %d"),
+					*Response->GetURL(),
+					Response->GetResponseCode());
+				
+				UE_LOG(LogLactoseRest, VeryVerbose, TEXT("Content: %s"),
+					*Response->GetContentAsString());
+				
 				// Convert request and response from JSON on a background thread before dispatching back to game thread.
 				AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [This = SharedThis(this), Context]
 				{
@@ -119,6 +127,9 @@ namespace Lactose::Rest
 
 					if constexpr (Concepts::RequestType<TRequestContent>)
 					{
+						UE_LOG(LogLactoseRest, VeryVerbose, TEXT("Deserialising request content to a %s"),
+							*TRequestContent::StaticStruct()->GetName());
+						
 						if (Context->HttpRequest && !Context->HttpRequest->GetContent().IsEmpty())
 						{
 							Context->RequestContent = Serialisation::Json::DeserialiseShared<TRequestContent>(
@@ -130,6 +141,9 @@ namespace Lactose::Rest
 					{
 						if (Context->HttpResponse && !Context->HttpResponse->GetContent().IsEmpty())
 						{
+							UE_LOG(LogLactoseRest, VeryVerbose, TEXT("Deserialising response content to a %s"),
+								*TResponseContent::StaticStruct()->GetName());
+							
 							Context->ResponseContent = Serialisation::Json::DeserialiseShared<TResponseContent>(
 								Context->HttpResponse->GetContent());
 						}

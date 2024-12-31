@@ -106,13 +106,13 @@ void ULactoseEconomyVendorsDebugTab::DrawBuySection(
 	ImGui::TableSetupColumn("Sell");
 	ImGui::TableHeadersRow();
 	
-	for (const FLactoseEconomyShopItem& VendorItem : VendorItems->ShopItems)
+	for (const FLactoseEconomyShopItem& ShopItem : VendorItems->ShopItems)
 	{
-		if (VendorItem.TransactionType != Lactose::Economy::Types::Buy)
+		if (ShopItem.TransactionType != Lactose::Economy::Types::Buy)
 			continue;
 		
-		FString ItemLabel = VendorItem.ItemId;
-		const TSharedPtr<const FLactoseEconomyItem> FoundItem = EconomySubsystem->GetItem(VendorItem.ItemId);
+		FString ItemLabel = ShopItem.ItemId;
+		const TSharedPtr<const FLactoseEconomyItem> FoundItem = EconomySubsystem->GetItem(ShopItem.ItemId);
 		
 		if (FoundItem)
 			ItemLabel += FString::Printf(TEXT(" (%s)"), *FoundItem->Name);
@@ -122,7 +122,7 @@ void ULactoseEconomyVendorsDebugTab::DrawBuySection(
 
 		if (ImGui::TableNextColumn())
 		{
-			ImGui::Text("%s", STR_TO_ANSI(VendorItem.ItemId));
+			ImGui::Text("%s", STR_TO_ANSI(ShopItem.ItemId));
 		}
 
 		if (ImGui::TableNextColumn())
@@ -132,9 +132,9 @@ void ULactoseEconomyVendorsDebugTab::DrawBuySection(
 
 		if (ImGui::TableNextColumn())
 		{
-			for (const FLactoseEconomyUserItem& TransactionItem : VendorItem.TransactionItems)
+			for (const FLactoseEconomyUserItem& TransactionItem : ShopItem.TransactionItems)
 			{
-				FString TransactionItemLabel = VendorItem.ItemId;
+				FString TransactionItemLabel = ShopItem.ItemId;
 				if (const TSharedPtr<const FLactoseEconomyItem> TransactionFoundItem = EconomySubsystem->GetItem(TransactionItem.ItemId))
 					TransactionItemLabel = TransactionFoundItem->Name;
 				
@@ -145,7 +145,7 @@ void ULactoseEconomyVendorsDebugTab::DrawBuySection(
 		if (ImGui::TableNextColumn())
 		{
 			check(EconomySubsystem);
-			const int32 CurrentUserQuantity = EconomySubsystem->GetCurrentUserItemQuantity(VendorItem.ItemId);
+			const int32 CurrentUserQuantity = EconomySubsystem->GetCurrentUserItemQuantity(ShopItem.ItemId);
 			const bool bCanSell = CurrentUserQuantity > 0;
 
 			bool bTrySell = false;
@@ -161,7 +161,7 @@ void ULactoseEconomyVendorsDebugTab::DrawBuySection(
 
 			if (bTrySell)
 			{
-				// TODO: Perform trade.
+				EconomySubsystem->PerformShopItemTrade(ShopItem.Id);
 			}
 		}
 	}
@@ -192,13 +192,13 @@ void ULactoseEconomyVendorsDebugTab::DrawSellSection(const FString& VendorId,
 	ImGui::TableSetupColumn("Buy");
 	ImGui::TableHeadersRow();
 	
-	for (const FLactoseEconomyShopItem& VendorItem : VendorItems->ShopItems)
+	for (const FLactoseEconomyShopItem& ShopItem : VendorItems->ShopItems)
 	{
-		if (VendorItem.TransactionType != Lactose::Economy::Types::Sell)
+		if (ShopItem.TransactionType != Lactose::Economy::Types::Sell)
 			continue;
 		
-		FString ItemLabel = VendorItem.ItemId;
-		const TSharedPtr<const FLactoseEconomyItem> FoundItem = EconomySubsystem->GetItem(VendorItem.ItemId);
+		FString ItemLabel = ShopItem.ItemId;
+		const TSharedPtr<const FLactoseEconomyItem> FoundItem = EconomySubsystem->GetItem(ShopItem.ItemId);
 		
 		if (FoundItem)
 			ItemLabel += FString::Printf(TEXT(" (%s)"), *FoundItem->Name);
@@ -208,7 +208,7 @@ void ULactoseEconomyVendorsDebugTab::DrawSellSection(const FString& VendorId,
 
 		if (ImGui::TableNextColumn())
 		{
-			ImGui::Text("%s", STR_TO_ANSI(VendorItem.ItemId));
+			ImGui::Text("%s", STR_TO_ANSI(ShopItem.ItemId));
 		}
 
 		if (ImGui::TableNextColumn())
@@ -218,17 +218,17 @@ void ULactoseEconomyVendorsDebugTab::DrawSellSection(const FString& VendorId,
 
 		if (ImGui::TableNextColumn())
 		{
-			if (VendorItem.Quantity == -1)
+			if (ShopItem.Quantity == -1)
 				ImGui::Text("Infinite");
 			else
-				ImGui::Text("%d", VendorItem.Quantity);
+				ImGui::Text("%d", ShopItem.Quantity);
 		}
 
 		if (ImGui::TableNextColumn())
 		{
-			for (const FLactoseEconomyUserItem& TransactionItem : VendorItem.TransactionItems)
+			for (const FLactoseEconomyUserItem& TransactionItem : ShopItem.TransactionItems)
 			{
-				FString TransactionItemLabel = VendorItem.ItemId;
+				FString TransactionItemLabel = ShopItem.ItemId;
 				if (const TSharedPtr<const FLactoseEconomyItem> TransactionFoundItem = EconomySubsystem->GetItem(TransactionItem.ItemId))
 					TransactionItemLabel = TransactionFoundItem->Name;
 				
@@ -241,7 +241,7 @@ void ULactoseEconomyVendorsDebugTab::DrawSellSection(const FString& VendorId,
 			TArray<FLactoseEconomyUserItem> MissingItems;
 			
 			check(EconomySubsystem);
-			for (const FLactoseEconomyUserItem& TransactionItem : VendorItem.TransactionItems)
+			for (const FLactoseEconomyUserItem& TransactionItem : ShopItem.TransactionItems)
 			{
 				const int32 CurrentUserQuantity = EconomySubsystem->GetCurrentUserItemQuantity(TransactionItem.ItemId);
 				if (CurrentUserQuantity < TransactionItem.Quantity)
@@ -259,12 +259,12 @@ void ULactoseEconomyVendorsDebugTab::DrawSellSection(const FString& VendorId,
 			{
 				bTryBuy = ImGui::Button("Buy");
 			}
-			else 
+			else
 			{
 				ImGui::Text("You are missing:");
 				for (const auto& MissingItem : MissingItems)
 				{
-					FString TransactionItemLabel = VendorItem.ItemId;
+					FString TransactionItemLabel = ShopItem.ItemId;
 					if (const TSharedPtr<const FLactoseEconomyItem> TransactionFoundItem = EconomySubsystem->GetItem(MissingItem.ItemId))
 						TransactionItemLabel = TransactionFoundItem->Name;
 				
@@ -279,7 +279,7 @@ void ULactoseEconomyVendorsDebugTab::DrawSellSection(const FString& VendorId,
 
 			if (bTryBuy)
 			{
-				// TODO: Perform trade.
+				EconomySubsystem->PerformShopItemTrade(ShopItem.Id);
 			}
 		}
 	}

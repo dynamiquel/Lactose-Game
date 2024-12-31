@@ -2,7 +2,7 @@
 
 
 #include "Services/Economy/LactoseEconomyServiceSubsystem.h"
-
+#include "Simp.h"
 #include "Services/LactoseServicesLog.h"
 #include "Services/Identity/LactoseIdentityServiceSubsystem.h"
 
@@ -153,7 +153,7 @@ void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()
 				{
 					if (FoundExistingUserItem->Get().Quantity != UserItem.Quantity)
 					{
-						UE_LOG(LogLactoseEconomyService, VeryVerbose, TEXT("Updated Current User dItem '%s' Quantity: %d -> %d"),
+						UE_LOG(LogLactoseEconomyService, VeryVerbose, TEXT("Updated Current User Item '%s' Quantity: %d -> %d"),
 							*UserItem.ItemId,
 							FoundExistingUserItem->Get().Quantity,
 							UserItem.Quantity);
@@ -233,7 +233,7 @@ TFuture<TSharedPtr<FGetEconomyUserShopItemsRequest::FResponseContext>> ULactoseE
 	return Future;
 }
 
-void ULactoseEconomyServiceSubsystem::PerformShopItemTrade(const FString& ShopItemId)
+void ULactoseEconomyServiceSubsystem::PerformShopItemTrade(const FString& ShopItemId, const int32 Quantity)
 {
 	auto* IdentitySubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseIdentityServiceSubsystem>();
 	if (!IdentitySubsystem)
@@ -251,7 +251,13 @@ void ULactoseEconomyServiceSubsystem::PerformShopItemTrade(const FString& ShopIt
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("shopitems/trade"));
 
-	auto ShopItemTradeRequest = MakeShared<FLactoseEconomyShopItemTradeRequest>(CurrentUser->Id, ShopItemId);
+	TSharedRef<FLactoseEconomyShopItemTradeRequest> ShopItemTradeRequest = MakeShareable(new FLactoseEconomyShopItemTradeRequest
+	{
+		.UserId = CurrentUser->Id,
+		.ShopItemId = ShopItemId,
+		.Quantity = Quantity,
+	});
+	
 	auto Future = RestRequest->SetContentAsJsonAndSendAsync(ShopItemTradeRequest);
 
 	UE_LOG(LogLactoseEconomyService, Verbose, TEXT("Sent a Shop Item Trade request for User ID '%s' and Shop Item ID '%s'"),
@@ -264,11 +270,14 @@ void ULactoseEconomyServiceSubsystem::OnAllItemsQueries(TSharedRef<FQueryEconomy
 	QueryAllItemsFuture.Reset();
 
 	if (!Context->ResponseContent.IsValid())
+	{
+		UE_LOG(LogLactoseEconomyService, Error, TEXT("Query Items request responded with no content"))
 		return;
+	}
 
 	if (Context->ResponseContent->ItemIds.IsEmpty())
 	{
-		UE_LOG(LogLactoseEconomyService, Error, TEXT("Query Items request responed with no items"));
+		UE_LOG(LogLactoseEconomyService, Error, TEXT("Query Items request responded with no items"));
 		return;
 	}
 

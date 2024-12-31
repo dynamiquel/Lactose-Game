@@ -119,7 +119,8 @@ void ACropActor::PostInitializeComponents()
 	if (GetWorld() && GetWorld()->IsGameWorld())
 	{
 		auto* CropSubsystem = GetWorld()->GetSubsystem<ULactoseCropWorldSubsystem>();
-		check(CropSubsystem);
+		if (!CropSubsystem)
+			return;
 
 		CropSubsystem->RegisterCropActor(*this);
 		UpdateBillboardText();
