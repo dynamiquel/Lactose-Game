@@ -4,8 +4,8 @@
 
 TFuture<Sp<FGetServiceStatusRequest::FResponseContext>> ULactoseServiceSubsystem::GetServiceInfo()
 {
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FGetServiceStatusRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FGetServiceStatusRequest::Create(RestSubsystem);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("info"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ULactoseServiceSubsystem::OnGetServiceInfoResponse);
 	

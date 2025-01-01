@@ -370,14 +370,10 @@ void ALactoseGameCharacter::TryUsePlotTool()
 	// TODO: Perform box trace to ensure the plot isn't blocking anything.
 	// TODO: If near an existing crop, lock on to it.
 
-	auto* SimulationSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseSimulationServiceSubsystem>();
-	if (!ensure(SimulationSubsystem))
-	{
-		return;
-	}
+	auto& SimulationSubsystem = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(self);
 
 	const FRotator SpawnRotation = FRotationMatrix::MakeFromZ(HitResult->Normal).Rotator();
-	SimulationSubsystem->CreateEmptyPlot(HitResult->Location, SpawnRotation);
+	SimulationSubsystem.CreateEmptyPlot(HitResult->Location, SpawnRotation);
 }
 
 void ALactoseGameCharacter::TryUseTreeTool()
@@ -390,7 +386,7 @@ void ALactoseGameCharacter::TryUseTreeTool()
 	if (!TreeCropToPlant.IsSet())
 		return;
 
-	auto& Simulation = Lactose::GetService<ULactoseSimulationServiceSubsystem>(*this);
+	auto& Simulation = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(*this);
 	if (!Simulation.CanCurrentUserAffordCrop(*TreeCropToPlant))
 	{
 		PC->ResetTreeCropIdToPlant();

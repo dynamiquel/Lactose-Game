@@ -3,13 +3,13 @@
 namespace Simp
 {
 	template<typename T>
-	concept Object = std::is_base_of_v<T, UObject>;
+	concept Object = std::is_base_of_v<UObject, T>;
 
 	template<typename T>
-	concept Actor = std::is_base_of_v<T, AActor>;
+	concept Actor = std::is_base_of_v<AActor, T>;
 
 	template<typename T>
-	concept Component = std::is_base_of_v<T, UActorComponent>;
+	concept Component = std::is_base_of_v<UActorComponent, T>;
 
 	template<typename T>
 	concept Subsystem = std::is_base_of_v<USubsystem, T>;

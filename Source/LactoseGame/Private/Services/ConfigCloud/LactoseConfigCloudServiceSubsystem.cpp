@@ -64,8 +64,8 @@ ELactoseConfigCloudStatus ULactoseConfigCloudServiceSubsystem::GetStatus() const
 
 void ULactoseConfigCloudServiceSubsystem::LoadConfig()
 {
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FGetConfigRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FGetConfigRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("config/config"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnConfigLoaded);

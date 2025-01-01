@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "SimpSubsystems.h"
 #include "Animation/AnimInstance.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
@@ -84,9 +85,10 @@ bool UTP_WeaponComponent::AttachWeapon(ALactoseGameCharacter* TargetCharacter)
 	Character->AddInstanceComponent(this);
 
 	// Set up action bindings
+	
 	if (APlayerController* PlayerController = Cast<APlayerController>(Character->GetController()))
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		if (auto* Subsystem = Subsystems::Get<UEnhancedInputLocalPlayerSubsystem>(*PlayerController))
 		{
 			// Set the priority of the mapping to 1, so that it overrides the Jump action with the Fire action when using touch input
 			Subsystem->AddMappingContext(FireMappingContext, 1);
@@ -104,16 +106,9 @@ bool UTP_WeaponComponent::AttachWeapon(ALactoseGameCharacter* TargetCharacter)
 
 void UTP_WeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (Character == nullptr)
-	{
+	if (!Character)
 		return;
-	}
 
-	if (APlayerController* PlayerController = Cast<APlayerController>(Character->GetController()))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->RemoveMappingContext(FireMappingContext);
-		}
-	}
+	if (auto* Subsystem = Subsystems::Get<UEnhancedInputLocalPlayerSubsystem>(*Character))
+		Subsystem->RemoveMappingContext(FireMappingContext);
 }

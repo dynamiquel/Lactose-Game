@@ -132,8 +132,8 @@ Sp<const FLactoseSimulationCrop> ULactoseSimulationServiceSubsystem::FindCrop(co
 
 void ULactoseSimulationServiceSubsystem::LoadAllCrops()
 {
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FQuerySimulationCropsRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FQuerySimulationCropsRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("crops/query"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnAllCropsQueried);
@@ -168,7 +168,7 @@ bool ULactoseSimulationServiceSubsystem::CanCurrentUserAffordCrop(const FString&
 
 	for (const FLactoseEconomyUserItem& CostItem : FoundCrop->CostItems)
 	{
-		const auto& EconomySubsystem = Lactose::GetService<ULactoseEconomyServiceSubsystem>(*this);
+		const auto& EconomySubsystem = Subsystems::GetRef<ULactoseEconomyServiceSubsystem>(self);
 		Sp<const FLactoseEconomyUserItem> FoundUserItem = EconomySubsystem.FindCurrentUserItem(CostItem.ItemId);
 		if (!FoundUserItem)
 			return false;
@@ -187,18 +187,16 @@ Sp<FLactoseSimulationUserCrops> ULactoseSimulationServiceSubsystem::GetMutableCu
 
 void ULactoseSimulationServiceSubsystem::LoadCurrentUserCrops()
 {
-	auto IdentitySubsystem = GetGameInstance()->GetSubsystem<ULactoseIdentityServiceSubsystem>();
-	if (!IdentitySubsystem)
-		return;
-
-	auto CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
+	auto& IdentitySubsystem = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
+	
+	auto CurrentUserInfo = IdentitySubsystem.GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
 		return Log::Error(LogLactoseSimulationService, TEXT("Cannot load current user's crops because the user is not logged in"));
 	}
 	
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FGetSimulationUserCropsRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FGetSimulationUserCropsRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("usercrops"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnCurrentUserCropsRetrieved);
@@ -219,18 +217,16 @@ void ULactoseSimulationServiceSubsystem::Simulate()
 	if (IsPending(SimulateCurrentUserCropsFuture))
 		return;
 	
-	auto IdentitySubsystem = GetGameInstance()->GetSubsystem<ULactoseIdentityServiceSubsystem>();
-	if (!IdentitySubsystem)
-		return;
+	auto& IdentitySubsystem = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
 
-	auto CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
+	auto CurrentUserInfo = IdentitySubsystem.GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
 		return Log::Error(LogLactoseSimulationService, TEXT("Cannot simulate current user's crops because the user is not logged in"));
 	}
 	
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FSimulateSimulationUserCropsRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FSimulateSimulationUserCropsRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("usercrops/simulate"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnCurrentUserCropsSimulated);
@@ -244,18 +240,16 @@ void ULactoseSimulationServiceSubsystem::Simulate()
 
 void ULactoseSimulationServiceSubsystem::HarvestCropInstances(TConstArrayView<FString> CropInstanceIds)
 {
-	auto IdentitySubsystem = GetGameInstance()->GetSubsystem<ULactoseIdentityServiceSubsystem>();
-	if (!IdentitySubsystem)
-		return;
+	auto& IdentitySubsystem = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
 
-	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
+	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem.GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
 		return Log::Error(LogLactoseSimulationService, TEXT("Cannot harvest current user's crops because the user is not logged in"));
 	}
 
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FHarvestSimulationUserCropsRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FHarvestSimulationUserCropsRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("usercrops/harvest"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnCurrentUserCropsHarvested);
@@ -272,18 +266,16 @@ void ULactoseSimulationServiceSubsystem::SeedCropInstances(
 	TConstArrayView<FString> CropInstanceIds,
 	const FString& CropId)
 {
-	auto IdentitySubsystem = GetGameInstance()->GetSubsystem<ULactoseIdentityServiceSubsystem>();
-	if (!IdentitySubsystem)
-		return;
+	auto& IdentitySubsystem = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
 
-	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
+	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem.GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
 		return Log::Error(LogLactoseSimulationService, TEXT("Cannot seed current user's crops because the user is not logged in"));
 	}
 
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FSeedSimulationUserCropsRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FSeedSimulationUserCropsRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("usercrops/seed"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnCurrentUserCropsSeeded);
@@ -299,18 +291,16 @@ void ULactoseSimulationServiceSubsystem::SeedCropInstances(
 
 void ULactoseSimulationServiceSubsystem::FertiliseCropInstances(TConstArrayView<FString> CropInstanceIds)
 {
-	auto IdentitySubsystem = GetGameInstance()->GetSubsystem<ULactoseIdentityServiceSubsystem>();
-	if (!IdentitySubsystem)
-		return;
-
-	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
+	auto& IdentitySubsystem = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
+	
+	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem.GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
 		return Log::Error(LogLactoseSimulationService, TEXT("Cannot fertilise current user's crops because the user is not logged in"));
 	}
 
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FFertiliseSimulationUserCropsRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FFertiliseSimulationUserCropsRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("usercrops/fertilise"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnCurrentUserCropsFertilised);
@@ -325,18 +315,16 @@ void ULactoseSimulationServiceSubsystem::FertiliseCropInstances(TConstArrayView<
 
 void ULactoseSimulationServiceSubsystem::DestroyCropInstances(TConstArrayView<FString> CropInstanceIds)
 {
-	auto IdentitySubsystem = GetGameInstance()->GetSubsystem<ULactoseIdentityServiceSubsystem>();
-	if (!IdentitySubsystem)
-		return;
+	auto& IdentitySubsystem = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
 
-	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
+	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem.GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
 		return Log::Error(LogLactoseSimulationService, TEXT("Cannot destroy current user's crops because the user is not logged in"));
 	}
 
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FDeleteSimulationUserCropsRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FDeleteSimulationUserCropsRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("usercrops/destroy"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnCurrentUserCropsDestroyed);
@@ -356,18 +344,16 @@ void ULactoseSimulationServiceSubsystem::CreateEmptyPlot(const FVector& Location
 
 void ULactoseSimulationServiceSubsystem::CreateCrop(const FString& CropId, const FVector& Location, const FRotator& Rotation)
 {
-	auto IdentitySubsystem = GetGameInstance()->GetSubsystem<ULactoseIdentityServiceSubsystem>();
-	if (!IdentitySubsystem)
-		return;
+	auto& IdentitySubsystem = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
 
-	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
+	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem.GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
 		return Log::Error(LogLactoseSimulationService, TEXT("Cannot destroy current user's crops because the user is not logged in"));
 	}
 
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FCreateSimulationUserCropRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FCreateSimulationUserCropRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("usercrops/create"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnCurrentUserCropsCreated);
@@ -410,8 +396,8 @@ void ULactoseSimulationServiceSubsystem::OnAllCropsQueried(Sr<FQuerySimulationCr
 		return Log::Error(LogLactoseSimulationService, TEXT("Query Crops request responed with no items"));
 	}
 
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FGetSimulationCropsRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FGetSimulationCropsRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("crops"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnAllCropsRetrieved);

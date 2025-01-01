@@ -17,7 +17,7 @@ ULactoseIdentityUserTab::ULactoseIdentityUserTab()
 
 void ULactoseIdentityUserTab::Init()
 {
-	IdentitySubsystem = UGameInstance::GetSubsystem<ULactoseIdentityServiceSubsystem>(GetWorld()->GetGameInstance());
+	IdentitySubsystem = Subsystems::Get<ULactoseIdentityServiceSubsystem>(self);
 }
 
 void ULactoseIdentityUserTab::Render()

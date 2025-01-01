@@ -13,7 +13,7 @@ ULactoseEconomyItemsTab::ULactoseEconomyItemsTab()
 
 void ULactoseEconomyItemsTab::Init()
 {
-	EconomySubsystem = UGameInstance::GetSubsystem<ULactoseEconomyServiceSubsystem>(GetWorld()->GetGameInstance());
+	EconomySubsystem = Subsystems::Get<ULactoseEconomyServiceSubsystem>(self);
 }
 
 void ULactoseEconomyItemsTab::Render()

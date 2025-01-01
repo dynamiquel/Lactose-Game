@@ -39,10 +39,9 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 {
 	PendingConditions.Reset();
 
-	auto* Identity = GetGameInstance()->GetSubsystem<ULactoseIdentityServiceSubsystem>();
-	check(Identity);
+	auto& Identity = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
 
-	switch (Identity->GetLoginStatus())
+	switch (Identity.GetLoginStatus())
 	{
 		case ELactoseIdentityUserLoginStatus::NotLoggedIn:
 			PendingConditions.Emplace(TEXT("You are not logged in"));
@@ -53,10 +52,9 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 		default:
 	}
 
-	auto* Economy = GetGameInstance()->GetSubsystem<ULactoseEconomyServiceSubsystem>();
-	check(Economy);
+	auto& Economy = Subsystems::GetRef<ULactoseEconomyServiceSubsystem>(self);
 	
-	switch (Economy->GetAllItemsStatus())
+	switch (Economy.GetAllItemsStatus())
 	{
 		case ELactoseEconomyAllItemsStatus::None:
 			PendingConditions.Emplace(TEXT("Economy items have not been loaded"));
@@ -70,7 +68,7 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 		default:
 	}
 
-	switch (Economy->GetCurrentUserItemsStatus())
+	switch (Economy.GetCurrentUserItemsStatus())
 	{
 		case ELactoseEconomyUserItemsStatus::None:
 			PendingConditions.Emplace(TEXT("Your items have not been loaded"));
@@ -81,10 +79,9 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 		default:
 	}
 
-	auto* Simulation = GetGameInstance()->GetSubsystem<ULactoseSimulationServiceSubsystem>();
-	check(Simulation);
+	auto& Simulation = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(self);
 
-	switch (Simulation->GetAllCropsStatus())
+	switch (Simulation.GetAllCropsStatus())
 	{
 		case ELactoseSimulationCropsStatus::None:
 			PendingConditions.Emplace(TEXT("Crops have not been loaded"));
@@ -98,7 +95,7 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 		default:
 	}
 
-	switch (Simulation->GetCurrentUserCropsStatus())
+	switch (Simulation.GetCurrentUserCropsStatus())
 	{
 		case ELactoseSimulationUserCropsStatus::None:
 			PendingConditions.Emplace(TEXT("Your crops have not been loaded"));
@@ -109,10 +106,9 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 		default:
 	}
 
-	auto* ConfigCloud = GetGameInstance()->GetSubsystem<ULactoseConfigCloudServiceSubsystem>();
-	check(ConfigCloud);
+	auto& ConfigCloud = Subsystems::GetRef<ULactoseConfigCloudServiceSubsystem>(self);
 
-	switch (ConfigCloud->GetStatus())
+	switch (ConfigCloud.GetStatus())
 	{
 		case ELactoseConfigCloudStatus::None:
 			PendingConditions.Emplace(TEXT("Config has not been loaded"));

@@ -11,6 +11,7 @@
 #include "InputMappingContext.h"
 
 #include "LactoseMenuTags.h"
+#include "SimpSubsystems.h"
 
 void ALactoseGamePlayerController::SetupInputComponent()
 {
@@ -69,7 +70,7 @@ void ALactoseGamePlayerController::OpenMenu(const FGameplayTag& MenuTag)
 	OpenedMenuTag = MenuTag;
 	OnMenuOpened.Broadcast(this, *OpenedMenuTag);
 
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = Subsystems::Get<UEnhancedInputLocalPlayerSubsystem>(self))
 	{
 		Subsystem->RemoveMappingContext(CharacterMappingContext);
 		Subsystem->AddMappingContext(MenuMappingContext, 0);
@@ -101,7 +102,7 @@ void ALactoseGamePlayerController::CloseActiveMenu()
 
 	OnMenuClosed.Broadcast(this, CopiedTag);
 
-	if (auto* InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+	if (auto* InputSubsystem = Subsystems::Get<UEnhancedInputLocalPlayerSubsystem>(self))
 	{
 		InputSubsystem->RemoveMappingContext(MenuMappingContext);
 		InputSubsystem->AddMappingContext(CharacterMappingContext, 0);
@@ -150,6 +151,6 @@ void ALactoseGamePlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (auto* InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+	if (auto* InputSubsystem = Subsystems::Get<UEnhancedInputLocalPlayerSubsystem>(self))
 		InputSubsystem->AddMappingContext(CharacterMappingContext, 0);
 }

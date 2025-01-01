@@ -15,8 +15,8 @@ ULactoseSimulationUserCropsTab::ULactoseSimulationUserCropsTab()
 
 void ULactoseSimulationUserCropsTab::Init()
 {
-	SimulationSubsystem = UGameInstance::GetSubsystem<ULactoseSimulationServiceSubsystem>(GetWorld()->GetGameInstance());
-	EconomySubsystem = UGameInstance::GetSubsystem<ULactoseEconomyServiceSubsystem>(GetWorld()->GetGameInstance());
+	SimulationSubsystem = Subsystems::Get<ULactoseSimulationServiceSubsystem>(self);
+	EconomySubsystem = Subsystems::Get<ULactoseEconomyServiceSubsystem>(self);
 }
 
 void ULactoseSimulationUserCropsTab::Render()

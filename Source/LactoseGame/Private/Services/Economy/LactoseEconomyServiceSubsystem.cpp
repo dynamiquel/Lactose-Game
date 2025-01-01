@@ -45,8 +45,8 @@ void ULactoseEconomyServiceSubsystem::LoadAllItems()
 {
 	ResetAllItems();
 	
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FQueryEconomyItemsRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FQueryEconomyItemsRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("items/query"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnAllItemsQueries);
@@ -66,8 +66,8 @@ void ULactoseEconomyServiceSubsystem::ResetAllItems()
 
 TFuture<Sp<FGetEconomyUserItemsRequest::FResponseContext>> ULactoseEconomyServiceSubsystem::GetUserItems(const FString& UserId) const
 {
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FGetEconomyUserItemsRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FGetEconomyUserItemsRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("useritems"));
 
@@ -113,11 +113,9 @@ int32 ULactoseEconomyServiceSubsystem::GetCurrentUserItemQuantity(const FString&
 
 void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()
 {
-	auto* IdentitySubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseIdentityServiceSubsystem>();
-	if (!IdentitySubsystem)
-		return;
+	auto& IdentitySubsystem = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
 	
-	const Sp<FLactoseIdentityGetUserResponse> CurrentUser = IdentitySubsystem->GetLoggedInUserInfo();
+	const Sp<FLactoseIdentityGetUserResponse> CurrentUser = IdentitySubsystem.GetLoggedInUserInfo();
 	if (!CurrentUser)
 	{
 		return Log::Error(LogLactoseEconomyService, TEXT("Cannot load current user's items because the user is not logged in"));
@@ -223,8 +221,8 @@ void ULactoseEconomyServiceSubsystem::DisableGetCurrentUserItemsTicker()
 
 TFuture<Sp<FGetEconomyUserShopItemsRequest::FResponseContext>> ULactoseEconomyServiceSubsystem::GetUserShopItems(const FLactoseEconomyGetUserShopItemsRequest& Request) const
 {
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FGetEconomyUserShopItemsRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FGetEconomyUserShopItemsRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("shopitems/usershop"));
 
@@ -240,18 +238,16 @@ TFuture<Sp<FGetEconomyUserShopItemsRequest::FResponseContext>> ULactoseEconomySe
 
 void ULactoseEconomyServiceSubsystem::PerformShopItemTrade(const FString& ShopItemId, const int32 Quantity)
 {
-	auto* IdentitySubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseIdentityServiceSubsystem>();
-	if (!IdentitySubsystem)
-		return;
+	auto& IdentitySubsystem = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
 	
-	const Sp<FLactoseIdentityGetUserResponse> CurrentUser = IdentitySubsystem->GetLoggedInUserInfo();
+	const Sp<FLactoseIdentityGetUserResponse> CurrentUser = IdentitySubsystem.GetLoggedInUserInfo();
 	if (!CurrentUser)
 	{
 		return Log::Error(LogLactoseEconomyService, TEXT("Cannot load current user's items because the user is not logged in"));
 	}
 	
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FEconomyShopItemTradeRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FEconomyShopItemTradeRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("shopitems/trade"));
 
@@ -284,8 +280,8 @@ void ULactoseEconomyServiceSubsystem::OnAllItemsQueries(Sr<FQueryEconomyItemsReq
 		return Log::Error(LogLactoseEconomyService, TEXT("Query Items request responded with no items"));
 	}
 
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FGetEconomyItemsRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FGetEconomyItemsRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("items"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnAllItemsRetrieved);

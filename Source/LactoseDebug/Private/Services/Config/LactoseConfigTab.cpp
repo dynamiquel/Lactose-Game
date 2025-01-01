@@ -15,7 +15,7 @@ ULactoseConfigTab::ULactoseConfigTab()
 
 void ULactoseConfigTab::Init()
 {
-	ConfigSubsystem = UGameInstance::GetSubsystem<ULactoseConfigCloudServiceSubsystem>(GetWorld()->GetGameInstance());
+	ConfigSubsystem = Subsystems::Get<ULactoseConfigCloudServiceSubsystem>(self);
 }
 
 void ULactoseConfigTab::Render()

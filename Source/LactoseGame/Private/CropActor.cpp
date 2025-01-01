@@ -44,13 +44,13 @@ ACropActor::ACropActor()
 		if (!This || !This->CropInstance || !This->Crop)
 			return false;
 
-		auto* Economy = This->GetWorld()->GetGameInstance()->GetSubsystem<ULactoseEconomyServiceSubsystem>();
+		auto& Economy = Subsystems::GetRef<ULactoseEconomyServiceSubsystem>(*This);
 		
 		if (This->CropInstance->State == Lactose::Simulation::States::Empty)
 		{
 			for (const auto& CostItem : This->Crop->CostItems)
 			{
-				Sp<const FLactoseEconomyUserItem> FoundUserItem = Economy->FindCurrentUserItem(CostItem.ItemId);
+				Sp<const FLactoseEconomyUserItem> FoundUserItem = Economy.FindCurrentUserItem(CostItem.ItemId);
 				if (!FoundUserItem || FoundUserItem->Quantity < CostItem.Quantity)
 					return false;
 			}
@@ -64,7 +64,7 @@ ACropActor::ACropActor()
 		if (This->CropInstance->State == Lactose::Simulation::States::Growing)
 		{
 			const FString& FertiliserItemId = This->Crop->FertiliserItemId;
-			Sp<const FLactoseEconomyUserItem> FoundUserItem = Economy->FindCurrentUserItem(FertiliserItemId);
+			Sp<const FLactoseEconomyUserItem> FoundUserItem = Economy.FindCurrentUserItem(FertiliserItemId);
 			return FoundUserItem && FoundUserItem->Quantity > 0;
 		}
 
@@ -118,7 +118,7 @@ void ACropActor::PostInitializeComponents()
 
 	if (GetWorld() && GetWorld()->IsGameWorld())
 	{
-		auto* CropSubsystem = GetWorld()->GetSubsystem<ULactoseCropWorldSubsystem>();
+		auto* CropSubsystem = Subsystems::Get<ULactoseCropWorldSubsystem>(self);
 		if (!CropSubsystem)
 			return;
 
@@ -137,7 +137,7 @@ void ACropActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
-	if (auto* CropSubsystem = GetWorld()->GetSubsystem<ULactoseCropWorldSubsystem>())
+	if (auto* CropSubsystem = Subsystems::Get<ULactoseCropWorldSubsystem>(self))
 		CropSubsystem->DeregisterCropActor(*this);
 }
 
@@ -205,19 +205,15 @@ void ACropActor::OnDestroyed(const Sr<const FLactoseSimulationUserCropInstance>&
 
 void ACropActor::OnInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* Instigator)
 {
-	auto* SimulationSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseSimulationServiceSubsystem>();
-	if (!ensure(SimulationSubsystem))
-	{
-		return;
-	}
+	auto& SimulationSubsystem = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(self);
 	
 	if (!Crop || !CropInstance)
 		return;
 	
 	if (CropInstance->State == Lactose::Simulation::States::Harvestable)
-		SimulationSubsystem->HarvestCropInstances({ CropInstance->Id });
+		SimulationSubsystem.HarvestCropInstances({ CropInstance->Id });
 	else if (CropInstance->State == Lactose::Simulation::States::Growing)
-		SimulationSubsystem->FertiliseCropInstances({ CropInstance->Id });
+		SimulationSubsystem.FertiliseCropInstances({ CropInstance->Id });
 	else if (CropInstance->State == Lactose::Simulation::States::Empty)
 	{
 		if (auto* LactosePC = Cast<ALactoseGamePlayerController>(Instigator))
@@ -231,16 +227,12 @@ void ACropActor::OnInteracted(const ULactoseInteractionComponent& InteractionCom
 
 void ACropActor::OnDestroyInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* Instigator)
 {
-	auto* SimulationSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseSimulationServiceSubsystem>();
-	if (!ensure(SimulationSubsystem))
-	{
-		return;
-	}
+	auto& SimulationSubsystem = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(self);
 
 	if (!Crop || !CropInstance)
 		return;
 
-	SimulationSubsystem->DestroyCropInstances({ CropInstance->Id} );
+	SimulationSubsystem.DestroyCropInstances({ CropInstance->Id} );
 }
 
 void ACropActor::UpdateBillboard()

@@ -251,7 +251,7 @@ void ULactoseRestSendDebugTab::SendRequest(const int32 SavedRequestIdx)
 
 	FLactoseRestDebugRequest& SelectedRequest = SavedRequests.Requests[SavedRequestIdx];
 
-	auto RestSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
+	auto RestSubsystem = Subsystems::Get<ULactoseRestSubsystem>(self);
 	if (!RestSubsystem)
 		return;
 

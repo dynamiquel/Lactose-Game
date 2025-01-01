@@ -46,7 +46,7 @@ TGameInstance* GetGameInstance(const UObject& WorldContext)
 	if (!World)
 		return nullptr;
 
-	const UGameInstance* GameInstance = World->GetGameInstance();
+	UGameInstance* GameInstance = World->GetGameInstance();
 	return Cast<TGameInstance>(GameInstance);
 }
 
@@ -57,3 +57,42 @@ TGameInstance& GetGameInstanceRef(const UObject& WorldContext)
 	check(FoundGameInstance);
 	return *FoundGameInstance;
 }
+
+template<typename TPlayerController = APlayerController, typename TPlayerContext = UObject> requires std::is_base_of_v<APlayerController, TPlayerController>
+TPlayerController* GetPlayerController(const TPlayerContext& PlayerContext)
+{
+	if constexpr (std::is_base_of_v<APlayerState, TPlayerContext>)
+	{
+		APlayerController* PlayerController = PlayerContext.GetPlayerController();
+		return Cast<TPlayerController>(PlayerController);
+	}
+	else if constexpr (std::is_base_of_v<APawn, TPlayerContext>)
+	{
+		AController* Controller = PlayerContext.GetController();
+		return Cast<TPlayerController>(Controller);
+	}
+	else if constexpr (std::is_base_of_v<UActorComponent, TPlayerContext>)
+	{
+		const UObject* Owner = PlayerContext.GetOwner();
+		if (!Owner)
+			return nullptr;
+
+		return GetPlayerController<TPlayerController>(*Owner);
+	}
+	else if constexpr (std::is_base_of_v<AActor, TPlayerContext>)
+	{
+		if (auto* OwnerAsPC = Cast<APlayerController>(&PlayerContext))
+			return const_cast<APlayerController*>(OwnerAsPC);
+		
+		if (auto* OwnerAsPawn = Cast<APawn>(&PlayerContext))
+			return GetPlayerController<TPlayerController>(*OwnerAsPawn);
+		
+		return nullptr;
+	}
+	else
+	{
+		return nullptr;
+	}
+}
+
+#define self *this

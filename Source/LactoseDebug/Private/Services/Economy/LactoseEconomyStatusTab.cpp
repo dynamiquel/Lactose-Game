@@ -13,7 +13,7 @@ ULactoseEconomyStatusTab::ULactoseEconomyStatusTab()
 
 void ULactoseEconomyStatusTab::Init()
 {
-	EconomySubsystem = UGameInstance::GetSubsystem<ULactoseEconomyServiceSubsystem>(GetWorld()->GetGameInstance());
+	EconomySubsystem = Subsystems::Get<ULactoseEconomyServiceSubsystem>(self);
 	StatusSection = CreateSr<Lactose::Debug::Services::FStatusSection>(EconomySubsystem);
 }
 

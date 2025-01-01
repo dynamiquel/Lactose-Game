@@ -13,7 +13,7 @@ ULactoseIdentityStatusTab::ULactoseIdentityStatusTab()
 
 void ULactoseIdentityStatusTab::Init()
 {
-	IdentitySubsystem = UGameInstance::GetSubsystem<ULactoseIdentityServiceSubsystem>(GetWorld()->GetGameInstance());
+	IdentitySubsystem = Subsystems::Get<ULactoseIdentityServiceSubsystem>(self);
 	StatusSection = CreateSr<Lactose::Debug::Services::FStatusSection>(IdentitySubsystem);
 }
 

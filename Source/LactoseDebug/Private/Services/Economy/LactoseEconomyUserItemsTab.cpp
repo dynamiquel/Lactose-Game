@@ -14,7 +14,7 @@ ULactoseEconomyUserItemsTab::ULactoseEconomyUserItemsTab()
 
 void ULactoseEconomyUserItemsTab::Init()
 {
-	EconomySubsystem = UGameInstance::GetSubsystem<ULactoseEconomyServiceSubsystem>(GetWorld()->GetGameInstance());
+	EconomySubsystem = Subsystems::Get<ULactoseEconomyServiceSubsystem>(self);
 }
 
 void ULactoseEconomyUserItemsTab::Render()

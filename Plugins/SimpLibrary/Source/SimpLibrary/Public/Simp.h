@@ -4,6 +4,7 @@
 #include "SimpPtr.h"
 #include "SimpShared.h"
 #include "SimpRefCounted.h"
+#include "SimpSubsystems.h"
 
 /*
  * Simp is a library that is used to help reduce the verbosity for common C++ operations

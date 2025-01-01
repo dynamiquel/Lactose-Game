@@ -23,8 +23,8 @@ void ULactoseIdentityServiceSubsystem::Login()
 		return;
 	}
 	
-	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
-	auto RestRequest = FGetUserRequest::Create(*RestSubsystem);
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	auto RestRequest = FGetUserRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("users"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnUserLoggedIn);

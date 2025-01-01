@@ -4,6 +4,7 @@
 #include <Subsystems/GameInstanceSubsystem.h>
 
 #include "Simp.h"
+#include "SimpConcepts.h"
 #include "Rest/LactoseRestRequest.h"
 
 #include "LactoseServiceSubsystem.generated.h"
@@ -79,11 +80,6 @@ namespace Lactose
 	template<typename TLactoseService>
 	static TLactoseService& GetService(const UObject& Context)
 	{
-		const UWorld* World = Context.GetWorld();
-		check(World);
-		const UGameInstance* GameInstance = World->GetGameInstance();
-		check(GameInstance);
-		auto* Service = GameInstance->GetSubsystem<TLactoseService>();
-		return *Service;
+		return Subsystems::GetRef<TLactoseService>(Context);
 	}
 }

@@ -15,7 +15,7 @@ ULactoseEconomyVendorsDebugTab::ULactoseEconomyVendorsDebugTab()
 
 void ULactoseEconomyVendorsDebugTab::Init()
 {
-	EconomySubsystem = UGameInstance::GetSubsystem<ULactoseEconomyServiceSubsystem>(GetWorld()->GetGameInstance());
+	EconomySubsystem = Subsystems::Get<ULactoseEconomyServiceSubsystem>(self);
 }
 
 void ULactoseEconomyVendorsDebugTab::Render()

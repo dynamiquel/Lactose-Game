@@ -61,10 +61,9 @@ void ULactoseCropWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 	Lactose::Simulation::Events::OnCurrentUserCropsLoaded.AddUObject(this, &ULactoseCropWorldSubsystem::OnUserCropsLoaded);
 
-	auto* Simulation = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseSimulationServiceSubsystem>();
-	check(Simulation);
+	auto& Simulation = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(self);
 	
-	if (Simulation->GetAllCropsStatus() == ELactoseSimulationCropsStatus::Loaded)
+	if (Simulation.GetAllCropsStatus() == ELactoseSimulationCropsStatus::Loaded)
 	{
 		bWaitingForCrops = false;
 	}
@@ -74,13 +73,12 @@ void ULactoseCropWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 		Lactose::Simulation::Events::OnAllCropsLoaded.AddUObject(this, &ThisClass::OnAllCropsLoaded);
 	}
 
-	if (Simulation->GetCurrentUserCropsStatus() == ELactoseSimulationUserCropsStatus::Loaded)
+	if (Simulation.GetCurrentUserCropsStatus() == ELactoseSimulationUserCropsStatus::Loaded)
 		bWaitingForUserCrops = false;
 
-	auto* Config = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseConfigCloudServiceSubsystem>();
-	check(Config);
+	auto& Config = Subsystems::GetRef<ULactoseConfigCloudServiceSubsystem>(self);
 
-	if (Config->GetStatus() == ELactoseConfigCloudStatus::Loaded)
+	if (Config.GetStatus() == ELactoseConfigCloudStatus::Loaded)
 	{
 		LoadCropActorClasses();
 	}
@@ -142,14 +140,13 @@ void ULactoseCropWorldSubsystem::OnConfigCloudLoaded(
 
 void ULactoseCropWorldSubsystem::CreateRequiredUserCrops()
 {
-	auto* Simulation = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseSimulationServiceSubsystem>();
-	check(Simulation);
+	auto& Simulation = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(self);
 
-	const TMap<FString, Sr<FLactoseSimulationCrop>>& AllCrops = Simulation->GetAllCrops();
+	const TMap<FString, Sr<FLactoseSimulationCrop>>& AllCrops = Simulation.GetAllCrops();
 	if (AllCrops.IsEmpty())
 		return;
 
-	Sp<const FLactoseSimulationUserCrops> UserCrops = Simulation->GetCurrentUserCrops();
+	Sp<const FLactoseSimulationUserCrops> UserCrops = Simulation.GetCurrentUserCrops();
 	if (!UserCrops)
 		return;
 
@@ -158,7 +155,7 @@ void ULactoseCropWorldSubsystem::CreateRequiredUserCrops()
 		if (FindCropActorForCropInstance(UserCrop->Id))
 			continue;
 		
-		auto Crop = Simulation->FindCrop(UserCrop->CropId);
+		auto Crop = Simulation.FindCrop(UserCrop->CropId);
 		if (!Crop)
 		{
 			Log::Error(LogLactose,
@@ -239,10 +236,9 @@ bool ULactoseCropWorldSubsystem::CreateUserCrop(
 
 void ULactoseCropWorldSubsystem::LoadCropActorClasses()
 {
-	auto* ConfigSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseConfigCloudServiceSubsystem>();
-	check(ConfigSubsystem);
+	auto& ConfigSubsystem = Subsystems::GetRef<ULactoseConfigCloudServiceSubsystem>(self);
 
-	Sp<const FLactoseConfigCloudConfig> Config = ConfigSubsystem->GetConfig();
+	Sp<const FLactoseConfigCloudConfig> Config = ConfigSubsystem.GetConfig();
 	if (!Config)
 	{
 		return Log::Error(LogLactose, TEXT("Crop Subsystem: Config Subsystem does not have a Config"));

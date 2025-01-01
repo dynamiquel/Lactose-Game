@@ -52,7 +52,7 @@ TArray<FLactoseEconomyUserItem> ULactoseSimulationBP::GetCropCostUserItems(
 
 	for (const FLactoseEconomyUserItem& CostItem : FoundCrop->CostItems)
 	{
-		const auto& EconomySubsystem = Lactose::GetService<ULactoseEconomyServiceSubsystem>(*Simulation);
+		const auto& EconomySubsystem = Subsystems::GetRef<ULactoseEconomyServiceSubsystem>(*Simulation);
 		Sp<const FLactoseEconomyUserItem> FoundUserItem = EconomySubsystem.FindCurrentUserItem(CostItem.ItemId);
 		UserCropCostItems.Add(FoundUserItem ? *FoundUserItem : FLactoseEconomyUserItem{.ItemId = CostItem.ItemId});
 	}
