@@ -50,7 +50,7 @@ namespace Lactose::Serialisation::Json
 	Sp<T> DeserialiseShared(const TArray<uint8>& JsonData)
 	{
 		TOptional<T> Object = Deserialise<T>(JsonData);
-		return Object ? MakeShared<T>(MoveTemp(*Object)).ToSharedPtr() : nullptr;
+		return Object ? CreateSr(MoveTemp(*Object)).ToSharedPtr() : nullptr;
 	}
 
 	template<typename T>

@@ -1,11 +1,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Simp.h"
 #include "HttpModule.h"
 #include "Subsystems/GameInstanceSubsystem.h"
-
 #include "ILactoseRestRequest.h"
-#include "Simp.h"
 
 #include "LactoseRestSubsystem.generated.h"
 
@@ -23,7 +22,7 @@ public:
 		Sr<IHttpRequest> HttpRequest = HttpModule.CreateRequest();
 		HttpRequest->SetVerb(Lactose::Rest::Verbs::GET);
 		
-		Sr<TRequest> LactoseRequest = MakeShared<TRequest>(this, HttpRequest);
+		Sr<TRequest> LactoseRequest = CreateSr<TRequest>(this, HttpRequest);
 		return LactoseRequest;
 	}
 

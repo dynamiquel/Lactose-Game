@@ -96,7 +96,7 @@ namespace Lactose::Rest
 			FHttpResponsePtr Response,
 			bool bConnectedSuccessfully) override
 		{
-			auto Context = MakeShared<FResponseContext>();
+			auto Context = CreateSr<FResponseContext>();
 			Context->HttpRequest = Request;
 			Context->HttpResponse = Response;
 			Context->RequestTime = GetRequestTime();

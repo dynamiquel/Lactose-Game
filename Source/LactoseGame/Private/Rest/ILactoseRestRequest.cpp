@@ -99,7 +99,7 @@ void Lactose::Rest::IRequest::OnResponseReceived(
 	FHttpResponsePtr Response,
 	bool bConnectedSuccessfully)
 {
-	auto ResponseContext = MakeShared(FResponseContext
+	auto ResponseContext = CreateSr(FResponseContext
 	{
 		.HttpRequest = Request,
 		.HttpResponse = Response,

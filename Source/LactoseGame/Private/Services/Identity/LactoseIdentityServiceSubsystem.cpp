@@ -29,7 +29,11 @@ void ULactoseIdentityServiceSubsystem::Login()
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("users"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnUserLoggedIn);
 
-	auto GetUserRequest = MakeShared<FLactoseIdentityGetUserRequest>(TEXT("67026efde05aacf9d6c79af6"));
+	auto GetUserRequest = CreateSr(FLactoseIdentityGetUserRequest
+	{
+		.UserId = TEXT("67026efde05aacf9d6c79af6")
+	});
+	
 	LoggedInFuture = RestRequest->SetContentAsJsonAndSendAsync(GetUserRequest);
 
 	Log::Verbose(LogLactoseIdentityService,

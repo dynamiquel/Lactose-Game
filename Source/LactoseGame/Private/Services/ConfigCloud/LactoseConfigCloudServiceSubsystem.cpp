@@ -31,7 +31,7 @@ void FLactoseConfigCloudConfig::AddOrUpdateEntry(const FString& EntryId, const F
 	if (Sp<FLactoseConfigCloudEntry> ExistingEntry = FindEntry(EntryId))
 		ExistingEntry->UpdateValue(EntryValue);
 	else
-		Entries.Emplace(EntryId, MakeShared<FLactoseConfigCloudEntry>(EntryId, EntryValue));
+		Entries.Emplace(EntryId, CreateSr<FLactoseConfigCloudEntry>(EntryId, EntryValue));
 }
 
 void FLactoseConfigCloudConfig::DeleteEntry(const FString& EntryId)
@@ -70,7 +70,7 @@ void ULactoseConfigCloudServiceSubsystem::LoadConfig()
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("config/config"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnConfigLoaded);
 	
-	auto GetConfigRequest = MakeShared<FLactoseConfigCloudGetConfigRequest>();
+	auto GetConfigRequest = CreateSr<FLactoseConfigCloudGetConfigRequest>();
 	GetConfigFuture = RestRequest->SetContentAsJsonAndSendAsync(GetConfigRequest);
 
 	Log::Verbose(LogLactoseConfigService, TEXT("Sent a Get Config request "));
@@ -84,7 +84,7 @@ void ULactoseConfigCloudServiceSubsystem::OnConfigLoaded(Sr<FGetConfigRequest::F
 	}
 
 	if (!Config)
-		Config = MakeShared<FLactoseConfigCloudConfig>();
+		Config = CreateSr<FLactoseConfigCloudConfig>();
 
 	TSet<FString> ExistingEntries;
 	for (const TTuple<FString, Sr<FLactoseConfigCloudEntry>>& ExistingEntry : GetConfig()->GetEntries())

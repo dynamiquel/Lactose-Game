@@ -27,13 +27,19 @@ using Wp = TWeakPtr<T>;
 template<typename T>
 Sr<T> CreateSr()
 {
-	return Sr<T>();
+	return MakeShared<T>();
 }
 
 template<typename T>
 Sr<T> CreateSr(T&& TempType)
 {
 	return MakeShared(Forward<T>(TempType));
+}
+
+template<typename T>
+Sr<T> CreateSr(const T& SourceType)
+{
+	return MakeShared(SourceType);
 }
 
 template<typename T, typename... TArgs>

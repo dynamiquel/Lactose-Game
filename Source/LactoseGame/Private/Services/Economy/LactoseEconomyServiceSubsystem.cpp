@@ -51,7 +51,7 @@ void ULactoseEconomyServiceSubsystem::LoadAllItems()
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("items/query"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnAllItemsQueries);
 
-	auto QueryAllItemsRequest = MakeShared<FLactoseEconomyQueryItemsRequest>();
+	auto QueryAllItemsRequest = CreateSr<FLactoseEconomyQueryItemsRequest>();
 	QueryAllItemsFuture = RestRequest->SetContentAsJsonAndSendAsync(QueryAllItemsRequest);
 
 	Log::Verbose(LogLactoseEconomyService, TEXT("Sent a Query All Items request"));
@@ -71,7 +71,7 @@ TFuture<Sp<FGetEconomyUserItemsRequest::FResponseContext>> ULactoseEconomyServic
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("useritems"));
 
-	auto GetUserItemsRequest = MakeShared<FLactoseEconomyGetUserItemsRequest>();
+	auto GetUserItemsRequest = CreateSr<FLactoseEconomyGetUserItemsRequest>();
 	GetUserItemsRequest->UserId = UserId;
 	auto Future = RestRequest->SetContentAsJsonAndSendAsync(GetUserItemsRequest);
 
@@ -165,7 +165,7 @@ void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()
 				}
 				else
 				{					
-					ThisPinned->CurrentUserItems.Emplace(UserItem.ItemId, MakeShared<FLactoseEconomyUserItem>(UserItem));
+					ThisPinned->CurrentUserItems.Emplace(UserItem.ItemId, CreateSr(UserItem));
 
 					Log::VeryVerbose(LogLactoseEconomyService,
 						TEXT("Added Current User Item '%s' with Quantity: %d"),
@@ -228,7 +228,7 @@ TFuture<Sp<FGetEconomyUserShopItemsRequest::FResponseContext>> ULactoseEconomySe
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("shopitems/usershop"));
 
-	auto GetUserShopItemsRequest = MakeShared<FLactoseEconomyGetUserShopItemsRequest>(Request);
+	auto GetUserShopItemsRequest = CreateSr(Request);
 	auto Future = RestRequest->SetContentAsJsonAndSendAsync(GetUserShopItemsRequest);
 
 	Log::Verbose(LogLactoseEconomyService,
@@ -290,7 +290,7 @@ void ULactoseEconomyServiceSubsystem::OnAllItemsQueries(Sr<FQueryEconomyItemsReq
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("items"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnAllItemsRetrieved);
 
-	auto GetAllItemsRequest = MakeShared<FLactoseEconomyGetItemsRequest>();
+	auto GetAllItemsRequest = CreateSr<FLactoseEconomyGetItemsRequest>();
 	GetAllItemsRequest->ItemIds.Append(Context->ResponseContent->ItemIds);
 	GetAllItemsFuture = RestRequest->SetContentAsJsonAndSendAsync(GetAllItemsRequest);
 
@@ -312,7 +312,7 @@ void ULactoseEconomyServiceSubsystem::OnAllItemsRetrieved(Sr<FGetEconomyItemsReq
 	AllItems.Reset();
 
 	for (const FLactoseEconomyItem& Item : Context->ResponseContent->Items)
-		AllItems.Emplace(Item.Id, MakeShared<FLactoseEconomyItem>(Item));
+		AllItems.Emplace(Item.Id, CreateSr(Item));
 
 	Log::Verbose(LogLactoseEconomyService,
 		TEXT("Loaded All %d Items"),

@@ -16,7 +16,7 @@ ULactoseSimulationStatusTab::ULactoseSimulationStatusTab()
 void ULactoseSimulationStatusTab::Init()
 {
 	SimulationSubsystem = UGameInstance::GetSubsystem<ULactoseSimulationServiceSubsystem>(GetWorld()->GetGameInstance());
-	StatusSection = MakeShared<Lactose::Debug::Services::FStatusSection>(SimulationSubsystem);
+	StatusSection = CreateSr<Lactose::Debug::Services::FStatusSection>(SimulationSubsystem);
 }
 
 void ULactoseSimulationStatusTab::Render()

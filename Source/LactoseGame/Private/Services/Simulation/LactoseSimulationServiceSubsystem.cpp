@@ -24,7 +24,7 @@ Sr<const FLactoseSimulationUserCropInstance> FLactoseSimulationUserCrops::Update
 	auto FoundCropInstance = FindMutableCropInstance(NewCropInstanceData.Id);
 	if (!FoundCropInstance)
 	{
-		auto NewCropInstance = MakeShared<FLactoseSimulationUserCropInstance>(NewCropInstanceData);
+		auto NewCropInstance = CreateSr(NewCropInstanceData);
 		Database.Add(NewCropInstance);
 		return NewCropInstance;
 	}
@@ -138,7 +138,7 @@ void ULactoseSimulationServiceSubsystem::LoadAllCrops()
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("crops/query"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnAllCropsQueried);
 
-	auto QueryAllItemsRequest = MakeShared<FLactoseSimulationQueryCropsRequest>();
+	auto QueryAllItemsRequest = CreateSr<FLactoseSimulationQueryCropsRequest>();
 	QueryAllCropsFuture = RestRequest->SetContentAsJsonAndSendAsync(QueryAllItemsRequest);
 
 	Log::Verbose(LogLactoseSimulationService, TEXT("Sent a Query All Crops request"));
@@ -203,7 +203,7 @@ void ULactoseSimulationServiceSubsystem::LoadCurrentUserCrops()
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("usercrops"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnCurrentUserCropsRetrieved);
 
-	auto GetCurrentUserCropsRequest = MakeShared<FLactoseSimulationGetUserCropsRequest>();
+	auto GetCurrentUserCropsRequest = CreateSr<FLactoseSimulationGetUserCropsRequest>();
 	GetCurrentUserCropsRequest->UserId = CurrentUserInfo->Id;
 	GetCurrentUserCropsFuture = RestRequest->SetContentAsJsonAndSendAsync(GetCurrentUserCropsRequest);
 
@@ -235,7 +235,7 @@ void ULactoseSimulationServiceSubsystem::Simulate()
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("usercrops/simulate"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnCurrentUserCropsSimulated);
 
-	auto SimulateRequest = MakeShared<FLactoseSimulationSimulateUserCropsRequest>();
+	auto SimulateRequest = CreateSr<FLactoseSimulationSimulateUserCropsRequest>();
 	SimulateRequest->UserId = CurrentUserInfo->Id;
 	SimulateCurrentUserCropsFuture = RestRequest->SetContentAsJsonAndSendAsync(SimulateRequest);
 
@@ -260,7 +260,7 @@ void ULactoseSimulationServiceSubsystem::HarvestCropInstances(TConstArrayView<FS
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("usercrops/harvest"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnCurrentUserCropsHarvested);
 
-	auto Request = MakeShared<FLactoseSimulationHarvestUserCropsRequest>();
+	auto Request = CreateSr<FLactoseSimulationHarvestUserCropsRequest>();
 	Request->UserId = CurrentUserInfo->Id;
 	Request->CropInstanceIds.Append(CropInstanceIds);
 	RestRequest->SetContentAsJsonAndSendAsync(Request);
@@ -288,7 +288,7 @@ void ULactoseSimulationServiceSubsystem::SeedCropInstances(
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("usercrops/seed"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnCurrentUserCropsSeeded);
 
-	auto Request = MakeShared<FLactoseSimulationSeedUserCropsRequest>();
+	auto Request = CreateSr<FLactoseSimulationSeedUserCropsRequest>();
 	Request->UserId = CurrentUserInfo->Id;
 	Request->CropInstanceIds.Append(CropInstanceIds);
 	Request->CropId = CropId;
@@ -315,7 +315,7 @@ void ULactoseSimulationServiceSubsystem::FertiliseCropInstances(TConstArrayView<
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("usercrops/fertilise"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnCurrentUserCropsFertilised);
 
-	auto Request = MakeShared<FLactoseSimulationFertiliseUserCropsRequest>();
+	auto Request = CreateSr<FLactoseSimulationFertiliseUserCropsRequest>();
 	Request->UserId = CurrentUserInfo->Id;
 	Request->CropInstanceIds.Append(CropInstanceIds);
 	RestRequest->SetContentAsJsonAndSendAsync(Request);
@@ -341,7 +341,7 @@ void ULactoseSimulationServiceSubsystem::DestroyCropInstances(TConstArrayView<FS
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("usercrops/destroy"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnCurrentUserCropsDestroyed);
 
-	auto Request = MakeShared<FLactoseSimulationDeleteUserCropsRequest>();
+	auto Request = CreateSr<FLactoseSimulationDeleteUserCropsRequest>();
 	Request->UserId = CurrentUserInfo->Id;
 	Request->CropInstanceIds.Append(CropInstanceIds);
 	RestRequest->SetContentAsJsonAndSendAsync(Request);
@@ -372,7 +372,7 @@ void ULactoseSimulationServiceSubsystem::CreateCrop(const FString& CropId, const
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("usercrops/create"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnCurrentUserCropsCreated);
 
-	auto Request = MakeShared<FLactoseSimulationCreateUserCropRequest>();
+	auto Request = CreateSr<FLactoseSimulationCreateUserCropRequest>();
 	Request->UserId = CurrentUserInfo->Id;
 	Request->CropId = CropId;
 	Request->CropLocation = Location;
@@ -416,7 +416,7 @@ void ULactoseSimulationServiceSubsystem::OnAllCropsQueried(Sr<FQuerySimulationCr
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("crops"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnAllCropsRetrieved);
 
-	auto GetAllItemsRequest = MakeShared<FLactoseSimulationGetCropsRequest>();
+	auto GetAllItemsRequest = CreateSr<FLactoseSimulationGetCropsRequest>();
 	GetAllItemsRequest->CropIds.Append(Context->ResponseContent->CropIds);
 	GetAllCropsFuture = RestRequest->SetContentAsJsonAndSendAsync(GetAllItemsRequest);
 
@@ -444,16 +444,19 @@ void ULactoseSimulationServiceSubsystem::OnAllCropsRetrieved(Sr<FGetSimulationCr
 		}
 		else
 		{
-			AllCrops.Emplace(Crop.Id, MakeShared<FLactoseSimulationCrop>(Crop));
+			AllCrops.Emplace(Crop.Id, CreateSr(Crop));
 		}
 	}
 
 	if (!FindCrop(TEXT("")))
 	{
 		// Create the placeholder 'empty' crop to make the rest of the game happy.
-		auto EmptyCrop = MakeShared<FLactoseSimulationCrop>();
-		EmptyCrop->Name = TEXT("Empty");
-		EmptyCrop->Type = Lactose::Simulation::Types::Plot;
+		auto EmptyCrop = CreateSr(FLactoseSimulationCrop
+		{
+			.Type = Lactose::Simulation::Types::Plot,
+			.Name =  TEXT("Empty"),
+		});
+		
 		AllCrops.Add(TEXT(""), EmptyCrop);
 	}
 
@@ -476,7 +479,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsRetrieved(Sr<FGetSimu
 	PreviousUserSimulationTime = Context->ResponseContent->PreviousSimulationTime;
 
 	if (!CurrentUserCrops)
-		CurrentUserCrops = MakeShared<FLactoseSimulationUserCrops>();
+		CurrentUserCrops = CreateSr<FLactoseSimulationUserCrops>();
 
 	TSet<FString> ExistingCropInstanceIds;
 	for (const Sr<FLactoseSimulationUserCropInstance>& ExistingCrop : GetMutableCurrentUserCrops()->GetAllCropInstances())
@@ -500,8 +503,8 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsRetrieved(Sr<FGetSimu
 		// Anything in Existing Crops is a crop that no longer exists.
 		// Forward this to the Delete function.
 		
-		auto DestroyRequest = MakeShared<FDeleteSimulationUserCropsRequest::FResponseContext>();
-		DestroyRequest->ResponseContent = MakeShared<FLactoseSimulationDeleteUserCropsResponse>();
+		auto DestroyRequest = CreateSr<FDeleteSimulationUserCropsRequest::FResponseContext>();
+		DestroyRequest->ResponseContent = CreateSr<FLactoseSimulationDeleteUserCropsResponse>();
 		DestroyRequest->ResponseContent->DestroyedCropInstanceIds.Append(ExistingCropInstanceIds.Array());
 		OnCurrentUserCropsDestroyed(DestroyRequest);
 	}

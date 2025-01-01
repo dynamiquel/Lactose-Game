@@ -21,8 +21,21 @@ template <typename T, ESPMode InMode = ESPMode::ThreadSafe>
 	return TSharedRef<T, InMode>(new T(Forward<T>(TempType)));
 }
 
+template <typename T, ESPMode InMode = ESPMode::ThreadSafe>
+[[nodiscard]] TSharedRef<T, InMode> MakeShared(const T& SourceType)
+{
+	return TSharedRef<T, InMode>(new T(SourceType));
+}
+
 template <typename T>
 [[nodiscard]] TUniquePtr<T> MakeUnique(T&& TempType)
 {
 	return TUniquePtr<T>(new T(Forward<T>(TempType)));
 }
+
+template <typename T>
+[[nodiscard]] TUniquePtr<T> MakeUnique(const T& SourceType)
+{
+	return TUniquePtr<T>(new T(SourceType));
+}
+
