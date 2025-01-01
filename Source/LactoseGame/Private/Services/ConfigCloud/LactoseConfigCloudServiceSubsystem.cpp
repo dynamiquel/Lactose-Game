@@ -73,15 +73,14 @@ void ULactoseConfigCloudServiceSubsystem::LoadConfig()
 	auto GetConfigRequest = MakeShared<FLactoseConfigCloudGetConfigRequest>();
 	GetConfigFuture = RestRequest->SetContentAsJsonAndSendAsync(GetConfigRequest);
 
-	UE_LOG(LogLactoseConfigService, Verbose, TEXT("Sent a Get Config request "));
+	Log::Verbose(LogLactoseConfigService, TEXT("Sent a Get Config request "));
 }
 
 void ULactoseConfigCloudServiceSubsystem::OnConfigLoaded(Sr<FGetConfigRequest::FResponseContext> Context)
 {
 	if (!Context->ResponseContent)
 	{
-		UE_LOG(LogLactoseConfigService, Error, TEXT("Did not receive config"));
-		return;
+		return Log::Error(LogLactoseConfigService, TEXT("Did not receive config"));
 	}
 
 	if (!Config)
@@ -101,7 +100,9 @@ void ULactoseConfigCloudServiceSubsystem::OnConfigLoaded(Sr<FGetConfigRequest::F
 	for (const FString& LingeringEntry : ExistingEntries)
 		Config->DeleteEntry(LingeringEntry);
 
-	UE_LOG(LogLactoseConfigService, Verbose, TEXT("Config loaded with %d entries"), Config->GetEntries().Num());
+	Log::Verbose(LogLactoseConfigService,
+		TEXT("Config loaded with %d entries"),
+		Config->GetEntries().Num());
 
 	Lactose::Config::Events::OnConfigLoaded.Broadcast(*this, Config.ToSharedRef());
 }

@@ -126,7 +126,7 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 	if (PendingConditions.IsEmpty())
 	{
 		GetWorldTimerManager().ClearTimer(BeginPlayConditionCheckTimer);
-		UE_LOG(LogGameMode, Log, TEXT("Game started"));
+		Log::Log(LogGameMode, TEXT("Game started"));
 		Super::StartPlay();
 	}
 	else
@@ -134,8 +134,9 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 		FString PendingConditionsFlattened;
 		for (const FString& Condition : PendingConditions)
 			PendingConditionsFlattened.Appendf(TEXT("\n%s"), *Condition);
-			
-		UE_LOG(LogGameMode, Verbose, TEXT("Game not starting because preconditions have not been met:%s"),
+
+		Log::Verbose(LogGameMode,
+			TEXT("Game not starting because preconditions have not been met:%s"),
 			*PendingConditionsFlattened);
 	}
 }

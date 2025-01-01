@@ -68,7 +68,7 @@ void ALactoseHUD::PostInitializeComponents()
 	}
 	else
 	{
-		UE_LOG(LogLactose, Error, TEXT("HUD Player Menu Widget Class was not set"));
+		Log::Error(LogLactose, TEXT("HUD Player Menu Widget Class was not set"));
 	}
 
 	if (LIKELY(PlantCropWidgetClass))
@@ -77,7 +77,7 @@ void ALactoseHUD::PostInitializeComponents()
 	}
 	else
 	{
-		UE_LOG(LogLactose, Error, TEXT("HUD Plant Crop Widget Class was not set"));
+		Log::Error(LogLactose, TEXT("HUD Plant Crop Widget Class was not set"));
 	}
 
 	if (LIKELY(SeedCropWidgetClass))
@@ -86,7 +86,7 @@ void ALactoseHUD::PostInitializeComponents()
 	}
 	else
 	{
-		UE_LOG(LogLactose, Error, TEXT("HUD Seed Crop Widget Class was not set"));
+		Log::Error(LogLactose, TEXT("HUD Seed Crop Widget Class was not set"));
 	}
 
 	if (LIKELY(NoneToolWidgetClass))
@@ -95,7 +95,7 @@ void ALactoseHUD::PostInitializeComponents()
 	}
 	else
 	{
-		UE_LOG(LogLactose, Error, TEXT("HUD None Tool Widget Class was not set"));
+		Log::Error(LogLactose, TEXT("HUD None Tool Widget Class was not set"));
 	}
 
 	if (LIKELY(PlotToolWidgetClass))
@@ -104,7 +104,7 @@ void ALactoseHUD::PostInitializeComponents()
 	}
 	else
 	{
-		UE_LOG(LogLactose, Error, TEXT("HUD Plot Tool Widget Class was not set"));
+		Log::Error(LogLactose, TEXT("HUD Plot Tool Widget Class was not set"));
 	}
 
 	if (LIKELY(TreeToolWidgetClass))
@@ -113,7 +113,7 @@ void ALactoseHUD::PostInitializeComponents()
 	}
 	else
 	{
-		UE_LOG(LogLactose, Error, TEXT("HUD Tree Tool Widget Class was not set"));
+		Log::Error(LogLactose, TEXT("HUD Tree Tool Widget Class was not set"));
 	}
 
 	if (LIKELY(AnimalToolWidgetClass))
@@ -122,7 +122,7 @@ void ALactoseHUD::PostInitializeComponents()
 	}
 	else
 	{
-		UE_LOG(LogLactose, Error, TEXT("HUD Animal Tool Widget Class was not set"));
+		Log::Error(LogLactose, TEXT("HUD Animal Tool Widget Class was not set"));
 	}
 
 	auto* LactosePC = Cast<ALactoseGamePlayerController>(GetOwningPlayerController());

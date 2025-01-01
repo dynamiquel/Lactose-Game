@@ -37,8 +37,9 @@ void ULactoseInteractionComponent::Interact(AController* Instigator)
 		return;
 	
 	OnInteractionComplete.Broadcast(*this, Instigator);
-	
-	UE_LOG(LogLactose, Verbose, TEXT("Actor '%s' Interacted (%s)"),
+
+	Log::Verbose(LogLactose,
+		TEXT("Actor '%s' Interacted (%s)"),
 		*GetOwner()->GetActorNameOrLabel(),
 		*GetInteractionText());
 

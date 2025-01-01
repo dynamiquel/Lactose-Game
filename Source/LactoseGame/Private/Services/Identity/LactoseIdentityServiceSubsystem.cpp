@@ -19,7 +19,7 @@ void ULactoseIdentityServiceSubsystem::Login()
 {
 	if (GetLoggedInUserInfo().IsValid())
 	{
-		UE_LOG(LogLactoseIdentityService, Error, TEXT("Cannot log in as the User is already logged in"));
+		Log::Error(LogLactoseIdentityService, TEXT("Cannot log in as the User is already logged in"));
 		return;
 	}
 	
@@ -32,7 +32,7 @@ void ULactoseIdentityServiceSubsystem::Login()
 	auto GetUserRequest = MakeShared<FLactoseIdentityGetUserRequest>(TEXT("67026efde05aacf9d6c79af6"));
 	LoggedInFuture = RestRequest->SetContentAsJsonAndSendAsync(GetUserRequest);
 
-	UE_LOG(LogLactoseIdentityService, Verbose,
+	Log::Verbose(LogLactoseIdentityService,
 		TEXT("Sent a User Login Request for User ID '%s'"),
 		*GetUserRequest->UserId);
 }
@@ -41,7 +41,7 @@ void ULactoseIdentityServiceSubsystem::Logout()
 {
 	if (!GetLoggedInUserInfo().IsValid())
 	{
-		UE_LOG(LogLactoseIdentityService, Error, TEXT("Cannot log out the User as no User is logged in"));
+		Log::Error(LogLactoseIdentityService, TEXT("Cannot log out the User as no User is logged in"));
 		return;
 	}
 
@@ -84,9 +84,7 @@ void ULactoseIdentityServiceSubsystem::OnUserLoggedIn(Sr<FGetUserRequest::FRespo
 	
 	LoggedInUserInfo = Context->ResponseContent;
 
-	UE_LOG(
-		LogLactoseIdentityService,
-		Log,
+	Log::Log(LogLactoseIdentityService,
 		TEXT("User Logged In: ID '%s'; Name '%s'"),
 		*Context->ResponseContent->Id,
 		*Context->ResponseContent->DisplayName);

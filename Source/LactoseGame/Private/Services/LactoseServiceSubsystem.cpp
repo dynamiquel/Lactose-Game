@@ -31,10 +31,10 @@ void ULactoseServiceSubsystem::OnGetServiceInfoResponse(Sr<FGetServiceStatusRequ
 {
 	if (Context->ResponseContent)
 	{
-		UE_LOG(LogLactoseServices, Log, TEXT("Responsed: %s"), *Context->HttpResponse->GetContentAsString())
+		Log::Log(LogLactoseServices, TEXT("Responsed: %s"), *Context->HttpResponse->GetContentAsString());
 	}
 	else
 	{
-		UE_LOG(LogLactoseServices, Log, TEXT("Failed: %d"), Context->HttpResponse->GetResponseCode());
+		Log::Log(LogLactoseServices, TEXT("Failed: %s"), *Context->HttpResponse->GetContentAsString());
 	}
 }

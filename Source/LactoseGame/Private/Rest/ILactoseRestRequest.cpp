@@ -64,7 +64,8 @@ TFuture<Sp<Lactose::Rest::IRequest::FResponseContext>> Lactose::Rest::IRequest::
 {
 	if (HasBeenSent())
 	{
-		UE_LOG(LogLactoseRest, Error, TEXT("Attempted to send a Request to '%s' but it has already been sent"),
+		Log::Error(LogLactoseRest,
+			TEXT("Attempted to send a Request to '%s' but it has already been sent"),
 			*GetInternal()->GetURL());
 		
 		return {};
@@ -108,18 +109,22 @@ void Lactose::Rest::IRequest::OnResponseReceived(
 
 	if (!ResponseContext->IsSuccessful())
 	{
-		UE_LOG(LogLactoseRest, Error, TEXT("Received an unsuccessful response from %s. Code %d; Reason: %d"),
+		
+		Log::Error(LogLactoseRest,
+			TEXT("Received an unsuccessful response from %s. Code %d; Reason: %d"),
 			*Response->GetURL(),
 			Response->GetResponseCode(),
 			Response->GetFailureReason());
 	}
 	else
 	{
-		UE_LOG(LogLactoseRest, Verbose, TEXT("Received a succesful response from %s. Code: %d"),
+		Log::Verbose(LogLactoseRest,
+			TEXT("Received a succesful response from %s. Code: %d"),
 			*Response->GetURL(),
 			Response->GetResponseCode());
 				
-		UE_LOG(LogLactoseRest, VeryVerbose, TEXT("Content: %s"),
+		Log::Verbose(LogLactoseRest,
+			TEXT("Content: %s"),
 			*Response->GetContentAsString());
 	}
 	

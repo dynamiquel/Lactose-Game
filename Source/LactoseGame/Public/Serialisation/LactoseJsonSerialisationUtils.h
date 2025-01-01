@@ -15,7 +15,7 @@ namespace Lactose::Serialisation::Json
 		Sr<TJsonReader<UTF8CHAR>> JsonReader = TJsonReaderFactory<UTF8CHAR>::Create(&MemoryReader);
 		if (!FJsonSerializer::Deserialize(JsonReader, JsonObject) || !JsonObject)
 		{
-			UE_LOG(LogSerialization, Error, TEXT("Could not deserialise the given bytes into a JSON object"));
+			Log::Error(LogSerialization, TEXT("Could not deserialise the given bytes into a JSON object"));
 			return {};
 		}
 
@@ -36,7 +36,10 @@ namespace Lactose::Serialisation::Json
 
 		if (!bConvertedToStruct)
 		{
-			UE_LOG(LogSerialization, Error, TEXT("Could not deserialise the JSON object into an object. Reason: %s"), *FailReason.ToString());
+			Log::Error(LogSerialization,
+				TEXT("Could not deserialise the JSON object into an object. Reason: %s"),
+				*FailReason.ToString());
+			
 			return {};
 		}
 
@@ -58,7 +61,7 @@ namespace Lactose::Serialisation::Json
 		TSharedPtr<FJsonObject> JsonObject = FJsonObjectConverter::UStructToJsonObject(Object);
 		if (!JsonObject)
 		{
-			UE_LOG(LogSerialization, Error, TEXT("Could not serialise object into a JSON object"));
+			Log::Error(LogSerialization, TEXT("Could not serialise object into a JSON object"));
 			return {};
 		}
 
@@ -67,7 +70,7 @@ namespace Lactose::Serialisation::Json
 		TSharedRef<TJsonWriter<UTF8CHAR>> JsonWriter = TJsonWriterFactory<UTF8CHAR>::Create(&MemoryWriter);
 		if (!FJsonSerializer::Serialize(JsonObject.ToSharedRef(), JsonWriter))
 		{
-			UE_LOG(LogSerialization, Error, TEXT("Could not serialise JSON object into bytes"));
+			Log::Error(LogSerialization, TEXT("Could not serialise JSON object into bytes"));
 			return {};
 		}
 

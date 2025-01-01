@@ -54,7 +54,7 @@ void ULactoseEconomyServiceSubsystem::LoadAllItems()
 	auto QueryAllItemsRequest = MakeShared<FLactoseEconomyQueryItemsRequest>();
 	QueryAllItemsFuture = RestRequest->SetContentAsJsonAndSendAsync(QueryAllItemsRequest);
 
-	UE_LOG(LogLactoseEconomyService, Verbose, TEXT("Sent a Query All Items request"));
+	Log::Verbose(LogLactoseEconomyService, TEXT("Sent a Query All Items request"));
 }
 
 void ULactoseEconomyServiceSubsystem::ResetAllItems()
@@ -75,7 +75,8 @@ TFuture<Sp<FGetEconomyUserItemsRequest::FResponseContext>> ULactoseEconomyServic
 	GetUserItemsRequest->UserId = UserId;
 	auto Future = RestRequest->SetContentAsJsonAndSendAsync(GetUserItemsRequest);
 
-	UE_LOG(LogLactoseEconomyService, Verbose, TEXT("Sent a Get User Items request for User ID '%s'"),
+	Log::Verbose(LogLactoseEconomyService,
+		TEXT("Sent a Get User Items request for User ID '%s'"),
 		*UserId);
 
 	return Future;
@@ -119,8 +120,7 @@ void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()
 	const Sp<FLactoseIdentityGetUserResponse> CurrentUser = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUser)
 	{
-		UE_LOG(LogLactoseEconomyService, Error, TEXT("Cannot load current user's items because the user is not logged in"));
-		return;
+		return Log::Error(LogLactoseEconomyService, TEXT("Cannot load current user's items because the user is not logged in"));
 	}
 
 	GetCurrentUserItemsFuture = GetUserItems(CurrentUser->Id);
@@ -153,7 +153,8 @@ void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()
 				{
 					if (FoundExistingUserItem->Get().Quantity != UserItem.Quantity)
 					{
-						UE_LOG(LogLactoseEconomyService, VeryVerbose, TEXT("Updated Current User Item '%s' Quantity: %d -> %d"),
+						Log::VeryVerbose(LogLactoseEconomyService,
+							TEXT("Updated Current User Item '%s' Quantity: %d -> %d"),
 							*UserItem.ItemId,
 							FoundExistingUserItem->Get().Quantity,
 							UserItem.Quantity);
@@ -166,7 +167,8 @@ void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()
 				{					
 					ThisPinned->CurrentUserItems.Emplace(UserItem.ItemId, MakeShared<FLactoseEconomyUserItem>(UserItem));
 
-					UE_LOG(LogLactoseEconomyService, VeryVerbose, TEXT("Added Current User Item '%s' with Quantity: %d"),
+					Log::VeryVerbose(LogLactoseEconomyService,
+						TEXT("Added Current User Item '%s' with Quantity: %d"),
 						*UserItem.ItemId,
 						UserItem.Quantity);
 					
@@ -182,14 +184,16 @@ void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()
 			{
 				ThisPinned->CurrentUserItems.Remove(ExistingUserItemsId);
 
-				UE_LOG(LogLactoseEconomyService, VeryVerbose, TEXT("Removed Current User Item '%s"),
+				Log::VeryVerbose(LogLactoseEconomyService,
+					TEXT("Removed Current User Item '%s"),
 						*ExistingUserItemsId);
 				
 				bAnyChanged = true;
 			}
 		}
 		
-		UE_LOG(LogLactoseEconomyService, Verbose, TEXT("Loaded All %d User Items"),
+		Log::Verbose(LogLactoseEconomyService,
+			TEXT("Loaded All %d User Items"),
 			ThisPinned->CurrentUserItems.Num());
 
 		// Only call the event if anything actually changed, otherwise it's pointless.
@@ -227,7 +231,8 @@ TFuture<Sp<FGetEconomyUserShopItemsRequest::FResponseContext>> ULactoseEconomySe
 	auto GetUserShopItemsRequest = MakeShared<FLactoseEconomyGetUserShopItemsRequest>(Request);
 	auto Future = RestRequest->SetContentAsJsonAndSendAsync(GetUserShopItemsRequest);
 
-	UE_LOG(LogLactoseEconomyService, Verbose, TEXT("Sent a Get User Shop Items request for User ID '%s'"),
+	Log::Verbose(LogLactoseEconomyService,
+		TEXT("Sent a Get User Shop Items request for User ID '%s'"),
 		*Request.UserId);
 
 	return Future;
@@ -242,8 +247,7 @@ void ULactoseEconomyServiceSubsystem::PerformShopItemTrade(const FString& ShopIt
 	const Sp<FLactoseIdentityGetUserResponse> CurrentUser = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUser)
 	{
-		UE_LOG(LogLactoseEconomyService, Error, TEXT("Cannot load current user's items because the user is not logged in"));
-		return;
+		return Log::Error(LogLactoseEconomyService, TEXT("Cannot load current user's items because the user is not logged in"));
 	}
 	
 	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
@@ -260,7 +264,8 @@ void ULactoseEconomyServiceSubsystem::PerformShopItemTrade(const FString& ShopIt
 	
 	auto Future = RestRequest->SetContentAsJsonAndSendAsync(ShopItemTradeRequest);
 
-	UE_LOG(LogLactoseEconomyService, Verbose, TEXT("Sent a Shop Item Trade request for User ID '%s' and Shop Item ID '%s'"),
+	Log::Verbose(LogLactoseEconomyService,
+		TEXT("Sent a Shop Item Trade request for User ID '%s' and Shop Item ID '%s'"),
 		*CurrentUser->Id,
 		*ShopItemId);
 }
@@ -271,14 +276,12 @@ void ULactoseEconomyServiceSubsystem::OnAllItemsQueries(Sr<FQueryEconomyItemsReq
 
 	if (!Context->ResponseContent.IsValid())
 	{
-		UE_LOG(LogLactoseEconomyService, Error, TEXT("Query Items request responded with no content"))
-		return;
+		return Log::Error(LogLactoseEconomyService, TEXT("Query Items request responded with no content"));
 	}
 
 	if (Context->ResponseContent->ItemIds.IsEmpty())
 	{
-		UE_LOG(LogLactoseEconomyService, Error, TEXT("Query Items request responded with no items"));
-		return;
+		return Log::Error(LogLactoseEconomyService, TEXT("Query Items request responded with no items"));
 	}
 
 	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
@@ -291,7 +294,7 @@ void ULactoseEconomyServiceSubsystem::OnAllItemsQueries(Sr<FQueryEconomyItemsReq
 	GetAllItemsRequest->ItemIds.Append(Context->ResponseContent->ItemIds);
 	GetAllItemsFuture = RestRequest->SetContentAsJsonAndSendAsync(GetAllItemsRequest);
 
-	UE_LOG(LogLactoseEconomyService, Verbose, TEXT("Sent a Get All Items request"));
+	Log::Verbose(LogLactoseEconomyService, TEXT("Sent a Get All Items request"));
 }
 
 void ULactoseEconomyServiceSubsystem::OnAllItemsRetrieved(Sr<FGetEconomyItemsRequest::FResponseContext> Context)
@@ -303,8 +306,7 @@ void ULactoseEconomyServiceSubsystem::OnAllItemsRetrieved(Sr<FGetEconomyItemsReq
 
 	if (Context->ResponseContent->Items.IsEmpty())
 	{
-		UE_LOG(LogLactoseEconomyService, Error, TEXT("Get Items request responed with no items"));
-		return;
+		return Log::Error(LogLactoseEconomyService, TEXT("Get Items request responed with no items"));
 	}
 
 	AllItems.Reset();
@@ -312,7 +314,8 @@ void ULactoseEconomyServiceSubsystem::OnAllItemsRetrieved(Sr<FGetEconomyItemsReq
 	for (const FLactoseEconomyItem& Item : Context->ResponseContent->Items)
 		AllItems.Emplace(Item.Id, MakeShared<FLactoseEconomyItem>(Item));
 
-	UE_LOG(LogLactoseEconomyService, Verbose, TEXT("Loaded All %d Items"),
+	Log::Verbose(LogLactoseEconomyService,
+		TEXT("Loaded All %d Items"),
 		AllItems.Num());
 
 	Lactose::Economy::Events::OnAllItemsLoaded.Broadcast(*this);

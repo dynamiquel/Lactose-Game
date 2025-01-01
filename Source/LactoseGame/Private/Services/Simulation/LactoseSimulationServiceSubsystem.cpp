@@ -141,7 +141,7 @@ void ULactoseSimulationServiceSubsystem::LoadAllCrops()
 	auto QueryAllItemsRequest = MakeShared<FLactoseSimulationQueryCropsRequest>();
 	QueryAllCropsFuture = RestRequest->SetContentAsJsonAndSendAsync(QueryAllItemsRequest);
 
-	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Sent a Query All Crops request"));
+	Log::Verbose(LogLactoseSimulationService, TEXT("Sent a Query All Crops request"));
 }
 
 ELactoseSimulationUserCropsStatus ULactoseSimulationServiceSubsystem::GetCurrentUserCropsStatus() const
@@ -194,8 +194,7 @@ void ULactoseSimulationServiceSubsystem::LoadCurrentUserCrops()
 	auto CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
-		UE_LOG(LogLactoseSimulationService, Error, TEXT("Cannot load current user's crops because the user is not logged in"));
-		return;
+		return Log::Error(LogLactoseSimulationService, TEXT("Cannot load current user's crops because the user is not logged in"));
 	}
 	
 	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
@@ -208,7 +207,7 @@ void ULactoseSimulationServiceSubsystem::LoadCurrentUserCrops()
 	GetCurrentUserCropsRequest->UserId = CurrentUserInfo->Id;
 	GetCurrentUserCropsFuture = RestRequest->SetContentAsJsonAndSendAsync(GetCurrentUserCropsRequest);
 
-	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Sent a Get User Crops request"));
+	Log::Verbose(LogLactoseSimulationService, TEXT("Sent a Get User Crops request"));
 
 	if (!SimulateTicker.IsValid())
 		EnableSimulateTicker();
@@ -227,8 +226,7 @@ void ULactoseSimulationServiceSubsystem::Simulate()
 	auto CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
-		UE_LOG(LogLactoseSimulationService, Error, TEXT("Cannot simulate current user's crops because the user is not logged in"));
-		return;
+		return Log::Error(LogLactoseSimulationService, TEXT("Cannot simulate current user's crops because the user is not logged in"));
 	}
 	
 	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
@@ -241,7 +239,7 @@ void ULactoseSimulationServiceSubsystem::Simulate()
 	SimulateRequest->UserId = CurrentUserInfo->Id;
 	SimulateCurrentUserCropsFuture = RestRequest->SetContentAsJsonAndSendAsync(SimulateRequest);
 
-	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Sent a Simulate User Crops request"));
+	Log::Verbose(LogLactoseSimulationService, TEXT("Sent a Simulate User Crops request"));
 }
 
 void ULactoseSimulationServiceSubsystem::HarvestCropInstances(TConstArrayView<FString> CropInstanceIds)
@@ -253,8 +251,7 @@ void ULactoseSimulationServiceSubsystem::HarvestCropInstances(TConstArrayView<FS
 	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
-		UE_LOG(LogLactoseSimulationService, Error, TEXT("Cannot harvest current user's crops because the user is not logged in"));
-		return;
+		return Log::Error(LogLactoseSimulationService, TEXT("Cannot harvest current user's crops because the user is not logged in"));
 	}
 
 	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
@@ -268,7 +265,7 @@ void ULactoseSimulationServiceSubsystem::HarvestCropInstances(TConstArrayView<FS
 	Request->CropInstanceIds.Append(CropInstanceIds);
 	RestRequest->SetContentAsJsonAndSendAsync(Request);
 
-	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Sent a Harvest User Crops request"));
+	Log::Verbose(LogLactoseSimulationService, TEXT("Sent a Harvest User Crops request"));
 }
 
 void ULactoseSimulationServiceSubsystem::SeedCropInstances(
@@ -282,8 +279,7 @@ void ULactoseSimulationServiceSubsystem::SeedCropInstances(
 	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
-		UE_LOG(LogLactoseSimulationService, Error, TEXT("Cannot seed current user's crops because the user is not logged in"));
-		return;
+		return Log::Error(LogLactoseSimulationService, TEXT("Cannot seed current user's crops because the user is not logged in"));
 	}
 
 	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
@@ -298,7 +294,7 @@ void ULactoseSimulationServiceSubsystem::SeedCropInstances(
 	Request->CropId = CropId;
 	RestRequest->SetContentAsJsonAndSendAsync(Request);
 
-	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Sent a Seed User Crops request"));
+	Log::Verbose(LogLactoseSimulationService, TEXT("Sent a Seed User Crops request"));
 }
 
 void ULactoseSimulationServiceSubsystem::FertiliseCropInstances(TConstArrayView<FString> CropInstanceIds)
@@ -310,8 +306,7 @@ void ULactoseSimulationServiceSubsystem::FertiliseCropInstances(TConstArrayView<
 	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
-		UE_LOG(LogLactoseSimulationService, Error, TEXT("Cannot fertilise current user's crops because the user is not logged in"));
-		return;
+		return Log::Error(LogLactoseSimulationService, TEXT("Cannot fertilise current user's crops because the user is not logged in"));
 	}
 
 	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
@@ -325,7 +320,7 @@ void ULactoseSimulationServiceSubsystem::FertiliseCropInstances(TConstArrayView<
 	Request->CropInstanceIds.Append(CropInstanceIds);
 	RestRequest->SetContentAsJsonAndSendAsync(Request);
 
-	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Sent a Fertilise User Crops request"));
+	Log::Verbose(LogLactoseSimulationService, TEXT("Sent a Fertilise User Crops request"));
 }
 
 void ULactoseSimulationServiceSubsystem::DestroyCropInstances(TConstArrayView<FString> CropInstanceIds)
@@ -337,8 +332,7 @@ void ULactoseSimulationServiceSubsystem::DestroyCropInstances(TConstArrayView<FS
 	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
-		UE_LOG(LogLactoseSimulationService, Error, TEXT("Cannot destroy current user's crops because the user is not logged in"));
-		return;
+		return Log::Error(LogLactoseSimulationService, TEXT("Cannot destroy current user's crops because the user is not logged in"));
 	}
 
 	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
@@ -352,7 +346,7 @@ void ULactoseSimulationServiceSubsystem::DestroyCropInstances(TConstArrayView<FS
 	Request->CropInstanceIds.Append(CropInstanceIds);
 	RestRequest->SetContentAsJsonAndSendAsync(Request);
 
-	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Sent a Destroy User Crops request"));
+	Log::Verbose(LogLactoseSimulationService, TEXT("Sent a Destroy User Crops request"));
 }
 
 void ULactoseSimulationServiceSubsystem::CreateEmptyPlot(const FVector& Location, const FRotator& Rotation)
@@ -369,8 +363,7 @@ void ULactoseSimulationServiceSubsystem::CreateCrop(const FString& CropId, const
 	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
-		UE_LOG(LogLactoseSimulationService, Error, TEXT("Cannot destroy current user's crops because the user is not logged in"));
-		return;
+		return Log::Error(LogLactoseSimulationService, TEXT("Cannot destroy current user's crops because the user is not logged in"));
 	}
 
 	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
@@ -386,7 +379,7 @@ void ULactoseSimulationServiceSubsystem::CreateCrop(const FString& CropId, const
 	Request->CropRotation = FVector(Rotation.Pitch, Rotation.Yaw, Rotation.Roll);
 	RestRequest->SetContentAsJsonAndSendAsync(Request);
 
-	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Sent a Create User Crop request"));
+	Log::Verbose(LogLactoseSimulationService, TEXT("Sent a Create User Crop request"));
 }
 
 void ULactoseSimulationServiceSubsystem::EnableSimulateTicker()
@@ -414,8 +407,7 @@ void ULactoseSimulationServiceSubsystem::OnAllCropsQueried(Sr<FQuerySimulationCr
 
 	if (Context->ResponseContent->CropIds.IsEmpty())
 	{
-		UE_LOG(LogLactoseSimulationService, Error, TEXT("Query Crops request responed with no items"));
-		return;
+		return Log::Error(LogLactoseSimulationService, TEXT("Query Crops request responed with no items"));
 	}
 
 	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
@@ -428,7 +420,7 @@ void ULactoseSimulationServiceSubsystem::OnAllCropsQueried(Sr<FQuerySimulationCr
 	GetAllItemsRequest->CropIds.Append(Context->ResponseContent->CropIds);
 	GetAllCropsFuture = RestRequest->SetContentAsJsonAndSendAsync(GetAllItemsRequest);
 
-	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Sent a Get All Crops request"));
+	Log::Verbose(LogLactoseSimulationService, TEXT("Sent a Get All Crops request"));
 }
 
 void ULactoseSimulationServiceSubsystem::OnAllCropsRetrieved(Sr<FGetSimulationCropsRequest::FResponseContext> Context)
@@ -440,8 +432,7 @@ void ULactoseSimulationServiceSubsystem::OnAllCropsRetrieved(Sr<FGetSimulationCr
 
 	if (Context->ResponseContent->Crops.IsEmpty())
 	{
-		UE_LOG(LogLactoseSimulationService, Error, TEXT("Get Crops request responed with no items"));
-		return;
+		return Log::Error(LogLactoseSimulationService, TEXT("Get Crops request responed with no items"));
 	}
 
 	// Add or update crops.
@@ -466,7 +457,8 @@ void ULactoseSimulationServiceSubsystem::OnAllCropsRetrieved(Sr<FGetSimulationCr
 		AllCrops.Add(TEXT(""), EmptyCrop);
 	}
 
-	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Added or updated %d Crops"),
+	Log::Verbose(LogLactoseSimulationService,
+		TEXT("Added or updated %d Crops"),
 		Context->ResponseContent->Crops.Num());
 
 	Lactose::Simulation::Events::OnAllCropsLoaded.Broadcast(*this);
@@ -524,7 +516,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSimulated(Sr<FSimulat
 	if (!Context->ResponseContent.IsValid())
 		return;
 	
-	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("User Crops have been simulated"));
+	Log::Verbose(LogLactoseSimulationService, TEXT("User Crops have been simulated"));
 
 	Lactose::Simulation::Events::OnCurrentUserCropsSimulated.Broadcast(
 		*this,
@@ -542,14 +534,14 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsHarvested(Sr<FHarvest
 
 	if (Context->ResponseContent->HarvestedCropInstanceIds.IsEmpty())
 	{
-		UE_LOG(LogLactoseSimulationService, Warning, TEXT("No User Crops were harvested"));
-		return;
+		return Log::Warning(LogLactoseSimulationService, TEXT("No User Crops were harvested"));
 	}
 
 	TArray<Sr<FLactoseSimulationUserCropInstance>> HarvestedCropInstances =
 		GetMutableCurrentUserCrops()->FindMutableCropInstances(Context->ResponseContent->HarvestedCropInstanceIds);
 
-	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Harvested %d User Crops"),
+	Log::Verbose(LogLactoseSimulationService,
+		TEXT("Harvested %d User Crops"),
 		Context->ResponseContent->HarvestedCropInstanceIds.Num());
 
 	Lactose::Simulation::Events::OnCurrentUserCropsHarvested.Broadcast(
@@ -590,14 +582,14 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSeeded(Sr<FSeedSimula
 
 	if (Context->ResponseContent->SeededCropInstanceIds.IsEmpty())
 	{
-		UE_LOG(LogLactoseSimulationService, Warning, TEXT("No User Crops were seeded"));
-		return;
+		return Log::Warning(LogLactoseSimulationService, TEXT("No User Crops were seeded"));
 	}
 
 	const TArray<Sr<FLactoseSimulationUserCropInstance>> SeededCropInstances =
 		GetMutableCurrentUserCrops()->FindMutableCropInstances(Context->ResponseContent->SeededCropInstanceIds);
 
-	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Seeded %d User Crops"),
+	Log::Verbose(LogLactoseSimulationService,
+		TEXT("Seeded %d User Crops"),
 		Context->ResponseContent->SeededCropInstanceIds.Num());
 
 	Lactose::Simulation::Events::OnCurrentUserCropsSeeded.Broadcast(
@@ -630,14 +622,14 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsFertilised(Sr<FFertil
 
 	if (Context->ResponseContent->FertilisedCropInstanceIds.IsEmpty())
 	{
-		UE_LOG(LogLactoseSimulationService, Warning, TEXT("No User Crops were fertilised"));
-		return;
+		return Log::Warning(LogLactoseSimulationService, TEXT("No User Crops were fertilised"));
 	}
 
 	const TArray<Sr<const FLactoseSimulationUserCropInstance>> FertilisedCropInstances =
 		GetMutableCurrentUserCrops()->FindCropInstances(Context->ResponseContent->FertilisedCropInstanceIds);
 
-	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Fertilised %d User Crops"),
+	Log::Verbose(LogLactoseSimulationService,
+		TEXT("Fertilised %d User Crops"),
 		Context->ResponseContent->FertilisedCropInstanceIds.Num());
 
 	Lactose::Simulation::Events::OnCurrentUserCropsFertilised.Broadcast(*this, FertilisedCropInstances);
@@ -653,8 +645,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsDestroyed(Sr<FDeleteS
 
 	if (Context->ResponseContent->DestroyedCropInstanceIds.IsEmpty())
 	{
-		UE_LOG(LogLactoseSimulationService, Warning, TEXT("No User Crops were destroyed"));
-		return;
+		return Log::Warning(LogLactoseSimulationService, TEXT("No User Crops were destroyed"));
 	}
 	
 	const TArray<Sr<const FLactoseSimulationUserCropInstance>> DestroyedCropInstances =
@@ -666,7 +657,8 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsDestroyed(Sr<FDeleteS
 		DestroyedCropInstance->OnDestroyed.Broadcast(DestroyedCropInstance);
 	}
 
-	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Deleted %d User Crops"),
+	Log::Verbose(LogLactoseSimulationService,
+		TEXT("Deleted %d User Crops"),
 		DestroyedCropInstances.Num());
 
 	Lactose::Simulation::Events::OnCurrentUserCropsDestroyed.Broadcast(*this, DestroyedCropInstances);
@@ -680,8 +672,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsCreated(
 
 	if (Context->ResponseContent->UserCropInstanceId.IsEmpty())
 	{
-		UE_LOG(LogLactoseSimulationService, Warning, TEXT("No User Crop was created"));
-		return;
+		return Log::Warning(LogLactoseSimulationService, TEXT("No User Crop was created"));
 	}
 	
 	Lactose::Simulation::Events::OnCurrentUserCropsCreated.Broadcast(*this, {});

@@ -10,7 +10,8 @@ bool ULactoseRestSubsystem::SendRequest(const Sr<Lactose::Rest::IRequest>& Reque
 		FScopeLock Lock(&PendingRequestsLock);
 		PendingRequests.Add(Request);
 
-		UE_LOG(LogLactoseRest, Verbose, TEXT("Sent Request to '%s'. Content:\n%s"),
+		Log::Verbose(LogLactoseRest
+			, TEXT("Sent Request to '%s'. Content:\n%s"),
 			*Request->GetInternal()->GetURL(),
 			*Request->GetContentString());
 		

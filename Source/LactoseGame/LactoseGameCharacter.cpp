@@ -115,8 +115,9 @@ void ALactoseGameCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
 	for (ULactoseInteractionComponent* FoundInteractionComp : FoundInteractionComps)
 	{
 		OverlappedInteractions.AddUnique(FoundInteractionComp);
-		
-		UE_LOG(LogLactose, Verbose, TEXT("Player is overlapping with Interaction for Actor '%s'"),
+
+		Log::Verbose(LogLactose,
+			TEXT("Player is overlapping with Interaction for Actor '%s'"),
 			*FoundInteractionComp->GetOwner()->GetActorNameOrLabel());
 	}
 }
@@ -132,7 +133,8 @@ void ALactoseGameCharacter::NotifyActorEndOverlap(AActor* OtherActor)
 		{
 			OverlappedInteractions.Remove(FoundInteractionComp);
 
-			UE_LOG(LogLactose, Verbose, TEXT("Player is no longer overlapping with Interaction for Actor '%s'"),
+			Log::Verbose(LogLactose,
+				TEXT("Player is no longer overlapping with Interaction for Actor '%s'"),
 				*FoundInteractionComp->GetOwner()->GetActorNameOrLabel());
 		}
 	}
@@ -297,14 +299,16 @@ void ALactoseGameCharacter::SetClosestInteraction(const UInputAction& InputActio
 	
 	if (InteractionComponent)
 	{
-		UE_LOG(LogLactose, Verbose, TEXT("Player's closest Interaction for '%s' is for Actor '%s' (%s)"),
+		Log::Verbose(LogLactose,
+			TEXT("Player's closest Interaction for '%s' is for Actor '%s' (%s)"),
 			*InputAction.GetName(),
 			*InteractionComponent->GetOwner()->GetActorNameOrLabel(),
 			*InteractionComponent->GetInteractionText());
 	}
 	else
 	{
-		UE_LOG(LogLactose, Verbose, TEXT("Player is no longer interacting with anything for '%s'"),
+		Log::Verbose(LogLactose,
+			TEXT("Player is no longer interacting with anything for '%s'"),
 			*InputAction.GetName());
 	}
 }
@@ -419,7 +423,8 @@ void ALactoseGameCharacter::SetHoldableItemState(ELactoseCharacterItemState NewS
 	const ELactoseCharacterItemState OldState = CurrentItemState;
 	CurrentItemState = NewState;
 
-	UE_LOG(LogLactose, Log, TEXT("Character's Item State: %s -> %s"),
+	Log::Log(LogLactose,
+		TEXT("Character's Item State: %s -> %s"),
 		*UEnum::GetValueAsString(CurrentItemState),
 		*UEnum::GetValueAsString(OldState));
 

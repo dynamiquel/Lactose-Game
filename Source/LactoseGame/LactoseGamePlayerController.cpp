@@ -86,7 +86,9 @@ void ALactoseGamePlayerController::OpenMenu(const FGameplayTag& MenuTag)
 	SetInputMode(FInputModeGameAndUI());
 	SetShowMouseCursor(true);
 
-	UE_LOG(LogLactose, Log, TEXT("Menu Opened: '%s'"), *OpenedMenuTag->ToString());
+	Log::Log(LogLactose,
+		TEXT("Menu Opened: '%s'"),
+		*OpenedMenuTag->ToString());
 }
 
 void ALactoseGamePlayerController::CloseActiveMenu()
@@ -108,7 +110,9 @@ void ALactoseGamePlayerController::CloseActiveMenu()
 	SetInputMode(FInputModeGameOnly());
 	SetShowMouseCursor(false);
 
-	UE_LOG(LogLactose, Log, TEXT("Menu Closed: '%s'"), *CopiedTag.ToString());
+	Log::Log(LogLactose,
+		TEXT("Menu Closed: '%s'"),
+		*CopiedTag.ToString());
 }
 
 bool ALactoseGamePlayerController::GetTreeCropIdToPlant(FString& CropId) const
@@ -130,14 +134,16 @@ void ALactoseGamePlayerController::SetTreeCropIdToPlant(const FString& CropId)
 {
 	TreeCropIdToPlant = CropId;
 
-	UE_LOG(LogLactose, Log, TEXT("Player has selected Tree Crop '%s' to plant"), *CropId);
+	Log::Log(LogLactose,
+		TEXT("Player has selected Tree Crop '%s' to plant"),
+		*CropId);
 }
 
 void ALactoseGamePlayerController::ResetTreeCropIdToPlant()
 {
 	TreeCropIdToPlant.Reset();
 
-	UE_LOG(LogLactose, Log, TEXT("Player has unselected Tree to plant"));
+	Log::Log(LogLactose, TEXT("Player has unselected Tree to plant"));
 }
 
 void ALactoseGamePlayerController::BeginPlay()
