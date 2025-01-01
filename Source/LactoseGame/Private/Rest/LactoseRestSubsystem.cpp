@@ -3,7 +3,7 @@
 #include "Rest/LactoseRestLog.h"
 
 
-bool ULactoseRestSubsystem::SendRequest(const TSharedRef<Lactose::Rest::IRequest>& Request)
+bool ULactoseRestSubsystem::SendRequest(const Sr<Lactose::Rest::IRequest>& Request)
 {
 	if (Request->GetInternal()->ProcessRequest())
 	{
@@ -20,7 +20,7 @@ bool ULactoseRestSubsystem::SendRequest(const TSharedRef<Lactose::Rest::IRequest
 	return false;
 }
 
-void ULactoseRestSubsystem::RemoveRequest(const TSharedRef<Lactose::Rest::IRequest>& Request)
+void ULactoseRestSubsystem::RemoveRequest(const Sr<Lactose::Rest::IRequest>& Request)
 {
 	FScopeLock Lock(&PendingRequestsLock);
 	PendingRequests.Remove(Request);

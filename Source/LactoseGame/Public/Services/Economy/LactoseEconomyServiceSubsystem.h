@@ -42,18 +42,18 @@ class LACTOSEGAME_API ULactoseEconomyServiceSubsystem : public ULactoseServiceSu
 	// End override ULactoseServiceSubsystem
 	
 public:
-	const TMap<FString, TSharedRef<FLactoseEconomyItem>>& GetAllItems() const { return AllItems; }
-	TSharedPtr<const FLactoseEconomyItem> GetItem(const FString& ItemId) const;
+	const TMap<FString, Sr<FLactoseEconomyItem>>& GetAllItems() const { return AllItems; }
+	Sp<const FLactoseEconomyItem> GetItem(const FString& ItemId) const;
 	ELactoseEconomyAllItemsStatus GetAllItemsStatus() const;
 
 	void LoadAllItems();
 	void ResetAllItems();
 
-	TFuture<TSharedPtr<FGetEconomyUserItemsRequest::FResponseContext>> GetUserItems(const FString& UserId) const;
-	const TMap<FString, TSharedRef<FLactoseEconomyUserItem>>& GetCurrentUserItems() const;
+	TFuture<Sp<FGetEconomyUserItemsRequest::FResponseContext>> GetUserItems(const FString& UserId) const;
+	const TMap<FString, Sr<FLactoseEconomyUserItem>>& GetCurrentUserItems() const;
 	ELactoseEconomyUserItemsStatus GetCurrentUserItemsStatus() const;
 
-	TSharedPtr<const FLactoseEconomyUserItem> FindCurrentUserItem(const FString& ItemId) const;
+	Sp<const FLactoseEconomyUserItem> FindCurrentUserItem(const FString& ItemId) const;
 	int32 GetCurrentUserItemQuantity(const FString& ItemId) const;
 
 	void LoadCurrentUserItems();
@@ -62,16 +62,16 @@ public:
 	void DisableGetCurrentUserItemsTicker();
 	bool IsAutoGetCurrentUserItemsTicking() const { return GetUserItemsTicker.IsValid(); }
 
-	TFuture<TSharedPtr<FGetEconomyUserShopItemsRequest::FResponseContext>> GetUserShopItems(const FLactoseEconomyGetUserShopItemsRequest& Request) const;
+	TFuture<Sp<FGetEconomyUserShopItemsRequest::FResponseContext>> GetUserShopItems(const FLactoseEconomyGetUserShopItemsRequest& Request) const;
 	void PerformShopItemTrade(const FString& ShopItemId, int32 Quantity = 1);
 	
 protected:
-	void OnAllItemsQueries(TSharedRef<FQueryEconomyItemsRequest::FResponseContext> Context);
-	void OnAllItemsRetrieved(TSharedRef<FGetEconomyItemsRequest::FResponseContext> Context);
+	void OnAllItemsQueries(Sr<FQueryEconomyItemsRequest::FResponseContext> Context);
+	void OnAllItemsRetrieved(Sr<FGetEconomyItemsRequest::FResponseContext> Context);
 
 	void OnUserLoggedIn(
 		const ULactoseIdentityServiceSubsystem& Sender,
-		const TSharedRef<FLactoseIdentityGetUserResponse>& User);
+		const Sr<FLactoseIdentityGetUserResponse>& User);
 
 	void OnUserLoggedOut(const ULactoseIdentityServiceSubsystem& Sender);
 
@@ -84,12 +84,12 @@ private:
 	UPROPERTY(EditDefaultsOnly, Config)
 	float GetUserItemsTickInterval = 2.f;
 	
-	TFuture<TSharedPtr<FQueryEconomyItemsRequest::FResponseContext>> QueryAllItemsFuture;
-	TFuture<TSharedPtr<FGetEconomyItemsRequest::FResponseContext>> GetAllItemsFuture;
-	TMap<FString, TSharedRef<FLactoseEconomyItem>> AllItems;
+	TFuture<Sp<FQueryEconomyItemsRequest::FResponseContext>> QueryAllItemsFuture;
+	TFuture<Sp<FGetEconomyItemsRequest::FResponseContext>> GetAllItemsFuture;
+	TMap<FString, Sr<FLactoseEconomyItem>> AllItems;
 
-	TFuture<TSharedPtr<FGetEconomyUserItemsRequest::FResponseContext>> GetCurrentUserItemsFuture;
-	TMap<FString, TSharedRef<FLactoseEconomyUserItem>> CurrentUserItems;
+	TFuture<Sp<FGetEconomyUserItemsRequest::FResponseContext>> GetCurrentUserItemsFuture;
+	TMap<FString, Sr<FLactoseEconomyUserItem>> CurrentUserItems;
 
 	FTimerHandle GetUserItemsTicker;
 };

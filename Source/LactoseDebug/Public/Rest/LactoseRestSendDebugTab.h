@@ -81,7 +81,7 @@ private:
 
 	void SaveRequests();
 	
-	void OnResponseReceived(TSharedRef<Lactose::Rest::IRequest::FResponseContext> Context);
+	void OnResponseReceived(Sr<Lactose::Rest::IRequest::FResponseContext> Context);
 	
 private:
 	inline static std::array<const char*, 7> Verbs = { "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD" };

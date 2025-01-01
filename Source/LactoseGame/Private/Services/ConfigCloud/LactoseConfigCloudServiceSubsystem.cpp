@@ -15,20 +15,20 @@ void FLactoseConfigCloudEntry::UpdateValue(const FString& NewValue)
 	CachedStruct.Reset();
 }
 
-TSharedPtr<const FLactoseConfigCloudEntry> FLactoseConfigCloudConfig::FindEntry(const FString& EntryId) const
+Sp<const FLactoseConfigCloudEntry> FLactoseConfigCloudConfig::FindEntry(const FString& EntryId) const
 {
 	return const_cast<FLactoseConfigCloudConfig*>(this)->FindEntry(EntryId);
 }
 
-TSharedPtr<FLactoseConfigCloudEntry> FLactoseConfigCloudConfig::FindEntry(const FString& EntryId)
+Sp<FLactoseConfigCloudEntry> FLactoseConfigCloudConfig::FindEntry(const FString& EntryId)
 {
-	const TSharedRef<FLactoseConfigCloudEntry>* FoundEntry = GetEntries().Find(EntryId);
+	const Sr<FLactoseConfigCloudEntry>* FoundEntry = GetEntries().Find(EntryId);
 	return FoundEntry ? FoundEntry->ToSharedPtr() : nullptr;
 }
 
 void FLactoseConfigCloudConfig::AddOrUpdateEntry(const FString& EntryId, const FString& EntryValue)
 {
-	if (TSharedPtr<FLactoseConfigCloudEntry> ExistingEntry = FindEntry(EntryId))
+	if (Sp<FLactoseConfigCloudEntry> ExistingEntry = FindEntry(EntryId))
 		ExistingEntry->UpdateValue(EntryValue);
 	else
 		Entries.Emplace(EntryId, MakeShared<FLactoseConfigCloudEntry>(EntryId, EntryValue));
@@ -76,7 +76,7 @@ void ULactoseConfigCloudServiceSubsystem::LoadConfig()
 	UE_LOG(LogLactoseConfigService, Verbose, TEXT("Sent a Get Config request "));
 }
 
-void ULactoseConfigCloudServiceSubsystem::OnConfigLoaded(TSharedRef<FGetConfigRequest::FResponseContext> Context)
+void ULactoseConfigCloudServiceSubsystem::OnConfigLoaded(Sr<FGetConfigRequest::FResponseContext> Context)
 {
 	if (!Context->ResponseContent)
 	{
@@ -88,7 +88,7 @@ void ULactoseConfigCloudServiceSubsystem::OnConfigLoaded(TSharedRef<FGetConfigRe
 		Config = MakeShared<FLactoseConfigCloudConfig>();
 
 	TSet<FString> ExistingEntries;
-	for (const TTuple<FString, TSharedRef<FLactoseConfigCloudEntry>>& ExistingEntry : GetConfig()->GetEntries())
+	for (const TTuple<FString, Sr<FLactoseConfigCloudEntry>>& ExistingEntry : GetConfig()->GetEntries())
 		ExistingEntries.Add(ExistingEntry.Key);
 
 	for (const TTuple<FString, FString>& Entry : Context->ResponseContent->Entries)
@@ -108,7 +108,7 @@ void ULactoseConfigCloudServiceSubsystem::OnConfigLoaded(TSharedRef<FGetConfigRe
 
 void ULactoseConfigCloudServiceSubsystem::OnUserLoggedIn(
 	const ULactoseIdentityServiceSubsystem& Sender,
-	const TSharedRef<FLactoseIdentityGetUserResponse>& User)
+	const Sr<FLactoseIdentityGetUserResponse>& User)
 {
 	if (bAutoRetrieveConfig)
 		LoadConfig();

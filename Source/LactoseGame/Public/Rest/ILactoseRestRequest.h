@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Interfaces/IHttpRequest.h"
+#include "Simp.h"
 
 class ULactoseRestSubsystem;
 
@@ -45,9 +46,9 @@ namespace Lactose::Rest
 		IRequest& SetUrl(const FString& Url);
 		IRequest& SetContent(TArray<uint8>&& Bytes);
 	
-		TFuture<TSharedPtr<FResponseContext>> Send();
+		TFuture<Sp<FResponseContext>> Send();
 	
-		const TSharedRef<IHttpRequest>& GetInternal() const { return InternalHttpRequest; }
+		const Sr<IHttpRequest>& GetInternal() const { return InternalHttpRequest; }
 
 	protected:
 		virtual void OnResponseReceived(
@@ -57,11 +58,11 @@ namespace Lactose::Rest
 
 	protected:
 		TWeakObjectPtr<ULactoseRestSubsystem> RestSubsystem;
-		TPromise<TSharedPtr<FResponseContext>> ResponsePromise;
+		TPromise<Sp<FResponseContext>> ResponsePromise;
 		FLactoseRestResponseReceivedDelegate ResponseReceived;
 		
 	private:
-		TSharedRef<IHttpRequest> InternalHttpRequest;
+		Sr<IHttpRequest> InternalHttpRequest;
 		FDateTime TimeRequestSent;
 	};
 }

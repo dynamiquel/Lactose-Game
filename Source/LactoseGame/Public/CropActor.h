@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Simp.h"
 #include "LactoseInteractionComponent.h"
 #include "GameFramework/Actor.h"
 #include "CropActor.generated.h"
@@ -32,18 +33,18 @@ protected:
 
 public:
 	void Init(
-		const TSharedRef<const FLactoseSimulationCrop>& InCrop,
-		const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance);
+		const Sr<const FLactoseSimulationCrop>& InCrop,
+		const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance);
 
-	TSharedPtr<const FLactoseSimulationCrop> GetCrop() const { return Crop; };
-	TSharedPtr<const FLactoseSimulationUserCropInstance> GetCropInstance() const { return CropInstance; };
+	Sp<const FLactoseSimulationCrop> GetCrop() const { return Crop; };
+	Sp<const FLactoseSimulationUserCropInstance> GetCropInstance() const { return CropInstance; };
 
 protected:
-	virtual void OnLoaded(const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance);
-	virtual void OnHarvested(const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance);
-	virtual void OnFertilised(const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance);
-	virtual void OnSeeded(const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance);
-	virtual void OnDestroyed(const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance);
+	virtual void OnLoaded(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance);
+	virtual void OnHarvested(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance);
+	virtual void OnFertilised(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance);
+	virtual void OnSeeded(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance);
+	virtual void OnDestroyed(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance);
 
 	virtual void OnInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* Instigator);
 	virtual void OnDestroyInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* Instigator);
@@ -98,6 +99,6 @@ protected:
 	float DestroySeconds = .3f;
 	
 private:
-	TSharedPtr<const FLactoseSimulationCrop> Crop;
-	TSharedPtr<const FLactoseSimulationUserCropInstance> CropInstance;
+	Sp<const FLactoseSimulationCrop> Crop;
+	Sp<const FLactoseSimulationUserCropInstance> CropInstance;
 };

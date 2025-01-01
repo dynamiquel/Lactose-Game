@@ -19,10 +19,10 @@ void ULactoseEconomyServiceSubsystem::Initialize(FSubsystemCollectionBase& Colle
 	Lactose::Identity::Events::OnUserLoggedOut.AddUObject(this, &ThisClass::OnUserLoggedOut);
 }
 
-TSharedPtr<const FLactoseEconomyItem> ULactoseEconomyServiceSubsystem::GetItem(const FString& ItemId) const
+Sp<const FLactoseEconomyItem> ULactoseEconomyServiceSubsystem::GetItem(const FString& ItemId) const
 {
-	if (const TSharedRef<FLactoseEconomyItem>* FoundItem = GetAllItems().Find(ItemId))
-		return TSharedPtr<const FLactoseEconomyItem>(*FoundItem);
+	if (const Sr<FLactoseEconomyItem>* FoundItem = GetAllItems().Find(ItemId))
+		return Sp<const FLactoseEconomyItem>(*FoundItem);
 
 	return nullptr;
 }
@@ -64,7 +64,7 @@ void ULactoseEconomyServiceSubsystem::ResetAllItems()
 	AllItems.Reset();
 }
 
-TFuture<TSharedPtr<FGetEconomyUserItemsRequest::FResponseContext>> ULactoseEconomyServiceSubsystem::GetUserItems(const FString& UserId) const
+TFuture<Sp<FGetEconomyUserItemsRequest::FResponseContext>> ULactoseEconomyServiceSubsystem::GetUserItems(const FString& UserId) const
 {
 	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
 	auto RestRequest = FGetEconomyUserItemsRequest::Create(*RestSubsystem);
@@ -81,7 +81,7 @@ TFuture<TSharedPtr<FGetEconomyUserItemsRequest::FResponseContext>> ULactoseEcono
 	return Future;
 }
 
-const TMap<FString, TSharedRef<FLactoseEconomyUserItem>>& ULactoseEconomyServiceSubsystem::GetCurrentUserItems() const
+const TMap<FString, Sr<FLactoseEconomyUserItem>>& ULactoseEconomyServiceSubsystem::GetCurrentUserItems() const
 {
 	return CurrentUserItems;
 }
@@ -97,16 +97,16 @@ ELactoseEconomyUserItemsStatus ULactoseEconomyServiceSubsystem::GetCurrentUserIt
 	return ELactoseEconomyUserItemsStatus::None;
 }
 
-TSharedPtr<const FLactoseEconomyUserItem> ULactoseEconomyServiceSubsystem::FindCurrentUserItem(
+Sp<const FLactoseEconomyUserItem> ULactoseEconomyServiceSubsystem::FindCurrentUserItem(
 	const FString& ItemId) const
 {
-	const TSharedRef<FLactoseEconomyUserItem>* FoundUserItem = GetCurrentUserItems().Find(ItemId);
-	return FoundUserItem ? TSharedPtr<const FLactoseEconomyUserItem>(*FoundUserItem) : TSharedPtr<const FLactoseEconomyUserItem>(nullptr);
+	const Sr<FLactoseEconomyUserItem>* FoundUserItem = GetCurrentUserItems().Find(ItemId);
+	return FoundUserItem ? Sp<const FLactoseEconomyUserItem>(*FoundUserItem) : Sp<const FLactoseEconomyUserItem>(nullptr);
 }
 
 int32 ULactoseEconomyServiceSubsystem::GetCurrentUserItemQuantity(const FString& ItemId) const
 {
-	const TSharedRef<FLactoseEconomyUserItem>* FoundCurrentUserItem = GetCurrentUserItems().Find(ItemId);
+	const Sr<FLactoseEconomyUserItem>* FoundCurrentUserItem = GetCurrentUserItems().Find(ItemId);
 	return FoundCurrentUserItem ? FoundCurrentUserItem->Get().Quantity : 0;
 }
 
@@ -116,7 +116,7 @@ void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()
 	if (!IdentitySubsystem)
 		return;
 	
-	const TSharedPtr<FLactoseIdentityGetUserResponse> CurrentUser = IdentitySubsystem->GetLoggedInUserInfo();
+	const Sp<FLactoseIdentityGetUserResponse> CurrentUser = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUser)
 	{
 		UE_LOG(LogLactoseEconomyService, Error, TEXT("Cannot load current user's items because the user is not logged in"));
@@ -136,7 +136,7 @@ void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()
 		ThisPinned->GetCurrentUserItemsFuture.Reset();
 
 		TSet<FString> ExistingUserItemsIds;
-		for (const TTuple<FString, TSharedRef<FLactoseEconomyUserItem>>& ExistingUserItem : ThisPinned->GetCurrentUserItems())
+		for (const TTuple<FString, Sr<FLactoseEconomyUserItem>>& ExistingUserItem : ThisPinned->GetCurrentUserItems())
 			ExistingUserItemsIds.Add(ExistingUserItem.Key);
 
 		bool bAnyChanged = false;
@@ -149,7 +149,7 @@ void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()
 			{
 				ExistingUserItemsIds.Remove(UserItem.ItemId);
 
-				if (TSharedRef<FLactoseEconomyUserItem>* FoundExistingUserItem = ThisPinned->CurrentUserItems.Find(UserItem.ItemId))
+				if (Sr<FLactoseEconomyUserItem>* FoundExistingUserItem = ThisPinned->CurrentUserItems.Find(UserItem.ItemId))
 				{
 					if (FoundExistingUserItem->Get().Quantity != UserItem.Quantity)
 					{
@@ -217,7 +217,7 @@ void ULactoseEconomyServiceSubsystem::DisableGetCurrentUserItemsTicker()
 	GetUserItemsTicker.Invalidate();
 }
 
-TFuture<TSharedPtr<FGetEconomyUserShopItemsRequest::FResponseContext>> ULactoseEconomyServiceSubsystem::GetUserShopItems(const FLactoseEconomyGetUserShopItemsRequest& Request) const
+TFuture<Sp<FGetEconomyUserShopItemsRequest::FResponseContext>> ULactoseEconomyServiceSubsystem::GetUserShopItems(const FLactoseEconomyGetUserShopItemsRequest& Request) const
 {
 	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
 	auto RestRequest = FGetEconomyUserShopItemsRequest::Create(*RestSubsystem);
@@ -239,7 +239,7 @@ void ULactoseEconomyServiceSubsystem::PerformShopItemTrade(const FString& ShopIt
 	if (!IdentitySubsystem)
 		return;
 	
-	const TSharedPtr<FLactoseIdentityGetUserResponse> CurrentUser = IdentitySubsystem->GetLoggedInUserInfo();
+	const Sp<FLactoseIdentityGetUserResponse> CurrentUser = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUser)
 	{
 		UE_LOG(LogLactoseEconomyService, Error, TEXT("Cannot load current user's items because the user is not logged in"));
@@ -251,7 +251,7 @@ void ULactoseEconomyServiceSubsystem::PerformShopItemTrade(const FString& ShopIt
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("shopitems/trade"));
 
-	TSharedRef<FLactoseEconomyShopItemTradeRequest> ShopItemTradeRequest = MakeShareable(new FLactoseEconomyShopItemTradeRequest
+	Sr<FLactoseEconomyShopItemTradeRequest> ShopItemTradeRequest = MakeShareable(new FLactoseEconomyShopItemTradeRequest
 	{
 		.UserId = CurrentUser->Id,
 		.ShopItemId = ShopItemId,
@@ -265,7 +265,7 @@ void ULactoseEconomyServiceSubsystem::PerformShopItemTrade(const FString& ShopIt
 		*ShopItemId);
 }
 
-void ULactoseEconomyServiceSubsystem::OnAllItemsQueries(TSharedRef<FQueryEconomyItemsRequest::FResponseContext> Context)
+void ULactoseEconomyServiceSubsystem::OnAllItemsQueries(Sr<FQueryEconomyItemsRequest::FResponseContext> Context)
 {
 	QueryAllItemsFuture.Reset();
 
@@ -294,7 +294,7 @@ void ULactoseEconomyServiceSubsystem::OnAllItemsQueries(TSharedRef<FQueryEconomy
 	UE_LOG(LogLactoseEconomyService, Verbose, TEXT("Sent a Get All Items request"));
 }
 
-void ULactoseEconomyServiceSubsystem::OnAllItemsRetrieved(TSharedRef<FGetEconomyItemsRequest::FResponseContext> Context)
+void ULactoseEconomyServiceSubsystem::OnAllItemsRetrieved(Sr<FGetEconomyItemsRequest::FResponseContext> Context)
 {
 	GetAllItemsFuture.Reset();
 
@@ -320,7 +320,7 @@ void ULactoseEconomyServiceSubsystem::OnAllItemsRetrieved(TSharedRef<FGetEconomy
 
 void ULactoseEconomyServiceSubsystem::OnUserLoggedIn(
 	const ULactoseIdentityServiceSubsystem& Sender,
-	const TSharedRef<FLactoseIdentityGetUserResponse>& User)
+	const Sr<FLactoseIdentityGetUserResponse>& User)
 {
 	if (bAutoRetrieveItems && GetAllItems().IsEmpty())
 		LoadAllItems();

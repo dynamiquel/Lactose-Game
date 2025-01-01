@@ -55,15 +55,15 @@ private:
 class LACTOSEGAME_API FLactoseConfigCloudConfig
 {
 public:
-	const TMap<FString, TSharedRef<FLactoseConfigCloudEntry>>& GetEntries() const { return Entries; }
-	TSharedPtr<const FLactoseConfigCloudEntry> FindEntry(const FString& EntryId) const;
-	TSharedPtr<FLactoseConfigCloudEntry> FindEntry(const FString& EntryId);
+	const TMap<FString, Sr<FLactoseConfigCloudEntry>>& GetEntries() const { return Entries; }
+	Sp<const FLactoseConfigCloudEntry> FindEntry(const FString& EntryId) const;
+	Sp<FLactoseConfigCloudEntry> FindEntry(const FString& EntryId);
 
 	void AddOrUpdateEntry(const FString& EntryId, const FString& EntryValue);
 	void DeleteEntry(const FString& EntryId);
 
 private:
-	TMap<FString, TSharedRef<FLactoseConfigCloudEntry>> Entries;
+	TMap<FString, Sr<FLactoseConfigCloudEntry>> Entries;
 };
 
 UENUM()
@@ -90,30 +90,30 @@ class LACTOSEGAME_API ULactoseConfigCloudServiceSubsystem : public ULactoseServi
 
 public:
 	ELactoseConfigCloudStatus GetStatus() const;
-	TSharedPtr<const FLactoseConfigCloudConfig> GetConfig() const { return Config; }
+	Sp<const FLactoseConfigCloudConfig> GetConfig() const { return Config; }
 	void LoadConfig();
 
 protected:
-	void OnConfigLoaded(TSharedRef<FGetConfigRequest::FResponseContext> Context);
+	void OnConfigLoaded(Sr<FGetConfigRequest::FResponseContext> Context);
 	
 	void OnUserLoggedIn(
 		const ULactoseIdentityServiceSubsystem& Sender,
-		const TSharedRef<FLactoseIdentityGetUserResponse>& User);
+		const Sr<FLactoseIdentityGetUserResponse>& User);
 
 private:
 	UPROPERTY(EditDefaultsOnly, Config)
 	bool bAutoRetrieveConfig = true;
 
-	TFuture<TSharedPtr<FGetConfigRequest::FResponseContext>> GetConfigFuture;
+	TFuture<Sp<FGetConfigRequest::FResponseContext>> GetConfigFuture;
 
-	TSharedPtr<FLactoseConfigCloudConfig> Config;
+	Sp<FLactoseConfigCloudConfig> Config;
 };
 
 namespace Lactose::Config::Events
 {
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FConfigLoaded,
 		const ULactoseConfigCloudServiceSubsystem& /* Sender */,
-		TSharedRef<FLactoseConfigCloudConfig> /* Config */);
+		Sr<FLactoseConfigCloudConfig> /* Config */);
 
 	inline FConfigLoaded OnConfigLoaded;
 }

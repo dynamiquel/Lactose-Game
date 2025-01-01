@@ -30,7 +30,7 @@ void APlotCropActor::BeginPlay()
 	
 }
 
-void APlotCropActor::OnLoaded(const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance)
+void APlotCropActor::OnLoaded(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance)
 {
 	Super::OnLoaded(InCropInstance);
 

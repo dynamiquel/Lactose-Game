@@ -6,9 +6,10 @@
 #include "SimpRefCounted.h"
 
 /*
- * Simp is a library that is used to help reduce the verbosity for common C++ operations.
+ * Simp is a library that is used to help reduce the verbosity for common C++ operations
+ * by simplifying them.
  *
- * You only need to include "Simp.h".
+ * In most cases, you only need to include "Simp.h".
  *
  * Maybe you like it or maybe you don't. Anyways, I do. - dynamiquel
  */

@@ -45,7 +45,7 @@ void ULactoseEconomyVendorsDebugTab::Render()
 			};
 			
 			EconomySubsystem->GetUserShopItems(ShopRequest).Next([WeakThis = MakeWeakObjectPtr(this)]
-				(TSharedPtr<FGetEconomyUserShopItemsRequest::FResponseContext> Context)
+				(Sp<FGetEconomyUserShopItemsRequest::FResponseContext> Context)
 			{
 				if (!Context)
 					return;
@@ -69,13 +69,13 @@ void ULactoseEconomyVendorsDebugTab::Render()
 
 	ItemsSearchBox.Draw();
 	
-	for (const TTuple<FString, TSharedRef<FLactoseEconomyGetUserShopItemsResponse>>& VendorItems : VendorsItems)
+	for (const TTuple<FString, Sr<FLactoseEconomyGetUserShopItemsResponse>>& VendorItems : VendorsItems)
 		DrawVendorItems(VendorItems.Key, VendorItems.Value);
 }
 
 void ULactoseEconomyVendorsDebugTab::DrawVendorItems(
 	const FString& VendorId,
-	const TSharedRef<FLactoseEconomyGetUserShopItemsResponse>& VendorItems)
+	const Sr<FLactoseEconomyGetUserShopItemsResponse>& VendorItems)
 {
 	if (!ImGui::CollapsingHeader(STR_TO_ANSI(VendorId)))
 		return;
@@ -86,7 +86,7 @@ void ULactoseEconomyVendorsDebugTab::DrawVendorItems(
 
 void ULactoseEconomyVendorsDebugTab::DrawBuySection(
 	const FString& VendorId,
-	const TSharedRef<FLactoseEconomyGetUserShopItemsResponse>& VendorItems)
+	const Sr<FLactoseEconomyGetUserShopItemsResponse>& VendorItems)
 {
 	const FString VendorSectionId = VendorId + TEXT("BuySection");
 	constexpr int32 NodeFlags = 0;
@@ -112,7 +112,7 @@ void ULactoseEconomyVendorsDebugTab::DrawBuySection(
 			continue;
 		
 		FString ItemLabel = ShopItem.ItemId;
-		const TSharedPtr<const FLactoseEconomyItem> FoundItem = EconomySubsystem->GetItem(ShopItem.ItemId);
+		const Sp<const FLactoseEconomyItem> FoundItem = EconomySubsystem->GetItem(ShopItem.ItemId);
 		
 		if (FoundItem)
 			ItemLabel += FString::Printf(TEXT(" (%s)"), *FoundItem->Name);
@@ -135,7 +135,7 @@ void ULactoseEconomyVendorsDebugTab::DrawBuySection(
 			for (const FLactoseEconomyUserItem& TransactionItem : ShopItem.TransactionItems)
 			{
 				FString TransactionItemLabel = ShopItem.ItemId;
-				if (const TSharedPtr<const FLactoseEconomyItem> TransactionFoundItem = EconomySubsystem->GetItem(TransactionItem.ItemId))
+				if (const Sp<const FLactoseEconomyItem> TransactionFoundItem = EconomySubsystem->GetItem(TransactionItem.ItemId))
 					TransactionItemLabel = TransactionFoundItem->Name;
 				
 				ImGui::BulletText("%d x %s", TransactionItem.Quantity, STR_TO_ANSI(TransactionItemLabel));
@@ -171,7 +171,7 @@ void ULactoseEconomyVendorsDebugTab::DrawBuySection(
 }
 
 void ULactoseEconomyVendorsDebugTab::DrawSellSection(const FString& VendorId,
-	const TSharedRef<FLactoseEconomyGetUserShopItemsResponse>& VendorItems)
+	const Sr<FLactoseEconomyGetUserShopItemsResponse>& VendorItems)
 {
 	const FString VendorSectionId = VendorId + TEXT("SellSection");
 	constexpr int32 NodeFlags = 0;
@@ -198,7 +198,7 @@ void ULactoseEconomyVendorsDebugTab::DrawSellSection(const FString& VendorId,
 			continue;
 		
 		FString ItemLabel = ShopItem.ItemId;
-		const TSharedPtr<const FLactoseEconomyItem> FoundItem = EconomySubsystem->GetItem(ShopItem.ItemId);
+		const Sp<const FLactoseEconomyItem> FoundItem = EconomySubsystem->GetItem(ShopItem.ItemId);
 		
 		if (FoundItem)
 			ItemLabel += FString::Printf(TEXT(" (%s)"), *FoundItem->Name);
@@ -229,7 +229,7 @@ void ULactoseEconomyVendorsDebugTab::DrawSellSection(const FString& VendorId,
 			for (const FLactoseEconomyUserItem& TransactionItem : ShopItem.TransactionItems)
 			{
 				FString TransactionItemLabel = ShopItem.ItemId;
-				if (const TSharedPtr<const FLactoseEconomyItem> TransactionFoundItem = EconomySubsystem->GetItem(TransactionItem.ItemId))
+				if (const Sp<const FLactoseEconomyItem> TransactionFoundItem = EconomySubsystem->GetItem(TransactionItem.ItemId))
 					TransactionItemLabel = TransactionFoundItem->Name;
 				
 				ImGui::BulletText("%d x %s", TransactionItem.Quantity, STR_TO_ANSI(TransactionItemLabel));
@@ -265,7 +265,7 @@ void ULactoseEconomyVendorsDebugTab::DrawSellSection(const FString& VendorId,
 				for (const auto& MissingItem : MissingItems)
 				{
 					FString TransactionItemLabel = ShopItem.ItemId;
-					if (const TSharedPtr<const FLactoseEconomyItem> TransactionFoundItem = EconomySubsystem->GetItem(MissingItem.ItemId))
+					if (const Sp<const FLactoseEconomyItem> TransactionFoundItem = EconomySubsystem->GetItem(MissingItem.ItemId))
 						TransactionItemLabel = TransactionFoundItem->Name;
 				
 					ImGui::BulletText("%d x %s", MissingItem.Quantity, STR_TO_ANSI(TransactionItemLabel));

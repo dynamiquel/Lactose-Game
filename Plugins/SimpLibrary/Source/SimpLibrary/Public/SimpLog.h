@@ -113,4 +113,4 @@ namespace Log
  * @note This approach does create multiple instances of the specified Log Category
  * but you probably don't need to worry about it.
  */
-#define CREATE_BASIC_LOG(CategoryName) static inline TCategory<> FLogCategory##CategoryName(TEXT(#CategoryName));
+#define CREATE_BASIC_LOG(CategoryName) static inline Log::TCategory<> CategoryName(TEXT(#CategoryName));

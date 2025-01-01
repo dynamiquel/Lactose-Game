@@ -56,7 +56,7 @@ void ULactoseEconomyItemsTab::Render()
 		ImGui::EndChild();
 	};
 
-	const TMap<FString, TSharedRef<FLactoseEconomyItem>>& EconomyItems = EconomySubsystem->GetAllItems();
+	const TMap<FString, Sr<FLactoseEconomyItem>>& EconomyItems = EconomySubsystem->GetAllItems();
 	if (EconomyItems.IsEmpty())
 	{
 		ImGui::Text("No Economy Items Found");

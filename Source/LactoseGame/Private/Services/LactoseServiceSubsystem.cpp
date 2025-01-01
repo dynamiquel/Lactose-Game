@@ -2,7 +2,7 @@
 
 #include "Services/LactoseServicesLog.h"
 
-TFuture<TSharedPtr<FGetServiceStatusRequest::FResponseContext>> ULactoseServiceSubsystem::GetServiceInfo()
+TFuture<Sp<FGetServiceStatusRequest::FResponseContext>> ULactoseServiceSubsystem::GetServiceInfo()
 {
 	auto RestSubsystem = GetGameInstance()->GetSubsystem<ULactoseRestSubsystem>();
 	auto RestRequest = FGetServiceStatusRequest::Create(*RestSubsystem);
@@ -27,7 +27,7 @@ void ULactoseServiceSubsystem::SetServiceBaseUrl(FString&& InUrl)
 	ServiceBaseUrl = std::move(InUrl);
 }
 
-void ULactoseServiceSubsystem::OnGetServiceInfoResponse(TSharedRef<FGetServiceStatusRequest::FResponseContext> Context)
+void ULactoseServiceSubsystem::OnGetServiceInfoResponse(Sr<FGetServiceStatusRequest::FResponseContext> Context)
 {
 	if (Context->ResponseContent)
 	{

@@ -3,6 +3,7 @@
 #include <CoreMinimal.h>
 #include <Subsystems/GameInstanceSubsystem.h>
 
+#include "Simp.h"
 #include "Rest/LactoseRestRequest.h"
 
 #include "LactoseServiceSubsystem.generated.h"
@@ -55,7 +56,7 @@ class LACTOSEGAME_API ULactoseServiceSubsystem : public UGameInstanceSubsystem
 
 public:
 	const FString& GetServiceBaseUrl() const { return ServiceBaseUrl; }
-	TFuture<TSharedPtr<FGetServiceStatusRequest::FResponseContext>> GetServiceInfo();
+	TFuture<Sp<FGetServiceStatusRequest::FResponseContext>> GetServiceInfo();
 
 protected:
 	// Begin override ULactoseServiceSubsystem
@@ -66,7 +67,7 @@ protected:
 	void SetServiceBaseUrl(FString&& InUrl);
 	
 	void OnGetServiceInfoResponse(
-		TSharedRef<FGetServiceStatusRequest::FResponseContext> Context);
+		Sr<FGetServiceStatusRequest::FResponseContext> Context);
 
 private:
 	UPROPERTY(EditDefaultsOnly, Config)

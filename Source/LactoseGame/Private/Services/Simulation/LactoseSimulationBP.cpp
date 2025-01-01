@@ -11,7 +11,7 @@ TMap<FString, FLactoseSimulationCrop> ULactoseSimulationBP::GetCrops(const ULact
 	if (!Simulation)
 		return {};
 
-	const TMap<FString, TSharedRef<FLactoseSimulationCrop>>& FoundCrops = Simulation->GetAllCrops();
+	const TMap<FString, Sr<FLactoseSimulationCrop>>& FoundCrops = Simulation->GetAllCrops();
 	TMap<FString, FLactoseSimulationCrop> CopiedCrops;
 	CopiedCrops.Reserve(FoundCrops.Num());
 	
@@ -26,7 +26,7 @@ FLactoseSimulationCrop ULactoseSimulationBP::GetCrop(const ULactoseSimulationSer
 	if (!Simulation)
 		return {};
 
-	const TSharedRef<FLactoseSimulationCrop>* FoundCrop = Simulation->GetAllCrops().Find(CropName);
+	const Sr<FLactoseSimulationCrop>* FoundCrop = Simulation->GetAllCrops().Find(CropName);
 	return FoundCrop ? FoundCrop->Get() : FLactoseSimulationCrop();
 }
 
@@ -46,14 +46,14 @@ TArray<FLactoseEconomyUserItem> ULactoseSimulationBP::GetCropCostUserItems(
 	if (!Simulation)
 		return UserCropCostItems;
 	
-	const TSharedPtr<const FLactoseSimulationCrop> FoundCrop =  Simulation->FindCrop(CropId);
+	const Sp<const FLactoseSimulationCrop> FoundCrop =  Simulation->FindCrop(CropId);
 	if (!FoundCrop)
 		return UserCropCostItems;
 
 	for (const FLactoseEconomyUserItem& CostItem : FoundCrop->CostItems)
 	{
 		const auto& EconomySubsystem = Lactose::GetService<ULactoseEconomyServiceSubsystem>(*Simulation);
-		TSharedPtr<const FLactoseEconomyUserItem> FoundUserItem = EconomySubsystem.FindCurrentUserItem(CostItem.ItemId);
+		Sp<const FLactoseEconomyUserItem> FoundUserItem = EconomySubsystem.FindCurrentUserItem(CostItem.ItemId);
 		UserCropCostItems.Add(FoundUserItem ? *FoundUserItem : FLactoseEconomyUserItem{.ItemId = CostItem.ItemId});
 	}
 	

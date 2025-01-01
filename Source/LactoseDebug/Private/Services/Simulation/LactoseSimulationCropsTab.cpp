@@ -61,7 +61,7 @@ void ULactoseSimulationCropsTab::Render()
 		ImGui::EndChild();
 	};
 
-	const TMap<FString, TSharedRef<FLactoseSimulationCrop>>& SimulationCrops = SimulationSubsystem->GetAllCrops();
+	const TMap<FString, Sr<FLactoseSimulationCrop>>& SimulationCrops = SimulationSubsystem->GetAllCrops();
 	if (SimulationCrops.IsEmpty())
 	{
 		ImGui::Text("No Simulation Crops Found");

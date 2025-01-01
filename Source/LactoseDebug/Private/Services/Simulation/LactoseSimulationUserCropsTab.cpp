@@ -84,7 +84,7 @@ void ULactoseSimulationUserCropsTab::Render()
 		{
 			SelectedUserCrops.Reset();
 		
-			for (const TSharedRef<FLactoseSimulationUserCropInstance>& UserCrop : UserCrops->GetAllCropInstances())
+			for (const Sr<FLactoseSimulationUserCropInstance>& UserCrop : UserCrops->GetAllCropInstances())
 				SelectedUserCrops.Add(UserCrop->Id);
 		}
 
@@ -170,10 +170,10 @@ void ULactoseSimulationUserCropsTab::Render()
 		ImGui::TableSetupColumn("Fertilise");
 		ImGui::TableHeadersRow();
 		
-		for (const TSharedRef<FLactoseSimulationUserCropInstance>& UserCrop : UserCrops->GetAllCropInstances())
+		for (const Sr<FLactoseSimulationUserCropInstance>& UserCrop : UserCrops->GetAllCropInstances())
 		{
 			FString CropName;
-			if (const TSharedPtr<const FLactoseSimulationCrop> FoundCrop = SimulationSubsystem->FindCrop(UserCrop->CropId))
+			if (const Sp<const FLactoseSimulationCrop> FoundCrop = SimulationSubsystem->FindCrop(UserCrop->CropId))
 				CropName = FoundCrop->Name;
 
 			// Allow the search box to filter by any of the below values.

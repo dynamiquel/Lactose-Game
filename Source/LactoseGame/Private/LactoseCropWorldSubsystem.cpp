@@ -20,7 +20,7 @@ bool ULactoseCropWorldSubsystem::CanCreateCrops() const
 
 void ULactoseCropWorldSubsystem::RegisterCropActor(ACropActor& CropActor)
 {
-	TSharedPtr<const FLactoseSimulationUserCropInstance> CropInstance = CropActor.GetCropInstance();
+	Sp<const FLactoseSimulationUserCropInstance> CropInstance = CropActor.GetCropInstance();
 	if (!ensure(CropInstance))
 	{
 		return;
@@ -31,7 +31,7 @@ void ULactoseCropWorldSubsystem::RegisterCropActor(ACropActor& CropActor)
 
 void ULactoseCropWorldSubsystem::DeregisterCropActor(const ACropActor& CropActor)
 {
-	TSharedPtr<const FLactoseSimulationUserCropInstance> CropInstance = CropActor.GetCropInstance();
+	Sp<const FLactoseSimulationUserCropInstance> CropInstance = CropActor.GetCropInstance();
 	if (!ensure(CropInstance))
 	{
 		return;
@@ -110,7 +110,7 @@ void ULactoseCropWorldSubsystem::OnAllCropsLoaded(const ULactoseSimulationServic
 
 void ULactoseCropWorldSubsystem::OnUserCropsLoaded(
 	const ULactoseSimulationServiceSubsystem& Sender,
-	TSharedRef<FLactoseSimulationUserCrops> UserCrops)
+	Sr<FLactoseSimulationUserCrops> UserCrops)
 {
 	if (bWaitingForUserCrops)
 	{
@@ -124,7 +124,7 @@ void ULactoseCropWorldSubsystem::OnUserCropsLoaded(
 
 void ULactoseCropWorldSubsystem::OnConfigCloudLoaded(
 	const ULactoseConfigCloudServiceSubsystem& Sender,
-   TSharedRef<FLactoseConfigCloudConfig> Config)
+   Sr<FLactoseConfigCloudConfig> Config)
 {
 	if (bWaitingForCropActorClassMap)
 	{
@@ -145,15 +145,15 @@ void ULactoseCropWorldSubsystem::CreateRequiredUserCrops()
 	auto* Simulation = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseSimulationServiceSubsystem>();
 	check(Simulation);
 
-	const TMap<FString, TSharedRef<FLactoseSimulationCrop>>& AllCrops = Simulation->GetAllCrops();
+	const TMap<FString, Sr<FLactoseSimulationCrop>>& AllCrops = Simulation->GetAllCrops();
 	if (AllCrops.IsEmpty())
 		return;
 
-	TSharedPtr<const FLactoseSimulationUserCrops> UserCrops = Simulation->GetCurrentUserCrops();
+	Sp<const FLactoseSimulationUserCrops> UserCrops = Simulation->GetCurrentUserCrops();
 	if (!UserCrops)
 		return;
 
-	for (const TSharedRef<FLactoseSimulationUserCropInstance>& UserCrop : UserCrops->GetAllCropInstances())
+	for (const Sr<FLactoseSimulationUserCropInstance>& UserCrop : UserCrops->GetAllCropInstances())
 	{
 		if (FindCropActorForCropInstance(UserCrop->Id))
 			continue;
@@ -172,8 +172,8 @@ void ULactoseCropWorldSubsystem::CreateRequiredUserCrops()
 }
 
 bool ULactoseCropWorldSubsystem::CreateUserCrop(
-	const TSharedRef<const FLactoseSimulationCrop>& Crop,
-	const TSharedRef<const FLactoseSimulationUserCropInstance>& CropInstance)
+	const Sr<const FLactoseSimulationCrop>& Crop,
+	const Sr<const FLactoseSimulationUserCropInstance>& CropInstance)
 {
 	if (!ensureMsgf(CropInstance->CropId == Crop->Id, TEXT("%s != %s"), *CropInstance->CropId, *Crop->Id))
 	{
@@ -237,14 +237,14 @@ void ULactoseCropWorldSubsystem::LoadCropActorClasses()
 	auto* ConfigSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<ULactoseConfigCloudServiceSubsystem>();
 	check(ConfigSubsystem);
 
-	TSharedPtr<const FLactoseConfigCloudConfig> Config = ConfigSubsystem->GetConfig();
+	Sp<const FLactoseConfigCloudConfig> Config = ConfigSubsystem->GetConfig();
 	if (!Config)
 	{
 		UE_LOG(LogLactose, Error, TEXT("Crop Subsystem: Config Subsystem does not have a Config"));
 		return;
 	}
 
-	TSharedPtr<const FLactoseConfigCloudEntry> FoundCropIdToCropActorClassMap = Config->FindEntry(CropIdToCropActorMapEntryId);
+	Sp<const FLactoseConfigCloudEntry> FoundCropIdToCropActorClassMap = Config->FindEntry(CropIdToCropActorMapEntryId);
 	if (!FoundCropIdToCropActorClassMap)
 	{
 		UE_LOG(LogLactose, Error, TEXT("Crop Subsystem: Could not find the Crop Actor Classes Map in the Config (%s)"),

@@ -50,7 +50,7 @@ ACropActor::ACropActor()
 		{
 			for (const auto& CostItem : This->Crop->CostItems)
 			{
-				TSharedPtr<const FLactoseEconomyUserItem> FoundUserItem = Economy->FindCurrentUserItem(CostItem.ItemId);
+				Sp<const FLactoseEconomyUserItem> FoundUserItem = Economy->FindCurrentUserItem(CostItem.ItemId);
 				if (!FoundUserItem || FoundUserItem->Quantity < CostItem.Quantity)
 					return false;
 			}
@@ -64,7 +64,7 @@ ACropActor::ACropActor()
 		if (This->CropInstance->State == Lactose::Simulation::States::Growing)
 		{
 			const FString& FertiliserItemId = This->Crop->FertiliserItemId;
-			TSharedPtr<const FLactoseEconomyUserItem> FoundUserItem = Economy->FindCurrentUserItem(FertiliserItemId);
+			Sp<const FLactoseEconomyUserItem> FoundUserItem = Economy->FindCurrentUserItem(FertiliserItemId);
 			return FoundUserItem && FoundUserItem->Quantity > 0;
 		}
 
@@ -150,8 +150,8 @@ void ACropActor::Tick(float DeltaTime)
 }
 
 void ACropActor::Init(
-	const TSharedRef<const FLactoseSimulationCrop>& InCrop,
-	const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance)
+	const Sr<const FLactoseSimulationCrop>& InCrop,
+	const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance)
 {
 	Crop = InCrop;
 	CropInstance = InCropInstance;
@@ -163,30 +163,30 @@ void ACropActor::Init(
 	CropInstance->OnDestroyed.AddUObject(this, &ThisClass::OnDestroyed);
 }
 
-void ACropActor::OnLoaded(const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance)
+void ACropActor::OnLoaded(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance)
 {
 	UpdateBillboardText();
 }
 
-void ACropActor::OnHarvested(const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance)
+void ACropActor::OnHarvested(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance)
 {
 	if (HarvestSound)
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), HarvestSound, GetActorLocation());
 }
 
-void ACropActor::OnFertilised(const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance)
+void ACropActor::OnFertilised(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance)
 {
 	if (FertiliseSound)
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), FertiliseSound, GetActorLocation());
 }
 
-void ACropActor::OnSeeded(const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance)
+void ACropActor::OnSeeded(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance)
 {
 	if (SeedSound)
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), SeedSound, GetActorLocation());
 }
 
-void ACropActor::OnDestroyed(const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance)
+void ACropActor::OnDestroyed(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance)
 {
 	if (DestroySound)
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), DestroySound, GetActorLocation());

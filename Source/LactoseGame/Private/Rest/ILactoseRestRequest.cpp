@@ -1,5 +1,4 @@
 #include "Rest/ILactoseRestRequest.h"
-
 #include "Interfaces/IHttpResponse.h"
 #include "Rest/LactoseRestLog.h"
 #include "Rest/LactoseRestSubsystem.h"
@@ -61,7 +60,7 @@ Lactose::Rest::IRequest& Lactose::Rest::IRequest::SetContent(TArray<uint8>&& Byt
 	return *this;
 }
 
-TFuture<TSharedPtr<Lactose::Rest::IRequest::FResponseContext>> Lactose::Rest::IRequest::Send()
+TFuture<Sp<Lactose::Rest::IRequest::FResponseContext>> Lactose::Rest::IRequest::Send()
 {
 	if (HasBeenSent())
 	{
@@ -99,11 +98,13 @@ void Lactose::Rest::IRequest::OnResponseReceived(
 	FHttpResponsePtr Response,
 	bool bConnectedSuccessfully)
 {
-	TSharedRef<FResponseContext> ResponseContext = MakeShared<FResponseContext>();
-	ResponseContext->HttpRequest = Request;
-	ResponseContext->HttpResponse = Response;
-	ResponseContext->RequestTime = GetRequestTime();
-	ResponseContext->ResponseTime = FDateTime::UtcNow();
+	auto ResponseContext = MakeShared(FResponseContext
+	{
+		.HttpRequest = Request,
+		.HttpResponse = Response,
+		.RequestTime = GetRequestTime(),
+		.ResponseTime = FDateTime::UtcNow()
+	});
 
 	if (!ResponseContext->IsSuccessful())
 	{

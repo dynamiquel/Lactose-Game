@@ -1,7 +1,5 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #pragma once
 
-#include "CoreMinimal.h"
+#include "SimpLog.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogLactose, Log, All);
+CREATE_BASIC_LOG(LogLactose)

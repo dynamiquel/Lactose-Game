@@ -61,7 +61,7 @@ ELactoseIdentityUserLoginStatus ULactoseIdentityServiceSubsystem::GetLoginStatus
 	return ELactoseIdentityUserLoginStatus::NotLoggedIn;
 }
 
-void ULactoseIdentityServiceSubsystem::OnUserLoggedIn(TSharedRef<FGetUserRequest::FResponseContext> Context)
+void ULactoseIdentityServiceSubsystem::OnUserLoggedIn(Sr<FGetUserRequest::FResponseContext> Context)
 {
 	// Atm, I'm only really using the future to know the status of a request.
 	// I couldn't care less about its contents.

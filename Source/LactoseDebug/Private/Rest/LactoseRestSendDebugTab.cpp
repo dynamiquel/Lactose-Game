@@ -280,7 +280,7 @@ void ULactoseRestSendDebugTab::SaveRequests()
 	bSelectedRequestDirty = false;
 }
 
-void ULactoseRestSendDebugTab::OnResponseReceived(TSharedRef<Lactose::Rest::IRequest::FResponseContext> Context)
+void ULactoseRestSendDebugTab::OnResponseReceived(Sr<Lactose::Rest::IRequest::FResponseContext> Context)
 {
 	RecentResponse.TimeReceived = FDateTime::UtcNow();
 	RecentResponse.ResponseContext = Context;

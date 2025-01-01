@@ -3,6 +3,7 @@
 #include "ILactoseRestRequest.h"
 #include "LactoseRestLog.h"
 #include "LactoseRestSubsystem.h"
+#include "Simp.h"
 #include "Interfaces/IHttpResponse.h"
 #include "Serialisation/LactoseJsonSerialisationUtils.h"
 
@@ -22,13 +23,13 @@ namespace Lactose::Rest
 		class FResponseContext : public IRequest::FResponseContext
 		{
 		public:
-			TSharedPtr<TRequestContent> RequestContent;
-			TSharedPtr<TResponseContent> ResponseContent;
+			Sp<TRequestContent> RequestContent;
+			Sp<TResponseContent> ResponseContent;
 		};
 	
-		DECLARE_MULTICAST_DELEGATE_OneParam(FLactoseRestResponseReceived2Delegate, TSharedRef<FResponseContext>);
+		DECLARE_MULTICAST_DELEGATE_OneParam(FLactoseRestResponseReceived2Delegate, Sr<FResponseContext>);
 
-		TRequest(const TWeakObjectPtr<ULactoseRestSubsystem>& RestSubsystem, const TSharedRef<IHttpRequest>& HttpRequest)
+		TRequest(const TWeakObjectPtr<ULactoseRestSubsystem>& RestSubsystem, const Sr<IHttpRequest>& HttpRequest)
 			: IRequest(RestSubsystem, HttpRequest) { }
 	
 		virtual ~TRequest()
@@ -42,14 +43,14 @@ namespace Lactose::Rest
 			}
 		}
 
-		static TSharedRef<TRequest> Create(ULactoseRestSubsystem& RestSubsystem)
+		static Sr<TRequest> Create(ULactoseRestSubsystem& RestSubsystem)
 		{
 			return RestSubsystem.CreateRequest<TRequest>();
 		}
 
 		FLactoseRestResponseReceived2Delegate& GetOnResponseReceived2() { return ResponseReceived2; }
 
-		TFuture<TSharedPtr<FResponseContext>> Send2()
+		TFuture<Sp<FResponseContext>> Send2()
 		{
 			if (IRequest::Send().IsValid())
 				return ResponsePromise2.GetFuture();
@@ -72,13 +73,13 @@ namespace Lactose::Rest
 		}
 
 		template<Concepts::RequestType TRequestContentEnabled = TRequestContent>
-		TFuture<TSharedPtr<FResponseContext>> SetContentAsJsonAndSendAsync(const TSharedRef<TRequestContentEnabled>& Request)
+		TFuture<Sp<FResponseContext>> SetContentAsJsonAndSendAsync(const TSharedRef<TRequestContentEnabled>& Request)
 		{
 			AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [This = SharedThis(this), Request]
 			{
 				if (This->SetContentAsJson(*Request))
 				{
-					TFuture<TSharedPtr<IRequest::FResponseContext>> FutureResponse = This->Send();
+					TFuture<Sp<IRequest::FResponseContext>> FutureResponse = This->Send();
 					if (/* bSent = */ FutureResponse.IsValid())
 						return;
 				}
@@ -95,7 +96,7 @@ namespace Lactose::Rest
 			FHttpResponsePtr Response,
 			bool bConnectedSuccessfully) override
 		{
-			TSharedRef<FResponseContext> Context = MakeShared<FResponseContext>();
+			auto Context = MakeShared<FResponseContext>();
 			Context->HttpRequest = Request;
 			Context->HttpResponse = Response;
 			Context->RequestTime = GetRequestTime();

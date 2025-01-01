@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Simp.h"
 #include "DebugAppTab.h"
 #include "LactoseSimulationStatusTab.generated.h"
 
@@ -28,7 +29,7 @@ class LACTOSEDEBUG_API ULactoseSimulationStatusTab : public UDebugAppTab
 	// End override UDebugAppTab
 
 private:
-	TSharedPtr<Lactose::Debug::Services::FStatusSection> StatusSection;
+	Sp<Lactose::Debug::Services::FStatusSection> StatusSection;
 	
 	UPROPERTY(Transient)
 	TObjectPtr<ULactoseSimulationServiceSubsystem> SimulationSubsystem;

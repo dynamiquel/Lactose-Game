@@ -28,7 +28,7 @@ void ULactoseIdentityUserTab::Render()
 	constexpr int32 CurrentUserHeaderFlags = ImGuiTreeNodeFlags_DefaultOpen;
 	if (ImGui::CollapsingHeader("Current User"), CurrentUserHeaderFlags)
 	{
-		TSharedPtr<FLactoseIdentityGetUserResponse> LoggedInUser = IdentitySubsystem->GetLoggedInUserInfo();
+		Sp<FLactoseIdentityGetUserResponse> LoggedInUser = IdentitySubsystem->GetLoggedInUserInfo();
 		if (!LoggedInUser)
 		{
 			if (ImGui::Button("Login"))

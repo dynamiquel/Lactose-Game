@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Simp.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "LactoseCropWorldSubsystem.generated.h"
 
@@ -49,16 +50,16 @@ protected:
 	
 	void OnUserCropsLoaded(
 		const ULactoseSimulationServiceSubsystem& Sender,
-		TSharedRef<FLactoseSimulationUserCrops> UserCrops);
+		Sr<FLactoseSimulationUserCrops> UserCrops);
 
 	void OnConfigCloudLoaded(
 		const ULactoseConfigCloudServiceSubsystem& Sender,
-		TSharedRef<FLactoseConfigCloudConfig> Config);
+		Sr<FLactoseConfigCloudConfig> Config);
 	
 	void CreateRequiredUserCrops();
 	bool CreateUserCrop(
-		const TSharedRef<const FLactoseSimulationCrop>& Crop,
-		const TSharedRef<const FLactoseSimulationUserCropInstance>& CropInstance);
+		const Sr<const FLactoseSimulationCrop>& Crop,
+		const Sr<const FLactoseSimulationUserCropInstance>& CropInstance);
 
 	void LoadCropActorClasses();
 

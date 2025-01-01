@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Logging/LogMacros.h"
-#include "Logging/LogCategory.h"
+#include "SimpLog.h"
 
-LACTOSEGAME_API DECLARE_LOG_CATEGORY_EXTERN(LogLactoseRest, Log, All);
+LACTOSEGAME_API CREATE_BASIC_LOG(LogLactoseRest);

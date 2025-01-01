@@ -32,5 +32,5 @@ class LACTOSEDEBUG_API ULactoseEconomyUserItemsTab : public UDebugAppTab
 	Debug::ImGui::FSearchBox OtherUserItemsSearchBox { TEXT("###OtherUserItemsSearchBox") };
 	std::array<char, 128> OtherUserIdBuffer;
 
-	TFuture<TSharedPtr<FGetEconomyUserItemsRequest::FResponseContext>> GetOtherUserItemsFuture;
+	TFuture<Sp<FGetEconomyUserItemsRequest::FResponseContext>> GetOtherUserItemsFuture;
 };

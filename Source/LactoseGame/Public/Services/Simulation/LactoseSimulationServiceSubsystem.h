@@ -33,21 +33,21 @@ class LACTOSEGAME_API FLactoseSimulationUserCrops
 	friend class ULactoseSimulationServiceSubsystem;
 
 public:
-	TConstArrayView<TSharedRef<FLactoseSimulationUserCropInstance>> GetAllCropInstances() const;
-	TSharedPtr<const FLactoseSimulationUserCropInstance> FindCropInstance(const FString& CropInstanceId) const;
-	TSharedRef<const FLactoseSimulationUserCropInstance> UpdateCropInstance(const FLactoseSimulationUserCropInstance& NewCropInstanceData);
+	TConstArrayView<Sr<FLactoseSimulationUserCropInstance>> GetAllCropInstances() const;
+	Sp<const FLactoseSimulationUserCropInstance> FindCropInstance(const FString& CropInstanceId) const;
+	Sr<const FLactoseSimulationUserCropInstance> UpdateCropInstance(const FLactoseSimulationUserCropInstance& NewCropInstanceData);
 	bool DeleteCropInstance(const FString& CropInstanceId);
 
-	TArray<TSharedRef<const FLactoseSimulationUserCropInstance>> FindCropInstances(TConstArrayView<FString> CropInstanceIds) const;
-	TArray<TSharedRef<FLactoseSimulationUserCropInstance>> FindMutableCropInstances(TConstArrayView<FString> CropInstanceIds);
+	TArray<Sr<const FLactoseSimulationUserCropInstance>> FindCropInstances(TConstArrayView<FString> CropInstanceIds) const;
+	TArray<Sr<FLactoseSimulationUserCropInstance>> FindMutableCropInstances(TConstArrayView<FString> CropInstanceIds);
 
 	
 private:
-	TSharedPtr<FLactoseSimulationUserCropInstance> FindMutableCropInstance(const FString& CropInstanceId);
-	void EmplaceCropInstance(const TSharedRef<FLactoseSimulationUserCropInstance>& ExistingCropInstance);
+	Sp<FLactoseSimulationUserCropInstance> FindMutableCropInstance(const FString& CropInstanceId);
+	void EmplaceCropInstance(const Sr<FLactoseSimulationUserCropInstance>& ExistingCropInstance);
 
 private:
-	TArray<TSharedRef<FLactoseSimulationUserCropInstance>> Database;
+	TArray<Sr<FLactoseSimulationUserCropInstance>> Database;
 };
 
 /**
@@ -66,13 +66,13 @@ class LACTOSEGAME_API ULactoseSimulationServiceSubsystem : public ULactoseServic
 
 public:
 	ELactoseSimulationCropsStatus GetAllCropsStatus() const;
-	const TMap<FString, TSharedRef<FLactoseSimulationCrop>>& GetAllCrops() const { return AllCrops; }
-	TSharedPtr<const FLactoseSimulationCrop> FindCrop(const FString& CropId) const;
+	const TMap<FString, Sr<FLactoseSimulationCrop>>& GetAllCrops() const { return AllCrops; }
+	Sp<const FLactoseSimulationCrop> FindCrop(const FString& CropId) const;
 
 	void LoadAllCrops();
 
 	ELactoseSimulationUserCropsStatus GetCurrentUserCropsStatus() const;
-	TSharedPtr<const FLactoseSimulationUserCrops> GetCurrentUserCrops() const;
+	Sp<const FLactoseSimulationUserCrops> GetCurrentUserCrops() const;
 	FDateTime GetCurrentUserPreviousSimulationTime() const { return PreviousUserSimulationTime; }
 
 	void LoadCurrentUserCrops();
@@ -91,22 +91,22 @@ public:
 	bool CanCurrentUserAffordCrop(const FString& CropId) const;
 
 protected:
-	TSharedPtr<FLactoseSimulationUserCrops> GetMutableCurrentUserCrops();
+	Sp<FLactoseSimulationUserCrops> GetMutableCurrentUserCrops();
 	
-	void OnAllCropsQueried(TSharedRef<FQuerySimulationCropsRequest::FResponseContext> Context);
-	void OnAllCropsRetrieved(TSharedRef<FGetSimulationCropsRequest::FResponseContext> Context);
+	void OnAllCropsQueried(Sr<FQuerySimulationCropsRequest::FResponseContext> Context);
+	void OnAllCropsRetrieved(Sr<FGetSimulationCropsRequest::FResponseContext> Context);
 	
-	void OnCurrentUserCropsRetrieved(TSharedRef<FGetSimulationUserCropsRequest::FResponseContext> Context);
-	void OnCurrentUserCropsSimulated(TSharedRef<FSimulateSimulationUserCropsRequest::FResponseContext> Context);
-	void OnCurrentUserCropsHarvested(TSharedRef<FHarvestSimulationUserCropsRequest::FResponseContext> Context);
-	void OnCurrentUserCropsSeeded(TSharedRef<FSeedSimulationUserCropsRequest::FResponseContext> Context);
-	void OnCurrentUserCropsFertilised(TSharedRef<FFertiliseSimulationUserCropsRequest::FResponseContext> Context);
-	void OnCurrentUserCropsDestroyed(TSharedRef<FDeleteSimulationUserCropsRequest::FResponseContext> Context);
-	void OnCurrentUserCropsCreated(TSharedRef<FCreateSimulationUserCropRequest::FResponseContext> Context);
+	void OnCurrentUserCropsRetrieved(Sr<FGetSimulationUserCropsRequest::FResponseContext> Context);
+	void OnCurrentUserCropsSimulated(Sr<FSimulateSimulationUserCropsRequest::FResponseContext> Context);
+	void OnCurrentUserCropsHarvested(Sr<FHarvestSimulationUserCropsRequest::FResponseContext> Context);
+	void OnCurrentUserCropsSeeded(Sr<FSeedSimulationUserCropsRequest::FResponseContext> Context);
+	void OnCurrentUserCropsFertilised(Sr<FFertiliseSimulationUserCropsRequest::FResponseContext> Context);
+	void OnCurrentUserCropsDestroyed(Sr<FDeleteSimulationUserCropsRequest::FResponseContext> Context);
+	void OnCurrentUserCropsCreated(Sr<FCreateSimulationUserCropRequest::FResponseContext> Context);
 
 	void OnUserLoggedIn(
 		const ULactoseIdentityServiceSubsystem& Sender,
-		const TSharedRef<FLactoseIdentityGetUserResponse>& User);
+		const Sr<FLactoseIdentityGetUserResponse>& User);
 
 	void OnUserLoggedOut(const ULactoseIdentityServiceSubsystem& Sender);
 
@@ -125,14 +125,14 @@ private:
 	UPROPERTY(EditAnywhere, Config)
 	bool bClientSidePrediction = true;
 	
-	TFuture<TSharedPtr<FQuerySimulationCropsRequest::FResponseContext>> QueryAllCropsFuture;
-	TFuture<TSharedPtr<FGetSimulationCropsRequest::FResponseContext>> GetAllCropsFuture;
-	TMap<FString, TSharedRef<FLactoseSimulationCrop>> AllCrops;
+	TFuture<Sp<FQuerySimulationCropsRequest::FResponseContext>> QueryAllCropsFuture;
+	TFuture<Sp<FGetSimulationCropsRequest::FResponseContext>> GetAllCropsFuture;
+	TMap<FString, Sr<FLactoseSimulationCrop>> AllCrops;
 
-	TFuture<TSharedPtr<FGetSimulationUserCropsRequest::FResponseContext>> GetCurrentUserCropsFuture;
-	TSharedPtr<FLactoseSimulationUserCrops> CurrentUserCrops;
+	TFuture<Sp<FGetSimulationUserCropsRequest::FResponseContext>> GetCurrentUserCropsFuture;
+	Sp<FLactoseSimulationUserCrops> CurrentUserCrops;
 
-	TFuture<TSharedPtr<FSimulateSimulationUserCropsRequest::FResponseContext>> SimulateCurrentUserCropsFuture;
+	TFuture<Sp<FSimulateSimulationUserCropsRequest::FResponseContext>> SimulateCurrentUserCropsFuture;
 
 	FDateTime PreviousUserSimulationTime;
 	FTimerHandle SimulateTicker;
@@ -145,7 +145,7 @@ namespace Lactose::Simulation::Events
 
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FUserCropsLoaded,
 		const ULactoseSimulationServiceSubsystem& /* Sender */,
-		TSharedRef<FLactoseSimulationUserCrops> /* UserCrops */);
+		Sr<FLactoseSimulationUserCrops> /* UserCrops */);
 
 	DECLARE_MULTICAST_DELEGATE_ThreeParams(FUserCropsSimulated,
 		const ULactoseSimulationServiceSubsystem& /* Sender */,
@@ -154,7 +154,7 @@ namespace Lactose::Simulation::Events
 
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FUserCropsDelegate,
 		const ULactoseSimulationServiceSubsystem& /* Sender */,
-		const TArray<TSharedRef<const FLactoseSimulationUserCropInstance>>& /* ModifiedUserCrops */);
+		const TArray<Sr<const FLactoseSimulationUserCropInstance>>& /* ModifiedUserCrops */);
 
 	inline FAllCropsLoaded OnAllCropsLoaded;
 	inline FUserCropsLoaded OnCurrentUserCropsLoaded;

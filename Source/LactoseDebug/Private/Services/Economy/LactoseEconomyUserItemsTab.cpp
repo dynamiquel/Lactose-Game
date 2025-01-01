@@ -69,7 +69,7 @@ void ULactoseEconomyUserItemsTab::Render()
 
 		ImGui::Spacing();
 		
-		const TMap<FString, TSharedRef<FLactoseEconomyUserItem>>& CurrentUserItems = EconomySubsystem->GetCurrentUserItems();
+		const TMap<FString, Sr<FLactoseEconomyUserItem>>& CurrentUserItems = EconomySubsystem->GetCurrentUserItems();
 		if (CurrentUserItems.IsEmpty())
 		{
 			ImGui::Text("No Items found for the Current User");
@@ -83,7 +83,7 @@ void ULactoseEconomyUserItemsTab::Render()
 			for (const auto& CurrentUserItem : CurrentUserItems)
 			{
 				FString ItemLabel = CurrentUserItem.Key;
-				if (TSharedPtr<const FLactoseEconomyItem> FoundItem = EconomySubsystem->GetItem(CurrentUserItem.Value->ItemId))
+				if (Sp<const FLactoseEconomyItem> FoundItem = EconomySubsystem->GetItem(CurrentUserItem.Value->ItemId))
 					ItemLabel += FString::Printf(TEXT(" (%s)"), *FoundItem->Name);
 
 				if (!CurrentUserItemsSearchBox.PassesFilter(ItemLabel))
@@ -128,14 +128,14 @@ void ULactoseEconomyUserItemsTab::Render()
 
 		if (GetOtherUserItemsFuture.IsReady())
 		{
-			const TSharedPtr<FGetEconomyUserItemsRequest::FResponseContext>& Context = GetOtherUserItemsFuture.Get();
+			const Sp<FGetEconomyUserItemsRequest::FResponseContext>& Context = GetOtherUserItemsFuture.Get();
 			if (!Context.IsValid())
 			{
 				ImGui::Text("Received unsuccessful response");
 			}
 			else
 			{
-				const TSharedPtr<FLactoseEconomyGetUserItemsResponse>& Response = Context->ResponseContent;
+				const Sp<FLactoseEconomyGetUserItemsResponse>& Response = Context->ResponseContent;
 				if (!Response)
 				{
 					ImGui::Text("Received unsuccessful response");
@@ -155,7 +155,7 @@ void ULactoseEconomyUserItemsTab::Render()
 						for (const FLactoseEconomyUserItem& CurrentUserItem : Response->Items)
 						{
 							FString ItemLabel = CurrentUserItem.ItemId;
-							if (TSharedPtr<const FLactoseEconomyItem> FoundItem = EconomySubsystem->GetItem(CurrentUserItem.ItemId))
+							if (Sp<const FLactoseEconomyItem> FoundItem = EconomySubsystem->GetItem(CurrentUserItem.ItemId))
 								ItemLabel += FString::Printf(TEXT(" (%s)"), *FoundItem->Name);
 							
 							if (!OtherUserItemsSearchBox.PassesFilter(ItemLabel))

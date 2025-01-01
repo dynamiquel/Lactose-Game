@@ -10,7 +10,7 @@ TMap<FString, FLactoseEconomyItem> ULactoseEconomyBP::GetItems(const ULactoseEco
 	if (!Economy)
 		return {};
 
-	TMap<FString, TSharedRef<FLactoseEconomyItem>> FoundItems = Economy->GetAllItems();
+	TMap<FString, Sr<FLactoseEconomyItem>> FoundItems = Economy->GetAllItems();
 
 	TMap<FString, FLactoseEconomyItem> CopiedItems;
 	CopiedItems.Reserve(FoundItems.Num());
@@ -26,7 +26,7 @@ FLactoseEconomyItem ULactoseEconomyBP::GetItem(const ULactoseEconomyServiceSubsy
 	if (!Economy)
 		return FLactoseEconomyItem();
 
-	const TSharedRef<FLactoseEconomyItem>* FoundItem = Economy->GetAllItems().Find(ItemId);
+	const Sr<FLactoseEconomyItem>* FoundItem = Economy->GetAllItems().Find(ItemId);
 	return FoundItem ? FoundItem->Get() : FLactoseEconomyItem();
 }
 
@@ -35,7 +35,7 @@ TMap<FString, FLactoseEconomyUserItem> ULactoseEconomyBP::GetCurrentUserItems(co
 	if (!Economy)
 		return {};
 
-	const TMap<FString, TSharedRef<FLactoseEconomyUserItem>>& FoundCurrentUserItems = Economy->GetCurrentUserItems();
+	const TMap<FString, Sr<FLactoseEconomyUserItem>>& FoundCurrentUserItems = Economy->GetCurrentUserItems();
 	TMap<FString, FLactoseEconomyUserItem> CopiedCurrentUserItems;
 	CopiedCurrentUserItems.Reserve(FoundCurrentUserItems.Num());
 
@@ -52,8 +52,8 @@ FLactoseEconomyUserItem ULactoseEconomyBP::GetCurrentUserItem(
 	if (!Economy)
 		return FLactoseEconomyUserItem();
 
-	const TMap<FString, TSharedRef<FLactoseEconomyUserItem>>& FoundCurrentUserItems = Economy->GetCurrentUserItems();
-	const TSharedRef<FLactoseEconomyUserItem>* FoundCurrentUserItem = FoundCurrentUserItems.Find(ItemId);
+	const TMap<FString, Sr<FLactoseEconomyUserItem>>& FoundCurrentUserItems = Economy->GetCurrentUserItems();
+	const Sr<FLactoseEconomyUserItem>* FoundCurrentUserItem = FoundCurrentUserItems.Find(ItemId);
 	return FoundCurrentUserItem ? FoundCurrentUserItem->Get() : FLactoseEconomyUserItem();
 }
 

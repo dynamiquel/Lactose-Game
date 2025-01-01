@@ -64,25 +64,25 @@ public:
 	void Login();
 	void Logout();
 	
-	const TSharedPtr<FLactoseIdentityGetUserResponse>& GetLoggedInUserInfo() const { return LoggedInUserInfo; }
+	const Sp<FLactoseIdentityGetUserResponse>& GetLoggedInUserInfo() const { return LoggedInUserInfo; }
 	ELactoseIdentityUserLoginStatus GetLoginStatus() const;
 
 protected:
-	void OnUserLoggedIn(TSharedRef<FGetUserRequest::FResponseContext> Context);
+	void OnUserLoggedIn(Sr<FGetUserRequest::FResponseContext> Context);
 	
 private:
 	UPROPERTY(EditDefaultsOnly, Config)
 	bool bAutoLogin = true;
 	
-	TFuture<TSharedPtr<FGetUserRequest::FResponseContext>> LoggedInFuture;
-	TSharedPtr<FLactoseIdentityGetUserResponse> LoggedInUserInfo;
+	TFuture<Sp<FGetUserRequest::FResponseContext>> LoggedInFuture;
+	Sp<FLactoseIdentityGetUserResponse> LoggedInUserInfo;
 };
 
 namespace Lactose::Identity::Events
 {
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FUserLoggedIn,
 		const ULactoseIdentityServiceSubsystem& /* Sender */,
-		const TSharedRef<FLactoseIdentityGetUserResponse>& /* User */);
+		const Sr<FLactoseIdentityGetUserResponse>& /* User */);
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FGeneric,
 		const ULactoseIdentityServiceSubsystem& /* Sender */);

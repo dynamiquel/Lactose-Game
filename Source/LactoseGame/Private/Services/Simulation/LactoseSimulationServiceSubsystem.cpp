@@ -7,18 +7,18 @@
 #include "Services/Economy/LactoseEconomyServiceSubsystem.h"
 #include "Services/Identity/LactoseIdentityServiceSubsystem.h"
 
-TConstArrayView<TSharedRef<FLactoseSimulationUserCropInstance>> FLactoseSimulationUserCrops::GetAllCropInstances() const
+TConstArrayView<Sr<FLactoseSimulationUserCropInstance>> FLactoseSimulationUserCrops::GetAllCropInstances() const
 {
 	return Database;
 }
 
-TSharedPtr<const FLactoseSimulationUserCropInstance> FLactoseSimulationUserCrops::FindCropInstance(
+Sp<const FLactoseSimulationUserCropInstance> FLactoseSimulationUserCrops::FindCropInstance(
 	const FString& CropInstanceId) const
 {
 	return const_cast<FLactoseSimulationUserCrops*>(this)->FindMutableCropInstance(CropInstanceId);
 }
 
-TSharedRef<const FLactoseSimulationUserCropInstance> FLactoseSimulationUserCrops::UpdateCropInstance(
+Sr<const FLactoseSimulationUserCropInstance> FLactoseSimulationUserCrops::UpdateCropInstance(
 	const FLactoseSimulationUserCropInstance& NewCropInstanceData)
 {
 	auto FoundCropInstance = FindMutableCropInstance(NewCropInstanceData.Id);
@@ -36,7 +36,7 @@ TSharedRef<const FLactoseSimulationUserCropInstance> FLactoseSimulationUserCrops
 bool FLactoseSimulationUserCrops::DeleteCropInstance(const FString& CropInstanceId)
 {
 	const int32 FoundCropInstanceIndex = Database.IndexOfByPredicate([&CropInstanceId]
-	(const TSharedRef<FLactoseSimulationUserCropInstance>& CropInstance)
+		(const Sr<FLactoseSimulationUserCropInstance>& CropInstance)
 		{
 			return CropInstance->Id == CropInstanceId;
 		});
@@ -48,13 +48,13 @@ bool FLactoseSimulationUserCrops::DeleteCropInstance(const FString& CropInstance
 	return true;
 }
 
-TArray<TSharedRef<const FLactoseSimulationUserCropInstance>> FLactoseSimulationUserCrops::FindCropInstances(
+TArray<Sr<const FLactoseSimulationUserCropInstance>> FLactoseSimulationUserCrops::FindCropInstances(
 	TConstArrayView<FString> CropInstanceIds) const
 {
-	TArray<TSharedRef<const FLactoseSimulationUserCropInstance>> FoundCropsInstances;
+	TArray<Sr<const FLactoseSimulationUserCropInstance>> FoundCropsInstances;
 	for (const FString& CropInstanceId : CropInstanceIds)
 	{
-		TSharedPtr<const FLactoseSimulationUserCropInstance> FoundCropInstance = FindCropInstance(CropInstanceId);
+		Sp<const FLactoseSimulationUserCropInstance> FoundCropInstance = FindCropInstance(CropInstanceId);
 		if (!FoundCropInstance)
 			continue;
 
@@ -64,13 +64,13 @@ TArray<TSharedRef<const FLactoseSimulationUserCropInstance>> FLactoseSimulationU
 	return FoundCropsInstances;
 }
 
-TArray<TSharedRef<FLactoseSimulationUserCropInstance>> FLactoseSimulationUserCrops::FindMutableCropInstances(
+TArray<Sr<FLactoseSimulationUserCropInstance>> FLactoseSimulationUserCrops::FindMutableCropInstances(
 	TConstArrayView<FString> CropInstanceIds)
 {
-	TArray<TSharedRef<FLactoseSimulationUserCropInstance>> FoundCropsInstances;
+	TArray<Sr<FLactoseSimulationUserCropInstance>> FoundCropsInstances;
 	for (const FString& CropInstanceId : CropInstanceIds)
 	{
-		TSharedPtr<FLactoseSimulationUserCropInstance> FoundCropInstance = FindMutableCropInstance(CropInstanceId);
+		Sp<FLactoseSimulationUserCropInstance> FoundCropInstance = FindMutableCropInstance(CropInstanceId);
 		if (!FoundCropInstance)
 			continue;
 
@@ -80,11 +80,11 @@ TArray<TSharedRef<FLactoseSimulationUserCropInstance>> FLactoseSimulationUserCro
 	return FoundCropsInstances;
 }
 
-TSharedPtr<FLactoseSimulationUserCropInstance> FLactoseSimulationUserCrops::FindMutableCropInstance(
+Sp<FLactoseSimulationUserCropInstance> FLactoseSimulationUserCrops::FindMutableCropInstance(
 	const FString& CropInstanceId)
 {
 	auto* FoundCropInstance = Database.FindByPredicate([&CropInstanceId]
-	(const TSharedRef<FLactoseSimulationUserCropInstance>& CropInstance)
+		(const Sr<FLactoseSimulationUserCropInstance>& CropInstance)
 		{
 			return CropInstance->Id == CropInstanceId;
 		});
@@ -92,7 +92,7 @@ TSharedPtr<FLactoseSimulationUserCropInstance> FLactoseSimulationUserCrops::Find
 	return FoundCropInstance ? FoundCropInstance->ToSharedPtr() : nullptr;
 }
 
-void FLactoseSimulationUserCrops::EmplaceCropInstance(const TSharedRef<FLactoseSimulationUserCropInstance>& ExistingCropInstance)
+void FLactoseSimulationUserCrops::EmplaceCropInstance(const Sr<FLactoseSimulationUserCropInstance>& ExistingCropInstance)
 {
 	Database.Add(ExistingCropInstance);
 }
@@ -124,9 +124,9 @@ ELactoseSimulationCropsStatus ULactoseSimulationServiceSubsystem::GetAllCropsSta
 	return ELactoseSimulationCropsStatus::None;
 }
 
-TSharedPtr<const FLactoseSimulationCrop> ULactoseSimulationServiceSubsystem::FindCrop(const FString& CropId) const
+Sp<const FLactoseSimulationCrop> ULactoseSimulationServiceSubsystem::FindCrop(const FString& CropId) const
 {
-	const TSharedRef<FLactoseSimulationCrop>* FoundCrop = GetAllCrops().Find(CropId);
+	const Sr<FLactoseSimulationCrop>* FoundCrop = GetAllCrops().Find(CropId);
 	return FoundCrop ? FoundCrop->ToSharedPtr() : nullptr;
 }
 
@@ -155,21 +155,21 @@ ELactoseSimulationUserCropsStatus ULactoseSimulationServiceSubsystem::GetCurrent
 	return ELactoseSimulationUserCropsStatus::None;
 }
 
-TSharedPtr<const FLactoseSimulationUserCrops> ULactoseSimulationServiceSubsystem::GetCurrentUserCrops() const
+Sp<const FLactoseSimulationUserCrops> ULactoseSimulationServiceSubsystem::GetCurrentUserCrops() const
 {
 	return CurrentUserCrops;
 }
 
 bool ULactoseSimulationServiceSubsystem::CanCurrentUserAffordCrop(const FString& CropId) const
 {
-	const TSharedPtr<const FLactoseSimulationCrop> FoundCrop = FindCrop(CropId);
+	const Sp<const FLactoseSimulationCrop> FoundCrop = FindCrop(CropId);
 	if (!FoundCrop)
 		return false;
 
 	for (const FLactoseEconomyUserItem& CostItem : FoundCrop->CostItems)
 	{
 		const auto& EconomySubsystem = Lactose::GetService<ULactoseEconomyServiceSubsystem>(*this);
-		TSharedPtr<const FLactoseEconomyUserItem> FoundUserItem = EconomySubsystem.FindCurrentUserItem(CostItem.ItemId);
+		Sp<const FLactoseEconomyUserItem> FoundUserItem = EconomySubsystem.FindCurrentUserItem(CostItem.ItemId);
 		if (!FoundUserItem)
 			return false;
 
@@ -180,7 +180,7 @@ bool ULactoseSimulationServiceSubsystem::CanCurrentUserAffordCrop(const FString&
 	return true;
 }
 
-TSharedPtr<FLactoseSimulationUserCrops> ULactoseSimulationServiceSubsystem::GetMutableCurrentUserCrops()
+Sp<FLactoseSimulationUserCrops> ULactoseSimulationServiceSubsystem::GetMutableCurrentUserCrops()
 {
 	return CurrentUserCrops;
 }
@@ -250,7 +250,7 @@ void ULactoseSimulationServiceSubsystem::HarvestCropInstances(TConstArrayView<FS
 	if (!IdentitySubsystem)
 		return;
 
-	TSharedPtr<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
+	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
 		UE_LOG(LogLactoseSimulationService, Error, TEXT("Cannot harvest current user's crops because the user is not logged in"));
@@ -279,7 +279,7 @@ void ULactoseSimulationServiceSubsystem::SeedCropInstances(
 	if (!IdentitySubsystem)
 		return;
 
-	TSharedPtr<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
+	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
 		UE_LOG(LogLactoseSimulationService, Error, TEXT("Cannot seed current user's crops because the user is not logged in"));
@@ -307,7 +307,7 @@ void ULactoseSimulationServiceSubsystem::FertiliseCropInstances(TConstArrayView<
 	if (!IdentitySubsystem)
 		return;
 
-	TSharedPtr<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
+	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
 		UE_LOG(LogLactoseSimulationService, Error, TEXT("Cannot fertilise current user's crops because the user is not logged in"));
@@ -334,7 +334,7 @@ void ULactoseSimulationServiceSubsystem::DestroyCropInstances(TConstArrayView<FS
 	if (!IdentitySubsystem)
 		return;
 
-	TSharedPtr<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
+	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
 		UE_LOG(LogLactoseSimulationService, Error, TEXT("Cannot destroy current user's crops because the user is not logged in"));
@@ -366,7 +366,7 @@ void ULactoseSimulationServiceSubsystem::CreateCrop(const FString& CropId, const
 	if (!IdentitySubsystem)
 		return;
 
-	TSharedPtr<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
+	Sp<FLactoseIdentityGetUserResponse> CurrentUserInfo = IdentitySubsystem->GetLoggedInUserInfo();
 	if (!CurrentUserInfo)
 	{
 		UE_LOG(LogLactoseSimulationService, Error, TEXT("Cannot destroy current user's crops because the user is not logged in"));
@@ -405,7 +405,7 @@ void ULactoseSimulationServiceSubsystem::DisableSimulateTicker()
 	SimulateTicker.Invalidate();
 }
 
-void ULactoseSimulationServiceSubsystem::OnAllCropsQueried(TSharedRef<FQuerySimulationCropsRequest::FResponseContext> Context)
+void ULactoseSimulationServiceSubsystem::OnAllCropsQueried(Sr<FQuerySimulationCropsRequest::FResponseContext> Context)
 {
 	QueryAllCropsFuture.Reset();
 
@@ -431,7 +431,7 @@ void ULactoseSimulationServiceSubsystem::OnAllCropsQueried(TSharedRef<FQuerySimu
 	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Sent a Get All Crops request"));
 }
 
-void ULactoseSimulationServiceSubsystem::OnAllCropsRetrieved(TSharedRef<FGetSimulationCropsRequest::FResponseContext> Context)
+void ULactoseSimulationServiceSubsystem::OnAllCropsRetrieved(Sr<FGetSimulationCropsRequest::FResponseContext> Context)
 {
 	GetAllCropsFuture.Reset();
 
@@ -447,7 +447,7 @@ void ULactoseSimulationServiceSubsystem::OnAllCropsRetrieved(TSharedRef<FGetSimu
 	// Add or update crops.
 	for (const FLactoseSimulationCrop& Crop : Context->ResponseContent->Crops)
 	{
-		if (TSharedRef<FLactoseSimulationCrop>* ExistingCrop = AllCrops.Find(Crop.Id))
+		if (Sr<FLactoseSimulationCrop>* ExistingCrop = AllCrops.Find(Crop.Id))
 		{
 			ExistingCrop->Get() = Crop;
 		}
@@ -472,7 +472,7 @@ void ULactoseSimulationServiceSubsystem::OnAllCropsRetrieved(TSharedRef<FGetSimu
 	Lactose::Simulation::Events::OnAllCropsLoaded.Broadcast(*this);
 }
 
-void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsRetrieved(TSharedRef<FGetSimulationUserCropsRequest::FResponseContext> Context)
+void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsRetrieved(Sr<FGetSimulationUserCropsRequest::FResponseContext> Context)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(ULactoseSimulationServiceSubsystem::OnCurrentUserCropsRetrieved);
 	
@@ -487,7 +487,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsRetrieved(TSharedRef<
 		CurrentUserCrops = MakeShared<FLactoseSimulationUserCrops>();
 
 	TSet<FString> ExistingCropInstanceIds;
-	for (const TSharedRef<FLactoseSimulationUserCropInstance>& ExistingCrop : GetMutableCurrentUserCrops()->GetAllCropInstances())
+	for (const Sr<FLactoseSimulationUserCropInstance>& ExistingCrop : GetMutableCurrentUserCrops()->GetAllCropInstances())
 	{
 		ExistingCropInstanceIds.Add(ExistingCrop->Id);
 	}
@@ -517,7 +517,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsRetrieved(TSharedRef<
 	Lactose::Simulation::Events::OnCurrentUserCropsLoaded.Broadcast(*this, CurrentUserCrops.ToSharedRef());
 }
 
-void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSimulated(TSharedRef<FSimulateSimulationUserCropsRequest::FResponseContext> Context)
+void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSimulated(Sr<FSimulateSimulationUserCropsRequest::FResponseContext> Context)
 {
 	SimulateCurrentUserCropsFuture.Reset();
 	
@@ -535,7 +535,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSimulated(TSharedRef<
 		LoadCurrentUserCrops();
 }
 
-void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsHarvested(TSharedRef<FHarvestSimulationUserCropsRequest::FResponseContext> Context)
+void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsHarvested(Sr<FHarvestSimulationUserCropsRequest::FResponseContext> Context)
 {
 	if (!Context->ResponseContent.IsValid())
 		return;
@@ -546,7 +546,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsHarvested(TSharedRef<
 		return;
 	}
 
-	TArray<TSharedRef<FLactoseSimulationUserCropInstance>> HarvestedCropInstances =
+	TArray<Sr<FLactoseSimulationUserCropInstance>> HarvestedCropInstances =
 		GetMutableCurrentUserCrops()->FindMutableCropInstances(Context->ResponseContent->HarvestedCropInstanceIds);
 
 	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Harvested %d User Crops"),
@@ -554,7 +554,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsHarvested(TSharedRef<
 
 	Lactose::Simulation::Events::OnCurrentUserCropsHarvested.Broadcast(
 		*this,
-		static_cast<TArray<TSharedRef<const FLactoseSimulationUserCropInstance>>>(HarvestedCropInstances));
+		static_cast<TArray<Sr<const FLactoseSimulationUserCropInstance>>>(HarvestedCropInstances));
 
 	for (const auto& HarvestedCrop : HarvestedCropInstances)
 		HarvestedCrop->OnHarvested.Broadcast(HarvestedCrop);
@@ -564,7 +564,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsHarvested(TSharedRef<
 		// Client-side prediction until next simulation tick happens.
 		for (const auto& HarvestedCropInstance : HarvestedCropInstances)
 		{
-			TSharedPtr<const FLactoseSimulationCrop> FoundCrop = FindCrop(HarvestedCropInstance->CropId);
+			Sp<const FLactoseSimulationCrop> FoundCrop = FindCrop(HarvestedCropInstance->CropId);
 			if (!FoundCrop)
 				continue;
 
@@ -583,7 +583,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsHarvested(TSharedRef<
 	}
 }
 
-void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSeeded(TSharedRef<FSeedSimulationUserCropsRequest::FResponseContext> Context)
+void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSeeded(Sr<FSeedSimulationUserCropsRequest::FResponseContext> Context)
 {
 	if (!Context->ResponseContent.IsValid())
 		return;
@@ -594,7 +594,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSeeded(TSharedRef<FSe
 		return;
 	}
 
-	const TArray<TSharedRef<FLactoseSimulationUserCropInstance>> SeededCropInstances =
+	const TArray<Sr<FLactoseSimulationUserCropInstance>> SeededCropInstances =
 		GetMutableCurrentUserCrops()->FindMutableCropInstances(Context->ResponseContent->SeededCropInstanceIds);
 
 	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Seeded %d User Crops"),
@@ -602,7 +602,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSeeded(TSharedRef<FSe
 
 	Lactose::Simulation::Events::OnCurrentUserCropsSeeded.Broadcast(
 		*this,
-		static_cast<TArray<TSharedRef<const FLactoseSimulationUserCropInstance>>>(SeededCropInstances));
+		static_cast<TArray<Sr<const FLactoseSimulationUserCropInstance>>>(SeededCropInstances));
 
 	for (const auto& SeededCrop : SeededCropInstances)
 		SeededCrop->OnSeeded.Broadcast(SeededCrop);
@@ -612,7 +612,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSeeded(TSharedRef<FSe
 		// Client-side prediction until next simulation tick happens.
 		for (const auto& SeededCropInstance : SeededCropInstances)
 		{
-			TSharedPtr<const FLactoseSimulationCrop> FoundCrop = FindCrop(SeededCropInstance->CropId);
+			Sp<const FLactoseSimulationCrop> FoundCrop = FindCrop(SeededCropInstance->CropId);
 			if (!FoundCrop)
 				continue;
 			
@@ -623,7 +623,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSeeded(TSharedRef<FSe
 	}
 }
 
-void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsFertilised(TSharedRef<FFertiliseSimulationUserCropsRequest::FResponseContext> Context)
+void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsFertilised(Sr<FFertiliseSimulationUserCropsRequest::FResponseContext> Context)
 {
 	if (!Context->ResponseContent.IsValid())
 		return;
@@ -634,7 +634,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsFertilised(TSharedRef
 		return;
 	}
 
-	const TArray<TSharedRef<const FLactoseSimulationUserCropInstance>> FertilisedCropInstances =
+	const TArray<Sr<const FLactoseSimulationUserCropInstance>> FertilisedCropInstances =
 		GetMutableCurrentUserCrops()->FindCropInstances(Context->ResponseContent->FertilisedCropInstanceIds);
 
 	UE_LOG(LogLactoseSimulationService, Verbose, TEXT("Fertilised %d User Crops"),
@@ -646,7 +646,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsFertilised(TSharedRef
 		FertilisedCrop->OnFertilised.Broadcast(FertilisedCrop);
 }
 
-void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsDestroyed(TSharedRef<FDeleteSimulationUserCropsRequest::FResponseContext> Context)
+void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsDestroyed(Sr<FDeleteSimulationUserCropsRequest::FResponseContext> Context)
 {
 	if (!Context->ResponseContent.IsValid())
 		return;
@@ -657,7 +657,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsDestroyed(TSharedRef<
 		return;
 	}
 	
-	const TArray<TSharedRef<const FLactoseSimulationUserCropInstance>> DestroyedCropInstances =
+	const TArray<Sr<const FLactoseSimulationUserCropInstance>> DestroyedCropInstances =
 		GetMutableCurrentUserCrops()->FindCropInstances(Context->ResponseContent->DestroyedCropInstanceIds);
 
 	for (const auto& DestroyedCropInstance : DestroyedCropInstances)
@@ -673,7 +673,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsDestroyed(TSharedRef<
 }
 
 void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsCreated(
-	TSharedRef<FCreateSimulationUserCropRequest::FResponseContext> Context)
+	Sr<FCreateSimulationUserCropRequest::FResponseContext> Context)
 {
 	if (!Context->ResponseContent.IsValid())
 		return;
@@ -691,7 +691,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsCreated(
 
 void ULactoseSimulationServiceSubsystem::OnUserLoggedIn(
 	const ULactoseIdentityServiceSubsystem& Sender,
-	const TSharedRef<FLactoseIdentityGetUserResponse>& User)
+	const Sr<FLactoseIdentityGetUserResponse>& User)
 {
 	if (bAutoRetrieveCrops)
 		LoadAllCrops();

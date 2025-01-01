@@ -11,8 +11,8 @@ namespace Lactose::Serialisation::Json
 
 		FMemoryReader MemoryReader(JsonData);
 
-		TSharedPtr<FJsonObject> JsonObject;
-		TSharedRef<TJsonReader<UTF8CHAR>> JsonReader = TJsonReaderFactory<UTF8CHAR>::Create(&MemoryReader);
+		Sp<FJsonObject> JsonObject;
+		Sr<TJsonReader<UTF8CHAR>> JsonReader = TJsonReaderFactory<UTF8CHAR>::Create(&MemoryReader);
 		if (!FJsonSerializer::Deserialize(JsonReader, JsonObject) || !JsonObject)
 		{
 			UE_LOG(LogSerialization, Error, TEXT("Could not deserialise the given bytes into a JSON object"));
@@ -44,7 +44,7 @@ namespace Lactose::Serialisation::Json
 	}
 
 	template<typename T>
-	TSharedPtr<T> DeserialiseShared(const TArray<uint8>& JsonData)
+	Sp<T> DeserialiseShared(const TArray<uint8>& JsonData)
 	{
 		TOptional<T> Object = Deserialise<T>(JsonData);
 		return Object ? MakeShared<T>(MoveTemp(*Object)).ToSharedPtr() : nullptr;

@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Logging/LogMacros.h"
-#include "Logging/LogCategory.h"
+#include "SimpLog.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogLactoseServices, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(LogLactoseIdentityService, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(LogLactoseEconomyService, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(LogLactoseSimulationService, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(LogLactoseConfigService, Log, All);
+CREATE_BASIC_LOG(LogLactoseServices)
+CREATE_BASIC_LOG(LogLactoseIdentityService)
+CREATE_BASIC_LOG(LogLactoseEconomyService)
+CREATE_BASIC_LOG(LogLactoseSimulationService)
+CREATE_BASIC_LOG(LogLactoseConfigService)

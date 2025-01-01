@@ -1,6 +1,7 @@
 #pragma once
 
 #include <CoreMinimal.h>
+#include "Simp.h"
 
 #include "DebugAppTab.h"
 #include "LactoseIdentityStatusTab.generated.h"
@@ -29,7 +30,7 @@ class LACTOSEDEBUG_API ULactoseIdentityStatusTab : public UDebugAppTab
 	// End override UDebugAppTab
 
 private:
-	TSharedPtr<Lactose::Debug::Services::FStatusSection> StatusSection;
+	Sp<Lactose::Debug::Services::FStatusSection> StatusSection;
 	
 	UPROPERTY(Transient)
 	TObjectPtr<ULactoseIdentityServiceSubsystem> IdentitySubsystem;

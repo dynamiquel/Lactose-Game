@@ -31,7 +31,7 @@ public:
 protected:
 	void BeginPlay() override;
 
-	void OnLoaded(const TSharedRef<const FLactoseSimulationUserCropInstance>& InCropInstance) override;
+	void OnLoaded(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance) override;
 
 	void SpawnPlantMeshes();
 	void SetPlantScaleBasedOnGrowth();

@@ -47,7 +47,7 @@ void ULactoseConfigTab::Render()
 
 	ImGui::Spacing();
 
-	TSharedPtr<const FLactoseConfigCloudConfig> Config = ConfigSubsystem->GetConfig();
+	Sp<const FLactoseConfigCloudConfig> Config = ConfigSubsystem->GetConfig();
 	if (!Config)
 		return;
 
@@ -57,7 +57,7 @@ void ULactoseConfigTab::Render()
 	
 	ImGui::Spacing();
 
-	for (const TTuple<FString, TSharedRef<FLactoseConfigCloudEntry>>& Entry : Config->GetEntries())
+	for (const TTuple<FString, Sr<FLactoseConfigCloudEntry>>& Entry : Config->GetEntries())
 	{
 		if (!ConfigSearchBox.PassesFilter(Entry.Key))
 			continue;
