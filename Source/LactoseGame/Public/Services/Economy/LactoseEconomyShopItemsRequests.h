@@ -41,12 +41,12 @@ struct FLactoseEconomyShopItem
 	TArray<FLactoseEconomyUserItem> TransactionItems;
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FLactoseEconomyGetUserShopItemsResponse
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	TArray<FLactoseEconomyShopItem> ShopItems;
 };
 

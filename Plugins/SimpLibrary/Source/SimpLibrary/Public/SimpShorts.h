@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Misc/Optional.h>
+#include "SimpShorts.generated.h"
 
 /**
  * Optional:
@@ -96,3 +97,16 @@ TPlayerController* GetPlayerController(const TPlayerContext& PlayerContext)
 }
 
 #define self *this
+
+/**
+ * This struct simply exists so UHT can make a generated.h file for this file.
+ * This is required so the dynamic delegates below will compile.
+ */
+USTRUCT()
+struct FSimpGeneratedFileStub
+{
+	GENERATED_BODY()
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSimpDynamicMCDelegate);
+DECLARE_DYNAMIC_DELEGATE(FSimpDynamicDelegate);

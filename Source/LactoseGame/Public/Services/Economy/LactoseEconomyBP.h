@@ -3,9 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Simp.h"
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <Kismet/BlueprintAsyncActionBase.h>
 
 #include "LactoseEconomyItemsRequests.h"
+#include "LactoseEconomyShopItemsRequests.h"
 #include "LactoseEconomyUserItemsRequests.h"
 #include "LactoseGame/LactoseNativeDelegateWrapper.h"
 #include "LactoseEconomyBP.generated.h"
@@ -43,6 +46,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Lactose Economy")
 	static bool IsValidUserItem(const FLactoseEconomyUserItem& Item);
+
+	UFUNCTION(BlueprintCallable, Category = "Lactose Economy")
+	void PerformShopItemTrade(const ULactoseEconomyServiceSubsystem* Economy, const FString& ShopItemId, int32 Quantity = 1);
 };
 
 UCLASS()
@@ -56,4 +62,33 @@ public:
 	
 private:
 	void HandleNativeEvent(const ULactoseEconomyServiceSubsystem& Sender);
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLactoseEconomyGetUserShopItemsSuccessPin,
+	const FLactoseEconomyGetUserShopItemsResponse&, Result);
+
+UCLASS(BlueprintType)
+class ULactoseEconomyGetUserShopItemsAsyncNode : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	UFUNCTION(BlueprintCallable, meta=(WorldContext="InWorldContext"))
+	static ULactoseEconomyGetUserShopItemsAsyncNode* LactoseEconomyGetUserShopItemsAsyncNode(
+		UObject* InWorldContext,
+		const FString& InUserId);
+
+	void Activate() override;
+	
+	UPROPERTY(BlueprintAssignable)
+	FLactoseEconomyGetUserShopItemsSuccessPin OnLoaded;
+
+	UPROPERTY(BlueprintAssignable)
+	FSimpDynamicMCDelegate OnFailed;
+
+protected:
+	UPROPERTY()
+	TObjectPtr<UObject> WorldContext;
+
+	FString UserId;
 };

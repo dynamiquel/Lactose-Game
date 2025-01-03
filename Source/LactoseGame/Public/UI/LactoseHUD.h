@@ -72,6 +72,9 @@ public:
 	UPROPERTY()
 	TSubclassOf<UUserWidget> ServiceIssuesWidgetClass;
 	
+	UPROPERTY()
+	TSubclassOf<UUserWidget> UserShopWidgetClass;
+	
 protected:
 	UPROPERTY(Transient)
 	TObjectPtr<UUserWidget> PlayerMenuWidget;
@@ -93,6 +96,9 @@ protected:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UUserWidget> AnimalToolWidget;
+	
+	UPROPERTY(Transient)
+	TObjectPtr<UUserWidget> UserShopWidget;
 
 	FGameplayTag ActiveToolHUD;
 };

@@ -42,10 +42,12 @@ ALactoseHUD::ALactoseHUD()
 	static ConstructorHelpers::FClassFinder<UUserWidget> PauseWidgetClassFinder(TEXT("/Game/UI/WBP_PlayerMenu"));
 	static ConstructorHelpers::FClassFinder<UUserWidget> PlantCropWidgetClassFinder(TEXT("/Game/UI/WBP_SeedTreeCrop"));
 	static ConstructorHelpers::FClassFinder<UUserWidget> SeedCropWidgetClassFinder(TEXT("/Game/UI/WBP_SeedPlotCrop"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> UserShopWidgetClassFinder(TEXT("/Game/UI/WBP_UserShop"));
 
 	PlayerMenuWidgetClass = PauseWidgetClassFinder.Class;
 	PlantCropWidgetClass = PlantCropWidgetClassFinder.Class;
 	SeedCropWidgetClass = SeedCropWidgetClassFinder.Class;
+	UserShopWidgetClass = UserShopWidgetClassFinder.Class;
 
 	static ConstructorHelpers::FClassFinder<UUserWidget> NoneToolWidgetClassFinder(TEXT("/Game/UI/HUD/WBP_NoneTool"));
 	static ConstructorHelpers::FClassFinder<UUserWidget> PlotToolWidgetClassFinder(TEXT("/Game/UI/HUD/WBP_PlotTool"));
@@ -63,67 +65,44 @@ void ALactoseHUD::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	if (LIKELY(PlayerMenuWidgetClass))
-	{
 		PlayerMenuWidget = CreateWidget(GetOwningPlayerController(), PlayerMenuWidgetClass);
-	}
 	else
-	{
 		Log::Error(LogLactose, TEXT("HUD Player Menu Widget Class was not set"));
-	}
 
 	if (LIKELY(PlantCropWidgetClass))
-	{
 		PlantCropWidget = CreateWidget(GetOwningPlayerController(), PlantCropWidgetClass);
-	}
 	else
-	{
 		Log::Error(LogLactose, TEXT("HUD Plant Crop Widget Class was not set"));
-	}
 
 	if (LIKELY(SeedCropWidgetClass))
-	{
 		SeedCropWidget = CreateWidget(GetOwningPlayerController(), SeedCropWidgetClass);
-	}
 	else
-	{
 		Log::Error(LogLactose, TEXT("HUD Seed Crop Widget Class was not set"));
-	}
 
 	if (LIKELY(NoneToolWidgetClass))
-	{
 		NoneToolWidget = CreateWidget(GetOwningPlayerController(), NoneToolWidgetClass);
-	}
 	else
-	{
 		Log::Error(LogLactose, TEXT("HUD None Tool Widget Class was not set"));
-	}
 
 	if (LIKELY(PlotToolWidgetClass))
-	{
 		PlotToolWidget = CreateWidget(GetOwningPlayerController(), PlotToolWidgetClass);
-	}
 	else
-	{
 		Log::Error(LogLactose, TEXT("HUD Plot Tool Widget Class was not set"));
-	}
 
 	if (LIKELY(TreeToolWidgetClass))
-	{
 		TreeToolWidget = CreateWidget(GetOwningPlayerController(), TreeToolWidgetClass);
-	}
 	else
-	{
 		Log::Error(LogLactose, TEXT("HUD Tree Tool Widget Class was not set"));
-	}
 
 	if (LIKELY(AnimalToolWidgetClass))
-	{
 		AnimalToolWidget = CreateWidget(GetOwningPlayerController(), AnimalToolWidgetClass);
-	}
 	else
-	{
 		Log::Error(LogLactose, TEXT("HUD Animal Tool Widget Class was not set"));
-	}
+
+	if (LIKELY(UserShopWidgetClass))
+		UserShopWidget = CreateWidget(GetOwningPlayerController(), UserShopWidgetClass);
+	else
+		Log::Error(LogLactose, TEXT("HUD User Shop Widget Class was not set"));
 
 	auto* LactosePC = Cast<ALactoseGamePlayerController>(GetOwningPlayerController());
 	if (!ensure(LactosePC))
@@ -178,6 +157,14 @@ void ALactoseHUD::OnMenuOpened(const APlayerController* PlayerController, const 
 			CallBPFunction(*SeedCropWidget, BaseWidgetShowFunctionName);
 		}
 	}
+	else if (MenuTag.MatchesTag(Lactose::Menus::UserShop))
+	{
+		if (LIKELY(UserShopWidget))
+		{
+			UserShopWidget->AddToPlayerScreen();
+			CallBPFunction(*UserShopWidget, BaseWidgetShowFunctionName);
+		}
+	}
 }
 
 void ALactoseHUD::OnMenuClosed(const APlayerController* PlayerController, const FGameplayTag& MenuTag)
@@ -204,6 +191,14 @@ void ALactoseHUD::OnMenuClosed(const APlayerController* PlayerController, const 
 		{
 			CallBPFunction(*SeedCropWidget, BaseWidgetHideFunctionName);
 			SeedCropWidget->RemoveFromParent();
+		}
+	}
+	else if (MenuTag.MatchesTag(Lactose::Menus::UserShop))
+	{
+		if (LIKELY(UserShopWidget))
+		{
+			CallBPFunction(*UserShopWidget, BaseWidgetHideFunctionName);
+			UserShopWidget->RemoveFromParent();
 		}
 	}
 }

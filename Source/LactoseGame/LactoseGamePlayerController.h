@@ -56,6 +56,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Lactose")
 	void ResetTreeCropIdToPlant();
 
+	UFUNCTION(BlueprintPure, Category="Lactose")
+	bool GetUserShopIdToBrowse(UPARAM() FString& CropId) const;
+	
+	UFUNCTION(BlueprintCallable, Category="Lactose")
+	void SetUserShopIdToBrowse(const FString& UserId);
+
+
 protected:
 	void BeginPlay() override;
 	void SetupInputComponent() override;
@@ -76,6 +83,7 @@ protected:
 	
 	TArray<FString> CropInstanceIdsToSeed;
 	TOptional<FString> TreeCropIdToPlant;
+	TOptional<FString> UserShopIdToBrowse;
 
 public:
 	UPROPERTY(BlueprintAssignable)

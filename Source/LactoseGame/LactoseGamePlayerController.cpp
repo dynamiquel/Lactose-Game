@@ -147,6 +147,23 @@ void ALactoseGamePlayerController::ResetTreeCropIdToPlant()
 	Log::Log(LogLactose, TEXT("Player has unselected Tree to plant"));
 }
 
+bool ALactoseGamePlayerController::GetUserShopIdToBrowse(FString& CropId) const
+{
+	if (UserShopIdToBrowse.IsSet())
+	{
+		CropId = *UserShopIdToBrowse;
+		return true;
+	}
+
+	CropId.Reset();
+	return false;
+}
+
+void ALactoseGamePlayerController::SetUserShopIdToBrowse(const FString& UserId)
+{
+	UserShopIdToBrowse = UserId;
+}
+
 void ALactoseGamePlayerController::BeginPlay()
 {
 	Super::BeginPlay();
