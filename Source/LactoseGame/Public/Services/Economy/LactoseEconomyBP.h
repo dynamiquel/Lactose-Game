@@ -48,7 +48,7 @@ public:
 	static bool IsValidUserItem(const FLactoseEconomyUserItem& Item);
 
 	UFUNCTION(BlueprintCallable, Category = "Lactose Economy")
-	void PerformShopItemTrade(const ULactoseEconomyServiceSubsystem* Economy, const FString& ShopItemId, int32 Quantity = 1);
+	static void PerformShopItemTrade(ULactoseEconomyServiceSubsystem* Economy, const FString& ShopItemId, int32 Quantity = 1);
 };
 
 UCLASS()

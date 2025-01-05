@@ -68,14 +68,14 @@ bool ULactoseEconomyBP::IsValidUserItem(const FLactoseEconomyUserItem& Item)
 }
 
 void ULactoseEconomyBP::PerformShopItemTrade(
-	const ULactoseEconomyServiceSubsystem* Economy,
+	ULactoseEconomyServiceSubsystem* Economy,
 	const FString& ShopItemId,
 	int32 Quantity)
 {
 	if (!Economy)
 		return;
 
-	PerformShopItemTrade(Economy, ShopItemId, Quantity);
+	Economy->PerformShopItemTrade(ShopItemId, Quantity);
 }
 
 void ULactoseEconomyCurrentUserItemsLoadedDelegateWrapper::OnSubscribed()
