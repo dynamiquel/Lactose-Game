@@ -32,7 +32,7 @@ protected:
 	// End override AActor
 
 public:
-	void Init(
+	virtual void Init(
 		const Sr<const FLactoseSimulationCrop>& InCrop,
 		const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance);
 

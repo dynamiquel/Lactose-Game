@@ -308,6 +308,10 @@
 		{
 			"Name": "VisualStudioCodeSourceCodeAccess",
 			"Enabled": false
+		},
+		{
+			"Name": "StructUtils",
+			"Enabled": true
 		}
 	]
 }

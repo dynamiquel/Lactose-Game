@@ -577,6 +577,9 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSeeded(Sr<FSeedSimula
 	const TArray<Sr<FLactoseSimulationUserCropInstance>> SeededCropInstances =
 		GetMutableCurrentUserCrops()->FindMutableCropInstances(Context->ResponseContent->SeededCropInstanceIds);
 
+	for (const auto& LactoseSimulationUserCropInstance : SeededCropInstances)
+		LactoseSimulationUserCropInstance->CropId = Context->RequestContent->CropId;
+
 	Log::Verbose(LogLactoseSimulationService,
 		TEXT("Seeded %d User Crops"),
 		Context->ResponseContent->SeededCropInstanceIds.Num());
@@ -596,7 +599,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSeeded(Sr<FSeedSimula
 			Sp<const FLactoseSimulationCrop> FoundCrop = FindCrop(SeededCropInstance->CropId);
 			if (!FoundCrop)
 				continue;
-			
+
 			SeededCropInstance->State = Lactose::Simulation::States::Growing;
 			SeededCropInstance->RemainingHarvestSeconds = FoundCrop->HarvestSeconds;
 			SeededCropInstance->OnLoaded.Broadcast(SeededCropInstance);

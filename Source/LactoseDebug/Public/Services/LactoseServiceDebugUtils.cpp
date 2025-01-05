@@ -26,13 +26,13 @@ bool Lactose::Debug::Services::FStatusSection::Render()
 		
 		ServiceSubsystemPinned->GetServiceInfo().Next([ThisWeak = AsWeak()]
 			(TSharedPtr<FGetServiceStatusRequest::FResponseContext> ResponseContext)
-		{
+		{			
 			auto This = ThisWeak.Pin();
 			if (!This)
 				return;
 			
-			This->ServiceStatus = ResponseContext->ResponseContent;
-			This->ServiceStatusResponseTimeMs = ResponseContext->GetLatencyMs();
+			This->ServiceStatus = ResponseContext ? ResponseContext->ResponseContent : nullptr;
+			This->ServiceStatusResponseTimeMs = ResponseContext ? ResponseContext->GetLatencyMs() : 0.;
 		});
 	}
 

@@ -56,7 +56,14 @@ ACropActor* ULactoseCropWorldSubsystem::ResetCropActor(ACropActor& CropActor)
 	Sp<const FLactoseSimulationUserCropInstance> ExistingCropInstance = CropActor.GetCropInstance();
 	CropActor.Destroy();
 
-	ACropActor* NewCropActor = CreateUserCrop(ExistingCrop.ToSharedRef(), ExistingCropInstance.ToSharedRef());
+	auto& Simulation = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(self);
+	Sp<const FLactoseSimulationCrop> NewCrop = Simulation.FindCrop(ExistingCropInstance->CropId);
+	if (!ensure(NewCrop))
+	{
+		return nullptr;
+	}
+	
+	ACropActor* NewCropActor = CreateUserCrop(NewCrop.ToSharedRef(), ExistingCropInstance.ToSharedRef());
 	
 	return NewCropActor;
 }
@@ -189,7 +196,7 @@ ACropActor* ULactoseCropWorldSubsystem::CreateUserCrop(
 		return nullptr;
 	}
 
-	if (!ensure(!FindCropActorForCropInstance(Crop->Id)))
+	if (!ensure(!FindCropActorForCropInstance(CropInstance->Id)))
 	{
 		return nullptr;
 	}

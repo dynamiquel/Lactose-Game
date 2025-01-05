@@ -24,7 +24,6 @@ AVendorActor::AVendorActor()
 
 	Interaction = CreateDefaultSubobject<ULactoseInteractionComponent>(TEXT("Interaction"));
 	Interaction->OnInteractionComplete.AddUObject(this, &ThisClass::OnInteracted);
-	Interaction->InteractionCooldown = 1.f;
 	
 	if (VendorName.IsEmpty())
 		Interaction->InteractionText = TEXT("Browse Vendor");

@@ -29,12 +29,14 @@ public:
 	void OnConstruction(const FTransform& Transform) override;
 
 protected:
-	void BeginPlay() override;
-
+	void Init(const Sr<const FLactoseSimulationCrop>& InCrop, const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance) override;
 	void OnLoaded(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance) override;
 
+	float GetCropGrowthProgress() const;
+	
 	void SpawnPlantMeshes();
 	void SetPlantScaleBasedOnGrowth();
+	void SetShadowBasedOnGrowth();
 
 public:
 	UPROPERTY(EditAnywhere)
@@ -57,6 +59,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	bool bUsePlantGrowthScale = true;
+
+	UPROPERTY(EditAnywhere, meta=(ClampMin=0, ClampMax=1))
+	float PlantGrowthEnableShadowThreshold = .5f;
 	
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UInstancedStaticMeshComponent>> GeneratedPlantMeshes;

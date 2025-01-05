@@ -12,9 +12,13 @@ APlotCropActor::APlotCropActor()
 {
 	SoilMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("Soil");
 	SoilMeshComponent->SetupAttachment(GroundMesh);
-
+	SoilMeshComponent->SetCollisionObjectType(ECC_WorldStatic);
+	SoilMeshComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SoilMeshComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	SoilMeshComponent->SetCastShadow(false);
+	
 	PlantsComponent = CreateDefaultSubobject<USceneComponent>("Plants");
-	PlantsComponent->SetupAttachment(PlantMesh);	
+	PlantsComponent->SetupAttachment(PlantMesh);
 }
 
 void APlotCropActor::OnConstruction(const FTransform& Transform)
@@ -24,18 +28,42 @@ void APlotCropActor::OnConstruction(const FTransform& Transform)
 	SpawnPlantMeshes();
 }
 
-void APlotCropActor::BeginPlay()
+void APlotCropActor::Init(const Sr<const FLactoseSimulationCrop>& InCrop,
+	const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance)
 {
-	Super::BeginPlay();
-	
+	Super::Init(InCrop, InCropInstance);
+
+	if (bUsePlantGrowthScale)
+		SetPlantScaleBasedOnGrowth();
 }
+
 
 void APlotCropActor::OnLoaded(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance)
 {
 	Super::OnLoaded(InCropInstance);
 
 	if (bUsePlantGrowthScale)
+	{
 		SetPlantScaleBasedOnGrowth();
+		SetShadowBasedOnGrowth();
+	}
+}
+
+float APlotCropActor::GetCropGrowthProgress() const
+{
+	if (GetCropInstance()->State == Lactose::Simulation::States::Harvestable)
+		return 1.f;
+	
+	if (GetCropInstance()->State == Lactose::Simulation::States::Empty)
+		return 0.f;
+
+	if (!GetCrop())
+		return 0.f;
+
+	if (GetCrop()->HarvestSeconds <= 0.)
+		return 0.f;
+
+	return (GetCrop()->HarvestSeconds - GetCropInstance()->RemainingHarvestSeconds) / GetCrop()->HarvestSeconds;
 }
 
 void APlotCropActor::SpawnPlantMeshes()
@@ -65,10 +93,11 @@ void APlotCropActor::SpawnPlantMeshes()
 			FTransform(),
 			/* bDeferredFinish */ true));
 
-		NewPlantMesh->bDisableCollision = true;
 		NewPlantMesh->SetupAttachment(PlantsComponent);
 		NewPlantMesh->SetStaticMesh(PlantMeshDefinition.StaticMesh);
-
+		NewPlantMesh->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
+		NewPlantMesh->bDisableCollision = true;
+		
 		FinishAddComponent(
 			NewPlantMesh,
 			/* bManualAttachment */ true,
@@ -96,7 +125,7 @@ void APlotCropActor::SpawnPlantMeshes()
 			const FVector PlantPaddingLocation = FVector(
 				StartX + PlantPaddingX * PlantXIdx,
 				StartY + PlantPaddingY * PlantYIdx,
-				0);
+				0.);
 			
 			const FTransform PlantPaddingTransform = FTransform(PlantPaddingLocation);
 			const FTransform PlantRelativeTransform = PlantMeshDefinition.RelativeTransform * PlantPaddingTransform;
@@ -112,30 +141,18 @@ void APlotCropActor::SetPlantScaleBasedOnGrowth()
 	{
 		return;
 	}
+	
+	PlantsComponent->SetRelativeScale3D(FVector(GetCropGrowthProgress()));
+}
 
+void APlotCropActor::SetShadowBasedOnGrowth()
+{
 	if (!GetCropInstance())
 		return;
 
-	float CropGrowthProgress;
-
-	if (GetCropInstance()->State == Lactose::Simulation::States::Harvestable)
-	{
-		CropGrowthProgress = 1.f;
-	}
-	else if (GetCropInstance()->State == Lactose::Simulation::States::Empty)
-	{
-		CropGrowthProgress = 0.f;
-	}
-	else
-	{
-		if (!GetCrop())
-			return;
-
-		if (GetCrop()->HarvestSeconds <= 0.)
-			return;
-
-		CropGrowthProgress = (GetCrop()->HarvestSeconds - GetCropInstance()->RemainingHarvestSeconds) / GetCrop()->HarvestSeconds;
-	}
-
-	PlantsComponent->SetRelativeScale3D(FVector(CropGrowthProgress));
+	const bool bShouldCastShadow = GetCropGrowthProgress() > PlantGrowthEnableShadowThreshold;
+	
+	for (UInstancedStaticMeshComponent* GeneratedPlantMesh : GeneratedPlantMeshes)
+		if (IsValid(GeneratedPlantMesh))
+			GeneratedPlantMesh->SetCastShadow(bShouldCastShadow);
 }
