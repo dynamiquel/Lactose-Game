@@ -182,6 +182,17 @@ ULactoseInteractionComponent* ALactoseGameCharacter::FindInteractionForAction(co
 	return ClosestInteractions.FindRef(&InputAction);
 }
 
+TArray<ULactoseInteractionComponent*> ALactoseGameCharacter::GetClosestInteractions() const
+{
+	TArray<ULactoseInteractionComponent*> Array;
+	Array.Reserve(ClosestInteractions.Num());
+	
+	for (const TTuple<TObjectPtr<const UInputAction>, TObjectPtr<ULactoseInteractionComponent>>& ClosestInteraction : ClosestInteractions)
+		Array.Add(ClosestInteraction.Value);
+
+	return Array;
+}
+
 void ALactoseGameCharacter::Move(const FInputActionValue& Value)
 {
 	// input is a Vector2D
@@ -421,8 +432,8 @@ void ALactoseGameCharacter::SetHoldableItemState(ELactoseCharacterItemState NewS
 
 	Log::Log(LogLactose,
 		TEXT("Character's Item State: %s -> %s"),
-		*UEnum::GetValueAsString(CurrentItemState),
-		*UEnum::GetValueAsString(OldState));
+		*UEnum::GetValueAsString(OldState),
+		*UEnum::GetValueAsString(CurrentItemState));
 
 	ItemStateChanged.Broadcast(this, CurrentItemState, OldState);
 }

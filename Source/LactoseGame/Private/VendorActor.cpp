@@ -24,7 +24,13 @@ AVendorActor::AVendorActor()
 
 	Interaction = CreateDefaultSubobject<ULactoseInteractionComponent>(TEXT("Interaction"));
 	Interaction->OnInteractionComplete.AddUObject(this, &ThisClass::OnInteracted);
-	Interaction->InteractionText = VendorName;
+	Interaction->InteractionCooldown = 1.f;
+	
+	if (VendorName.IsEmpty())
+		Interaction->InteractionText = TEXT("Browse Vendor");
+	else
+		Interaction->InteractionText = FString::Printf(TEXT("Browse Vendor (%s)"), *VendorName);
+
 
 	BillboardComponent = CreateDefaultSubobject<USceneComponent>("Billboard");
 	BillboardComponent->SetupAttachment(GetRootComponent());

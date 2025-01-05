@@ -109,7 +109,6 @@ void Lactose::Rest::IRequest::OnResponseReceived(
 
 	if (!ResponseContext->IsSuccessful())
 	{
-		
 		Log::Error(LogLactoseRest,
 			TEXT("Received an unsuccessful response from %s. Code %d; Reason: %d"),
 			*Response->GetURL(),

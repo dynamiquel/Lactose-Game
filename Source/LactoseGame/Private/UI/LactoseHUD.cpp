@@ -39,6 +39,9 @@ void ALactoseHUD::SetToolHUD(const FGameplayTag& ToolHUD)
 
 ALactoseHUD::ALactoseHUD()
 {
+	static ConstructorHelpers::FClassFinder<UUserWidget> OverlayWidgetClassFinder(TEXT("/Game/UI/HUD/WBP_Overlay"));
+	OverlayWidgetClass = OverlayWidgetClassFinder.Class;
+	
 	static ConstructorHelpers::FClassFinder<UUserWidget> PauseWidgetClassFinder(TEXT("/Game/UI/WBP_PlayerMenu"));
 	static ConstructorHelpers::FClassFinder<UUserWidget> PlantCropWidgetClassFinder(TEXT("/Game/UI/WBP_SeedTreeCrop"));
 	static ConstructorHelpers::FClassFinder<UUserWidget> SeedCropWidgetClassFinder(TEXT("/Game/UI/WBP_SeedPlotCrop"));
@@ -63,6 +66,14 @@ ALactoseHUD::ALactoseHUD()
 void ALactoseHUD::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
+
+	if (LIKELY(OverlayWidgetClass))
+	{
+		OverlayWidget = CreateWidget(GetOwningPlayerController(), OverlayWidgetClass);
+		OverlayWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+	}
+	else
+		Log::Error(LogLactose, TEXT("HUD Overlay Widget Class was not set"));
 
 	if (LIKELY(PlayerMenuWidgetClass))
 		PlayerMenuWidget = CreateWidget(GetOwningPlayerController(), PlayerMenuWidgetClass);
@@ -118,6 +129,9 @@ void ALactoseHUD::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (OverlayWidget)
+		OverlayWidget->AddToPlayerScreen(TNumericLimits<int32>::Max());
+	
 	auto* LactoseChar = Cast<ALactoseGameCharacter>(GetOwningPawn());
 	if (!ensure(LactoseChar))
 	{

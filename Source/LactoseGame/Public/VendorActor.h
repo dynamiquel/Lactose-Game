@@ -38,7 +38,6 @@ protected:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UTextRenderComponent> VendorIdTextComponent;
 
-
 	UPROPERTY(EditAnywhere)
 	FString VendorId;
 

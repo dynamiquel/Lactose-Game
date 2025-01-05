@@ -20,12 +20,15 @@ class LACTOSEGAME_API ULactoseInteractionComponent : public UActorComponent
 	ULactoseInteractionComponent();
 
 public:
+	UFUNCTION(BlueprintPure, Category="Lactose Interaction")
 	virtual bool CanBeInteracted() const;
+
+	UFUNCTION(BlueprintPure, Category="Lactose Interaction")
 	virtual FString GetInteractionText() const;
 	
 	virtual void Interact(AController* Instigator);
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UInputAction> InputAction;
 
 	UPROPERTY(EditAnywhere)

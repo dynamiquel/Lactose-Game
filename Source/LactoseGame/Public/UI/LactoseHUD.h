@@ -46,6 +46,9 @@ protected:
 	UUserWidget* GetToolWidgetFromToolType(const FGameplayTag& ToolHUD) const;
 
 public:
+	UPROPERTY()
+	TSubclassOf<UUserWidget> OverlayWidgetClass;
+	
 // Menu widgets
 	UPROPERTY()
 	TSubclassOf<UUserWidget> PlayerMenuWidgetClass;
@@ -76,6 +79,9 @@ public:
 	TSubclassOf<UUserWidget> UserShopWidgetClass;
 	
 protected:
+	UPROPERTY(Transient)
+	TObjectPtr<UUserWidget> OverlayWidget;
+
 	UPROPERTY(Transient)
 	TObjectPtr<UUserWidget> PlayerMenuWidget;
 

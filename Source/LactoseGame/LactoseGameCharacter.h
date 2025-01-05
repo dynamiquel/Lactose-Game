@@ -95,6 +95,9 @@ public:
 	ELactoseCharacterItemState GetCurrentItemState() const { return CurrentItemState; }
 	FLactoseCharacterItemStateChangedDelegate& GetItemStateChanged() { return ItemStateChanged; }
 
+	UFUNCTION(BlueprintPure, Category="Lactose")
+	TArray<ULactoseInteractionComponent*> GetClosestInteractions() const;
+
 protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
