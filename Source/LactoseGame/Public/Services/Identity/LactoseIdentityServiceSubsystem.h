@@ -38,8 +38,8 @@ struct FLactoseIdentityGetUserResponse
 
 using FGetUserRequest = Lactose::Rest::TRequest<FLactoseIdentityGetUserRequest, FLactoseIdentityGetUserResponse>;
 
-UENUM()
-enum class ELactoseIdentityUserLoginStatus
+UENUM(BlueprintType)
+enum class ELactoseIdentityUserLoginStatus : uint8
 {
 	NotLoggedIn,
 	LoggingIn,
@@ -65,6 +65,8 @@ public:
 	void Logout();
 	
 	const Sp<FLactoseIdentityGetUserResponse>& GetLoggedInUserInfo() const { return LoggedInUserInfo; }
+
+	UFUNCTION(BlueprintPure, Category = "Identity")
 	ELactoseIdentityUserLoginStatus GetLoginStatus() const;
 
 protected:

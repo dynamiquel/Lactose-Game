@@ -112,7 +112,7 @@ void ULactoseEconomyGetUserShopItemsAsyncNode::Activate()
 	if (!World)
 		return;
 
-	auto& Economy = Subsystems::GameInstance::GetRef<ULactoseEconomyServiceSubsystem>(*World);
+	auto& Economy = Subsystems::GetRef<ULactoseEconomyServiceSubsystem>(*World);
 	auto Request = FLactoseEconomyGetUserShopItemsRequest
 	{
 		.UserId = UserId,

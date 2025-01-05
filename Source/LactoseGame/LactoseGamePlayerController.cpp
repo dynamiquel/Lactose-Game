@@ -170,4 +170,7 @@ void ALactoseGamePlayerController::BeginPlay()
 
 	if (auto* InputSubsystem = Subsystems::Get<UEnhancedInputLocalPlayerSubsystem>(self))
 		InputSubsystem->AddMappingContext(CharacterMappingContext, 0);
+
+	SetInputMode(FInputModeGameOnly());
+	SetShowMouseCursor(false);
 }
