@@ -30,7 +30,7 @@ ACropActor::ACropActor()
 		const FString CropName = This->Crop->Name;
 
 		if (This->CropInstance->State == Lactose::Simulation::States::Empty)
-			return FString::Printf(TEXT("Seed your %s"), *CropName);
+			return FString::Printf(TEXT("Plant a seed"));
 		if (This->CropInstance->State == Lactose::Simulation::States::Harvestable)
 			return FString::Printf(TEXT("Harvest your %s"), *CropName);
 		if (This->CropInstance->State == Lactose::Simulation::States::Growing)

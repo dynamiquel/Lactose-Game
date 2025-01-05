@@ -35,7 +35,7 @@ public:
 	int32 Priority = 0;
 
 	UPROPERTY(EditAnywhere)
-	float InteractionCooldown = 2.f;
+	float InteractionCooldown = 1.f;
 
 	UPROPERTY(EditAnywhere)
 	FString InteractionText;
