@@ -2,6 +2,7 @@
 
 
 #include "LactoseInteractionComponent.h"
+#include "Simp.h"
 #include "InputAction.h"
 #include "LactoseGame/LactoseGame.h"
 
@@ -36,7 +37,7 @@ void ULactoseInteractionComponent::Interact(AController* Instigator)
 	if (!GetOwner())
 		return;
 	
-	OnInteractionComplete.Broadcast(*this, Instigator);
+	OnInteractionComplete.Broadcast(self, Instigator);
 
 	Log::Verbose(LogLactose,
 		TEXT("Actor '%s' Interacted (%s)"),

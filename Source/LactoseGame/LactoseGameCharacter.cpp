@@ -386,7 +386,7 @@ void ALactoseGameCharacter::TryUseTreeTool()
 	if (!TreeCropToPlant.IsSet())
 		return;
 
-	auto& Simulation = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(*this);
+	auto& Simulation = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(self);
 	if (!Simulation.CanCurrentUserAffordCrop(*TreeCropToPlant))
 	{
 		PC->ResetTreeCropIdToPlant();

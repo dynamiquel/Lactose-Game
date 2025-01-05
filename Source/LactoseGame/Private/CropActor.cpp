@@ -122,7 +122,7 @@ void ACropActor::PostInitializeComponents()
 		if (!CropSubsystem)
 			return;
 
-		CropSubsystem->RegisterCropActor(*this);
+		CropSubsystem->RegisterCropActor(self);
 		UpdateBillboardText();
 	}
 }
@@ -138,7 +138,7 @@ void ACropActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 
 	if (auto* CropSubsystem = Subsystems::Get<ULactoseCropWorldSubsystem>(self))
-		CropSubsystem->DeregisterCropActor(*this);
+		CropSubsystem->DeregisterCropActor(self);
 }
 
 void ACropActor::Tick(float DeltaTime)
@@ -155,6 +155,7 @@ void ACropActor::Init(
 {
 	Crop = InCrop;
 	CropInstance = InCropInstance;
+	OriginalCropId = InCropInstance->CropId;
 	
 	CropInstance->OnLoaded.AddUObject(this, &ThisClass::OnLoaded);
 	CropInstance->OnHarvested.AddUObject(this, &ThisClass::OnHarvested);
@@ -165,6 +166,15 @@ void ACropActor::Init(
 
 void ACropActor::OnLoaded(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance)
 {
+	if (InCropInstance->CropId != OriginalCropId)
+	{
+		if (auto* Crops = Subsystems::Get<ULactoseCropWorldSubsystem>(self))
+		{
+			Crops->ResetCropActor(self);
+			return;
+		}
+	}
+	
 	UpdateBillboardText();
 }
 

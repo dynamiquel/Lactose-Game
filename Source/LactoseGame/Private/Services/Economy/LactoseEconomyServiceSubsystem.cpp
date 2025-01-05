@@ -314,7 +314,7 @@ void ULactoseEconomyServiceSubsystem::OnAllItemsRetrieved(Sr<FGetEconomyItemsReq
 		TEXT("Loaded All %d Items"),
 		AllItems.Num());
 
-	Lactose::Economy::Events::OnAllItemsLoaded.Broadcast(*this);
+	Lactose::Economy::Events::OnAllItemsLoaded.Broadcast(self);
 }
 
 void ULactoseEconomyServiceSubsystem::OnUserLoggedIn(

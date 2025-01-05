@@ -101,4 +101,8 @@ protected:
 private:
 	Sp<const FLactoseSimulationCrop> Crop;
 	Sp<const FLactoseSimulationUserCropInstance> CropInstance;
+
+	// Used to know when the Crop for this Crop Instance has been changed,
+	// so we can replace the Actor with the correct one.
+	FString OriginalCropId;
 };

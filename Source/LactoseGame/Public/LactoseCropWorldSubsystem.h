@@ -38,6 +38,7 @@ public:
 	void DeregisterCropActor(const ACropActor& CropActor);
 	ACropActor* FindCropActorForCropInstance(const FString& CropInstanceId) const;
 	TSubclassOf<ACropActor> FindCropActorClassForCrop(const FString& CropId) const;
+	ACropActor* ResetCropActor(ACropActor& CropActor);
 	
 protected:
 	bool ShouldCreateSubsystem(UObject* Outer) const override;
@@ -57,7 +58,7 @@ protected:
 		Sr<FLactoseConfigCloudConfig> Config);
 	
 	void CreateRequiredUserCrops();
-	bool CreateUserCrop(
+	ACropActor* CreateUserCrop(
 		const Sr<const FLactoseSimulationCrop>& Crop,
 		const Sr<const FLactoseSimulationUserCropInstance>& CropInstance);
 

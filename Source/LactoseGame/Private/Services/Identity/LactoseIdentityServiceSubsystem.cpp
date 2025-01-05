@@ -51,7 +51,7 @@ void ULactoseIdentityServiceSubsystem::Logout()
 
 	LoggedInUserInfo.Reset();
 
-	Lactose::Identity::Events::OnUserLoggedOut.Broadcast(*this);
+	Lactose::Identity::Events::OnUserLoggedOut.Broadcast(self);
 }
 
 ELactoseIdentityUserLoginStatus ULactoseIdentityServiceSubsystem::GetLoginStatus() const
@@ -82,7 +82,7 @@ void ULactoseIdentityServiceSubsystem::OnUserLoggedIn(Sr<FGetUserRequest::FRespo
 			!Context->RequestContent, LogLactoseIdentityService, Error,
 			TEXT("Failed to log in User"));
 
-		Lactose::Identity::Events::OnUserLoginFailed.Broadcast(*this);
+		Lactose::Identity::Events::OnUserLoginFailed.Broadcast(self);
 		return;
 	}
 	
@@ -93,5 +93,5 @@ void ULactoseIdentityServiceSubsystem::OnUserLoggedIn(Sr<FGetUserRequest::FRespo
 		*Context->ResponseContent->Id,
 		*Context->ResponseContent->DisplayName);
 
-	Lactose::Identity::Events::OnUserLoggedIn.Broadcast(*this, LoggedInUserInfo.ToSharedRef());
+	Lactose::Identity::Events::OnUserLoggedIn.Broadcast(self, LoggedInUserInfo.ToSharedRef());
 }

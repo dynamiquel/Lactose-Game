@@ -50,6 +50,17 @@ TSubclassOf<ACropActor> ULactoseCropWorldSubsystem::FindCropActorClassForCrop(co
 	return CropIdToCropActorMap.FindRef(CropId);
 }
 
+ACropActor* ULactoseCropWorldSubsystem::ResetCropActor(ACropActor& CropActor)
+{
+	Sp<const FLactoseSimulationCrop> ExistingCrop = CropActor.GetCrop();
+	Sp<const FLactoseSimulationUserCropInstance> ExistingCropInstance = CropActor.GetCropInstance();
+	CropActor.Destroy();
+
+	ACropActor* NewCropActor = CreateUserCrop(ExistingCrop.ToSharedRef(), ExistingCropInstance.ToSharedRef());
+	
+	return NewCropActor;
+}
+
 bool ULactoseCropWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
 	return Super::ShouldCreateSubsystem(Outer) && CVarEnableCropWorldSubsystem.GetValueOnGameThread() == true;
@@ -154,8 +165,8 @@ void ULactoseCropWorldSubsystem::CreateRequiredUserCrops()
 	{
 		if (FindCropActorForCropInstance(UserCrop->Id))
 			continue;
-		
-		auto Crop = Simulation.FindCrop(UserCrop->CropId);
+
+		Sp<const FLactoseSimulationCrop> Crop = Simulation.FindCrop(UserCrop->CropId);
 		if (!Crop)
 		{
 			Log::Error(LogLactose,
@@ -169,18 +180,18 @@ void ULactoseCropWorldSubsystem::CreateRequiredUserCrops()
 	}
 }
 
-bool ULactoseCropWorldSubsystem::CreateUserCrop(
+ACropActor* ULactoseCropWorldSubsystem::CreateUserCrop(
 	const Sr<const FLactoseSimulationCrop>& Crop,
 	const Sr<const FLactoseSimulationUserCropInstance>& CropInstance)
 {
 	if (!ensureMsgf(CropInstance->CropId == Crop->Id, TEXT("%s != %s"), *CropInstance->CropId, *Crop->Id))
 	{
-		return false;
+		return nullptr;
 	}
 
 	if (!ensure(!FindCropActorForCropInstance(Crop->Id)))
 	{
-		return false;
+		return nullptr;
 	}
 
 	TSubclassOf<ACropActor> CropActorClass = FindCropActorClassForCrop(Crop->Id);
@@ -191,7 +202,7 @@ bool ULactoseCropWorldSubsystem::CreateUserCrop(
 			*Crop->Id);
 		
 #if UE_BUILD_SHIPPING || UE_BUILD_TEST 
-		return false;
+		return nullptr;
 #else
 		Log::Warning(LogLactose, TEXT("Fallbacking to default Crop Actor class for development purposes"));
 		CropActorClass = ACropActor::StaticClass();
@@ -220,7 +231,7 @@ bool ULactoseCropWorldSubsystem::CreateUserCrop(
 			TEXT("Could not create a Crop Actor with class '%s'"),
 			*CropActorClass->GetName());
 		
-		return false;
+		return nullptr;
 	}
 
 	NewCropActor->Init(Crop, CropInstance);
@@ -231,7 +242,7 @@ bool ULactoseCropWorldSubsystem::CreateUserCrop(
 		*NewCropActor->GetActorNameOrLabel(),
 		*CropInstance->Id);
 	
-	return true;
+	return NewCropActor;
 }
 
 void ULactoseCropWorldSubsystem::LoadCropActorClasses()

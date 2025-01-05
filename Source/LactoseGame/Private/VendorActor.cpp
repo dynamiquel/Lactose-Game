@@ -19,6 +19,9 @@ AVendorActor::AVendorActor()
 	
 	InteractionCollision = CreateDefaultSubobject<UBoxComponent>("InteractionCollision");
 	InteractionCollision->SetupAttachment(GetRootComponent());
+	if (auto* BoxCollision = Cast<UBoxComponent>(InteractionCollision))
+		BoxCollision->SetBoxExtent(FVector(50., 50., 100.));
+
 	Interaction = CreateDefaultSubobject<ULactoseInteractionComponent>(TEXT("Interaction"));
 	Interaction->OnInteractionComplete.AddUObject(this, &ThisClass::OnInteracted);
 	Interaction->InteractionText = VendorName;

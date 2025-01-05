@@ -104,7 +104,7 @@ void ULactoseConfigCloudServiceSubsystem::OnConfigLoaded(Sr<FGetConfigRequest::F
 		TEXT("Config loaded with %d entries"),
 		Config->GetEntries().Num());
 
-	Lactose::Config::Events::OnConfigLoaded.Broadcast(*this, Config.ToSharedRef());
+	Lactose::Config::Events::OnConfigLoaded.Broadcast(self, Config.ToSharedRef());
 }
 
 void ULactoseConfigCloudServiceSubsystem::OnUserLoggedIn(

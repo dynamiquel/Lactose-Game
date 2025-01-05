@@ -45,19 +45,19 @@ FString Lactose::Rest::IRequest::GetContentString() const
 Lactose::Rest::IRequest& Lactose::Rest::IRequest::SetVerb(const FString& Verb)
 {
 	GetInternal()->SetVerb(Verb);
-	return *this;
+	return self;
 }
 
 Lactose::Rest::IRequest& Lactose::Rest::IRequest::SetUrl(const FString& Url)
 {
 	GetInternal()->SetURL(Url);
-	return *this;
+	return self;
 }
 
 Lactose::Rest::IRequest& Lactose::Rest::IRequest::SetContent(TArray<uint8>&& Bytes)
 {
 	GetInternal()->SetContent(Bytes);
-	return *this;
+	return self;
 }
 
 TFuture<Sp<Lactose::Rest::IRequest::FResponseContext>> Lactose::Rest::IRequest::Send()

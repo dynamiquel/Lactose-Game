@@ -450,7 +450,7 @@ void ULactoseSimulationServiceSubsystem::OnAllCropsRetrieved(Sr<FGetSimulationCr
 		TEXT("Added or updated %d Crops"),
 		Context->ResponseContent->Crops.Num());
 
-	Lactose::Simulation::Events::OnAllCropsLoaded.Broadcast(*this);
+	Lactose::Simulation::Events::OnAllCropsLoaded.Broadcast(self);
 }
 
 void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsRetrieved(Sr<FGetSimulationUserCropsRequest::FResponseContext> Context)
@@ -582,7 +582,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsSeeded(Sr<FSeedSimula
 		Context->ResponseContent->SeededCropInstanceIds.Num());
 
 	Lactose::Simulation::Events::OnCurrentUserCropsSeeded.Broadcast(
-		*this,
+		self,
 		static_cast<TArray<Sr<const FLactoseSimulationUserCropInstance>>>(SeededCropInstances));
 
 	for (const auto& SeededCrop : SeededCropInstances)

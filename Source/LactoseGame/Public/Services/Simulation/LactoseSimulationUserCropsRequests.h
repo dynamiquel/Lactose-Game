@@ -33,7 +33,7 @@ struct FLactoseSimulationUserCropInstance
 		RemainingHarvestSeconds = Other.RemainingHarvestSeconds;
 		RemainingFertiliserSeconds = Other.RemainingFertiliserSeconds;
 
-		return *this;
+		return self;
 	}
 
 	UPROPERTY()
