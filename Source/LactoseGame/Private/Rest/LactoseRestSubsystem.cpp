@@ -26,3 +26,21 @@ void ULactoseRestSubsystem::RemoveRequest(const Sr<Lactose::Rest::IRequest>& Req
 	FScopeLock Lock(&PendingRequestsLock);
 	PendingRequests.Remove(Request);
 }
+
+void ULactoseRestSubsystem::AddAuthorization(const FString& AccessToken)
+{
+	FHttpModule& HttpModule = FHttpModule::Get();
+	
+	HttpModule.AddDefaultHeader(
+		TEXT("Authorization"),
+		FString::Printf(TEXT("Bearer %s"), *AccessToken));
+}
+
+void ULactoseRestSubsystem::RemoveAuthorization()
+{
+	FHttpModule& HttpModule = FHttpModule::Get();
+	
+	HttpModule.AddDefaultHeader(
+		TEXT("Authorization"),
+		FString());
+}

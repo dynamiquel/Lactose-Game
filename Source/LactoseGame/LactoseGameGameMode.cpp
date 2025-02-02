@@ -49,6 +49,8 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 		case ELactoseIdentityUserLoginStatus::LoggingIn:
 			PendingConditions.Emplace(TEXT("You are being logged in"));
 			break;
+		case ELactoseIdentityUserLoginStatus::GettingUserInfo:
+			PendingConditions.Emplace(TEXT("Your user info is being retrieved"));
 		default:
 	}
 

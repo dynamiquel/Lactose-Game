@@ -31,8 +31,8 @@ void ULactoseIdentityUserTab::Render()
 		Sp<FLactoseIdentityGetUserResponse> LoggedInUser = IdentitySubsystem->GetLoggedInUserInfo();
 		if (!LoggedInUser)
 		{
-			if (ImGui::Button("Login"))
-				IdentitySubsystem->Login();
+			if (ImGui::Button("Login Using Refresh Token"))
+				IdentitySubsystem->LoginUsingRefreshToken([]{});
 		}
 		else
 		{

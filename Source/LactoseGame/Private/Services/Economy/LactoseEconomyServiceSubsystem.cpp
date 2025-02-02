@@ -122,17 +122,17 @@ void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()
 	}
 
 	GetCurrentUserItemsFuture = GetUserItems(CurrentUser->Id);
-	GetCurrentUserItemsFuture.Next([WeakThis = MakeWeakObjectPtr(this)](TSharedPtr<FGetEconomyUserItemsRequest::FResponseContext> Context)
+	GetCurrentUserItemsFuture.Next([WeakThis = MakeWeakObjectPtr(this)](Sp<FGetEconomyUserItemsRequest::FResponseContext> Context)
 	{
-		if (!Context.IsValid() || !Context->ResponseContent.IsValid())
-			return;
-		
 		auto* ThisPinned = WeakThis.Get();
 		if (!ThisPinned)
 			return;
 
 		ThisPinned->GetCurrentUserItemsFuture.Reset();
 
+		if (!Context.IsValid() || !Context->ResponseContent.IsValid())
+			return;
+		
 		TSet<FString> ExistingUserItemsIds;
 		for (const TTuple<FString, Sr<FLactoseEconomyUserItem>>& ExistingUserItem : ThisPinned->GetCurrentUserItems())
 			ExistingUserItemsIds.Add(ExistingUserItem.Key);
@@ -251,7 +251,7 @@ void ULactoseEconomyServiceSubsystem::PerformShopItemTrade(const FString& ShopIt
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("shopitems/trade"));
 
-	Sr<FLactoseEconomyShopItemTradeRequest> ShopItemTradeRequest = MakeShareable(new FLactoseEconomyShopItemTradeRequest
+	auto ShopItemTradeRequest = CreateSr(FLactoseEconomyShopItemTradeRequest
 	{
 		.UserId = CurrentUser->Id,
 		.ShopItemId = ShopItemId,

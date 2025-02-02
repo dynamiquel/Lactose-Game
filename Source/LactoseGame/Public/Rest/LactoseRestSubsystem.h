@@ -18,16 +18,17 @@ public:
 	Sr<TRequest> CreateRequest()
 	{
 		FHttpModule& HttpModule = FHttpModule::Get();
-		
 		Sr<IHttpRequest> HttpRequest = HttpModule.CreateRequest();
 		HttpRequest->SetVerb(Lactose::Rest::Verbs::GET);
-		
 		Sr<TRequest> LactoseRequest = CreateSr<TRequest>(this, HttpRequest);
 		return LactoseRequest;
 	}
 
 	bool SendRequest(const Sr<Lactose::Rest::IRequest>& Request);
 	void RemoveRequest(const Sr<Lactose::Rest::IRequest>& Request);
+
+	void AddAuthorization(const FString& AccessToken);
+	void RemoveAuthorization();
 
 private:
 	// Ensures Requests stay alive while they are being processed.

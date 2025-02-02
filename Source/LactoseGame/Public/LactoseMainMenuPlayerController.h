@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SimpShorts.h"
 
 #include "LactoseMainMenuPlayerController.generated.h"
 
@@ -27,6 +28,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Lactose")
 	void TryLogout();
+
+	UFUNCTION(BlueprintCallable, Category="Lactose")
+	void LoginUsingBasicAuth(const FString& Email, const FString& Password);
 	
 	UFUNCTION(BlueprintPure, Category="Lactose")
 	bool CanStart(UPARAM() TArray<FString>& PendingConditions) const;
@@ -37,4 +41,7 @@ protected:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UUserWidget> MainMenuWidget;
+
+	UPROPERTY(BlueprintAssignable)
+	FSimpDynamicMCDelegate OnLoginUsingRefreshTokenFailed;
 };

@@ -388,7 +388,7 @@ void ULactoseSimulationServiceSubsystem::OnAllCropsQueried(Sr<FQuerySimulationCr
 {
 	QueryAllCropsFuture.Reset();
 
-	if (!Context->ResponseContent.IsValid())
+	if (!Context->IsSuccessful())
 		return;
 
 	if (Context->ResponseContent->CropIds.IsEmpty())

@@ -132,25 +132,6 @@ namespace Subsystems
 	 * on the provided Subsystem Type and Context.
 	 */
 	template<Subsystem TSubsystem, Object TContext = UObject>
-	TSubsystem* Get(const TContext* Context)
-	{
-		if constexpr (EngineSubsystem<TSubsystem>)
-		{
-			// Engine Subsystems don't require any kind of Context.
-			return Engine::Get<TSubsystem>();
-		}
-		else if (Context)
-		{
-			return Get<TSubsystem>(*Context);
-		}
-		else
-		{
-			UE_LOG(LogSubsystemCollection, Warning, TEXT("A Context is required for retrieving a non-Engine Subsystem"));
-			return nullptr;
-		}
-	}
-	
-	template<Subsystem TSubsystem, Object TContext = UObject>
 	TSubsystem* Get(const TContext& Context)
 	{
 		if constexpr (EngineSubsystem<TSubsystem>)
@@ -171,6 +152,25 @@ namespace Subsystems
 		}
 		else
 		{
+			return nullptr;
+		}
+	}
+
+	template<Subsystem TSubsystem, Object TContext = UObject>
+	TSubsystem* Get(const TContext* Context)
+	{
+		if constexpr (EngineSubsystem<TSubsystem>)
+		{
+			// Engine Subsystems don't require any kind of Context.
+			return Engine::Get<TSubsystem>();
+		}
+		else if (Context)
+		{
+			return Get<TSubsystem>(*Context);
+		}
+		else
+		{
+			UE_LOG(LogSubsystemCollection, Warning, TEXT("A Context is required for retrieving a non-Engine Subsystem"));
 			return nullptr;
 		}
 	}

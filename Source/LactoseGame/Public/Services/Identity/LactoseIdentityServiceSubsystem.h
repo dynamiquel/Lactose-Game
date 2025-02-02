@@ -36,13 +36,62 @@ struct FLactoseIdentityGetUserResponse
 	FDateTime TimeLastLoggedIn;
 };
 
+USTRUCT()
+struct FLactoseIdentityLoginRequest
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FString Email;
+
+	UPROPERTY()
+	FString Password;
+};
+
+USTRUCT()
+struct FLactoseIdentityLoginResponse
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FString Id;
+
+	UPROPERTY()
+	FString Token;
+};
+
+USTRUCT()
+struct FLactoseIdentitySignupRequest
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FString DisplayName;
+
+	UPROPERTY()
+	FString Email;
+
+	UPROPERTY()
+	FString Password;
+};
+
+USTRUCT()
+struct FLactoseIdentityRefreshTokenRequest
+{
+	GENERATED_BODY()
+};
+
 using FGetUserRequest = Lactose::Rest::TRequest<FLactoseIdentityGetUserRequest, FLactoseIdentityGetUserResponse>;
+using FLoginRequest = Lactose::Rest::TRequest<FLactoseIdentityLoginRequest, FLactoseIdentityLoginResponse>;
+using FSignupRequest = Lactose::Rest::TRequest<FLactoseIdentitySignupRequest, FLactoseIdentityLoginResponse>;
+using FRefreshTokenRequest = Lactose::Rest::TRequest<FLactoseIdentityRefreshTokenRequest, FLactoseIdentityLoginResponse>;
 
 UENUM(BlueprintType)
 enum class ELactoseIdentityUserLoginStatus : uint8
 {
 	NotLoggedIn,
 	LoggingIn,
+	GettingUserInfo,
 	LoggedIn
 };
 
@@ -60,8 +109,10 @@ public:
 	// Begin override ULactoseServiceSubsystem
 	void Initialize(FSubsystemCollectionBase& Collection) override;
 	// End override ULactoseServiceSubsystem
-	
-	void Login();
+
+	void LoginUsingBasicAuth(const FString& Username, const FString& Password);
+	void LoginUsingRefreshToken(TFunction<void()>&& LoginFailed);
+	void LoadCurrentUser(const FString& UserId);
 	void Logout();
 	
 	const Sp<FLactoseIdentityGetUserResponse>& GetLoggedInUserInfo() const { return LoggedInUserInfo; }
@@ -75,8 +126,10 @@ protected:
 private:
 	UPROPERTY(EditDefaultsOnly, Config)
 	bool bAutoLogin = true;
-	
-	TFuture<Sp<FGetUserRequest::FResponseContext>> LoggedInFuture;
+
+	TFuture<Sp<FLoginRequest::FResponseContext>> LoginUsingBasicAuthFuture;
+	TFuture<Sp<FRefreshTokenRequest::FResponseContext>> LoginUsingRefreshFuture;
+	TFuture<Sp<FGetUserRequest::FResponseContext>> CurrentUserInfoFuture;
 	Sp<FLactoseIdentityGetUserResponse> LoggedInUserInfo;
 };
 

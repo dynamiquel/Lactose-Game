@@ -59,13 +59,22 @@ void ALactoseMainMenuPlayerController::OpenFarm(const bool bForceStart)
 void ALactoseMainMenuPlayerController::TryLogin()
 {
 	auto& Identity = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
-	Identity.Login();
+	Identity.LoginUsingRefreshToken([WeakThis = MakeWeakObjectPtr(this)]
+		{
+			WeakThis->OnLoginUsingRefreshTokenFailed.Broadcast();
+		});
 }
 
 void ALactoseMainMenuPlayerController::TryLogout()
 {
 	auto& Identity = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
 	Identity.Logout();
+}
+
+void ALactoseMainMenuPlayerController::LoginUsingBasicAuth(const FString& Email, const FString& Password)
+{
+	auto& Identity = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
+	Identity.LoginUsingBasicAuth(Email, Password);
 }
 
 bool ALactoseMainMenuPlayerController::CanStart(TArray<FString>& PendingConditions) const
@@ -83,6 +92,8 @@ bool ALactoseMainMenuPlayerController::CanStart(TArray<FString>& PendingConditio
 		case ELactoseIdentityUserLoginStatus::LoggingIn:
 			PendingConditions.Emplace(TEXT("You are being logged in"));
 			break;
+		case ELactoseIdentityUserLoginStatus::GettingUserInfo:
+			PendingConditions.Emplace(TEXT("Your user info is being retrieved"));
 		default:
 	}
 

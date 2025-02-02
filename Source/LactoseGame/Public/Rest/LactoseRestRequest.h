@@ -107,10 +107,11 @@ namespace Lactose::Rest
 				if (Response)
 				{
 					Log::Error(LogLactoseRest,
-						TEXT("Received an unsuccessful response from %s. Code %d; Reason: %d"),
+						TEXT("Received an unsuccessful response from %s. Code %d; Reason: %d; Content: %s"),
 						*Response->GetURL(),
 						Response->GetResponseCode(),
-						Response->GetFailureReason());
+						Response->GetFailureReason(),
+						*Response->GetContentAsString());
 				}
 				else if (Request)
 					Log::Error(LogLactoseRest, TEXT("Received an unsuccessful response from %s"), *Request->GetURL());
@@ -119,6 +120,9 @@ namespace Lactose::Rest
 
 				ResponsePromise.SetValue(nullptr);
 				ResponsePromise2.SetValue(nullptr);
+
+				GetOnResponseReceived().Broadcast(StaticCastSharedRef<IRequest::FResponseContext>(Context));
+				GetOnResponseReceived2().Broadcast(Context);
 			}
 			else
 			{
