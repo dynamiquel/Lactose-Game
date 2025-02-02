@@ -57,7 +57,10 @@ struct FLactoseIdentityLoginResponse
 	FString Id;
 
 	UPROPERTY()
-	FString Token;
+	FString AccessToken;
+
+	UPROPERTY()
+	FString RefreshToken;
 };
 
 USTRUCT()
@@ -79,6 +82,9 @@ USTRUCT()
 struct FLactoseIdentityRefreshTokenRequest
 {
 	GENERATED_BODY()
+
+	UPROPERTY()
+	FString RefreshToken;
 };
 
 using FGetUserRequest = Lactose::Rest::TRequest<FLactoseIdentityGetUserRequest, FLactoseIdentityGetUserResponse>;

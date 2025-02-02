@@ -57,10 +57,12 @@ void ULactoseIdentityServiceSubsystem::LoginUsingBasicAuth(const FString& Userna
 			Log::Log(LogLactoseIdentityService,
 			TEXT("Logged in as '%s'. Access Token: %s\n"),
 			*Context->ResponseContent->Id,
-			*Context->ResponseContent->Token);
+			*Context->ResponseContent->AccessToken);
 
 			auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(*ThisPinned);
-			RestSubsystem.AddAuthorization(Context->ResponseContent->Token);
+			RestSubsystem.AddAuthorization(
+				Context->ResponseContent->AccessToken,
+				Context->ResponseContent->RefreshToken.IsEmpty() ? nullptr : &Context->ResponseContent->RefreshToken);
 			
 			ThisPinned->LoadCurrentUser(Context->ResponseContent->Id);
 		});
@@ -79,7 +81,15 @@ void ULactoseIdentityServiceSubsystem::LoginUsingRefreshToken(TFunction<void()>&
 	auto RestRequest = FRefreshTokenRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("auth/refresh"));
-	LoginUsingRefreshFuture = RestRequest->SetContentAsJsonAndSendAsync(CreateSr<FLactoseIdentityRefreshTokenRequest>());
+
+	const TOptional<FString>& RefreshToken = RestSubsystem.GetRefreshToken();
+
+	auto Request = CreateSr(FLactoseIdentityRefreshTokenRequest
+		{
+			.RefreshToken = RefreshToken.IsSet() ? *RefreshToken : FString()
+		});
+	
+	LoginUsingRefreshFuture = RestRequest->SetContentAsJsonAndSendAsync(Request);
 
 	LoginUsingRefreshFuture.Next([WeakThis = MakeWeakObjectPtr(this), LoginFailed = MoveTemp(LoginFailed)](TSharedPtr<FRefreshTokenRequest::FResponseContext> Context)
 	{		
@@ -98,10 +108,12 @@ void ULactoseIdentityServiceSubsystem::LoginUsingRefreshToken(TFunction<void()>&
 		Log::Log(LogLactoseIdentityService,
 			TEXT("Logged in as '%s'. Access Token: %s\n"),
 			*Context->ResponseContent->Id,
-			*Context->ResponseContent->Token);
+			*Context->ResponseContent->AccessToken);
 
 		auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(ThisPinned);
-		RestSubsystem.AddAuthorization(Context->ResponseContent->Token);
+		RestSubsystem.AddAuthorization(
+			Context->ResponseContent->AccessToken,
+			Context->ResponseContent->RefreshToken.IsEmpty() ? nullptr : &Context->ResponseContent->RefreshToken);
 		
 		// Just reset current user info so it gets reloaded.
 		ThisPinned->LoggedInUserInfo.Reset();
