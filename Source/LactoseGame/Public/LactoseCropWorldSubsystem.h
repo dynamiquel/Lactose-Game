@@ -15,15 +15,6 @@ struct FLactoseSimulationUserCropInstance;
 class FLactoseSimulationUserCrops;
 class ULactoseSimulationServiceSubsystem;
 
-USTRUCT()
-struct FLactoseCropActorClassesDatabase
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	TMap<FString, TSoftClassPtr<ACropActor>> Items;
-};
-
 /**
  * 
  */
@@ -52,12 +43,9 @@ protected:
 	void OnUserCropsLoaded(
 		const ULactoseSimulationServiceSubsystem& Sender,
 		Sr<FLactoseSimulationUserCrops> UserCrops);
-
-	void OnConfigCloudLoaded(
-		const ULactoseConfigCloudServiceSubsystem& Sender,
-		Sr<FLactoseConfigCloudConfig> Config);
 	
 	void CreateRequiredUserCrops();
+	
 	ACropActor* CreateUserCrop(
 		const Sr<const FLactoseSimulationCrop>& Crop,
 		const Sr<const FLactoseSimulationUserCropInstance>& CropInstance);

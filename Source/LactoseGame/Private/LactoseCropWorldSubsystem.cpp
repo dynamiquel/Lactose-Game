@@ -84,6 +84,7 @@ void ULactoseCropWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	if (Simulation.GetAllCropsStatus() == ELactoseSimulationCropsStatus::Loaded)
 	{
 		bWaitingForCrops = false;
+		LoadCropActorClasses();
 	}
 	else
 	{
@@ -93,17 +94,6 @@ void ULactoseCropWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 	if (Simulation.GetCurrentUserCropsStatus() == ELactoseSimulationUserCropsStatus::Loaded)
 		bWaitingForUserCrops = false;
-
-	auto& Config = Subsystems::GetRef<ULactoseConfigCloudServiceSubsystem>(self);
-
-	if (Config.GetStatus() == ELactoseConfigCloudStatus::Loaded)
-	{
-		LoadCropActorClasses();
-	}
-	else
-	{
-		Lactose::Config::Events::OnConfigLoaded.AddUObject(this, &ThisClass::OnConfigCloudLoaded);
-	}
 
 	if (CanCreateCrops())
 		CreateRequiredUserCrops();
@@ -115,6 +105,8 @@ void ULactoseCropWorldSubsystem::OnAllCropsLoaded(const ULactoseSimulationServic
 	{
 		bWaitingForCrops = false;
 		Log::Verbose(LogLactose, TEXT("Crop Subsystem: Received Crops"));
+		
+		LoadCropActorClasses();
 
 		if (CanCreateCrops())
 			CreateRequiredUserCrops();
@@ -136,24 +128,6 @@ void ULactoseCropWorldSubsystem::OnUserCropsLoaded(
 
 	if (CanCreateCrops())
 		CreateRequiredUserCrops();
-}
-
-void ULactoseCropWorldSubsystem::OnConfigCloudLoaded(
-	const ULactoseConfigCloudServiceSubsystem& Sender,
-   Sr<FLactoseConfigCloudConfig> Config)
-{
-	if (bWaitingForCropActorClassMap)
-	{
-		Log::Verbose(LogLactose, TEXT("Crop Subsystem: Received Config"));
-
-		LoadCropActorClasses();
-		
-		if (CanCreateCrops())
-			CreateRequiredUserCrops();
-	}
-
-	// Don't care about future events.
-	Lactose::Config::Events::OnConfigLoaded.RemoveAll(this);
 }
 
 void ULactoseCropWorldSubsystem::CreateRequiredUserCrops()
@@ -254,50 +228,53 @@ ACropActor* ULactoseCropWorldSubsystem::CreateUserCrop(
 
 void ULactoseCropWorldSubsystem::LoadCropActorClasses()
 {
-	auto& ConfigSubsystem = Subsystems::GetRef<ULactoseConfigCloudServiceSubsystem>(self);
+	auto& SimulationSubsystem = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(self);
 
-	Sp<const FLactoseConfigCloudConfig> Config = ConfigSubsystem.GetConfig();
-	if (!Config)
+	const TMap<FString, Sr<FLactoseSimulationCrop>>& AllCrops = SimulationSubsystem.GetAllCrops();
+	for (auto& Crop : AllCrops)
 	{
-		return Log::Error(LogLactose, TEXT("Crop Subsystem: Config Subsystem does not have a Config"));
-	}
-
-	Sp<const FLactoseConfigCloudEntry> FoundCropIdToCropActorClassMap = Config->FindEntry(CropIdToCropActorMapEntryId);
-	if (!FoundCropIdToCropActorClassMap)
-	{
-		return Log::Error(LogLactose,
-			TEXT("Crop Subsystem: Could not find the Crop Actor Classes Map in the Config (%s)"),
-			*CropIdToCropActorMapEntryId);
-	}
-
-	const FLactoseCropActorClassesDatabase* DeserialisedMap = FoundCropIdToCropActorClassMap->Get<FLactoseCropActorClassesDatabase>();
-	if (!DeserialisedMap)
-	{
-		return Log::Error(LogLactose,
-			TEXT("Crop Subsystem: The Crop Actor Classes Map in the Config (%s) could not be deserialised"),
-			*CropIdToCropActorMapEntryId);
-	}
-
-	if (DeserialisedMap->Items.IsEmpty())
-	{
-		return Log::Error(LogLactose,
-			TEXT("Crop Subsystem: The Crop Actor Classes Map in the Config (%s) is empty"),
-			*CropIdToCropActorMapEntryId);
-	}
-
-	for (const TTuple<FString, TSoftClassPtr<ACropActor>>& CropIdToCropActorMapping : DeserialisedMap->Items)
-	{
-		TSubclassOf<ACropActor> CropActorClass = CropIdToCropActorMapping.Value.LoadSynchronous();
-		if (!CropActorClass)
+		FString CropClassPath = Crop.Value->GameCrop;
+		if (!CropClassPath.EndsWith(TEXT("_C")))
 		{
-			Log::Error(LogLactose,
-				TEXT("Crop Subsystem: Could not load Actor Class with path '%s'"),
-				*CropIdToCropActorMapping.Value.ToString());
+			// If the object doesn't end with _C, then it is a 'short' path that doesn't actually
+			// reference the class but we want the class, so fix here.
+			// "/Game/Crops/BP_Crop_Carrot" ->"/Game/Crops/BP_Crop_Carrot.BP_Crop_Carrot_C" 
+			
+			int32 ClassNameStart = INDEX_NONE;
+			if (!CropClassPath.FindLastChar(TEXT('/'), OUT ClassNameStart))
+				continue;
+
+			const FString ClassName = CropClassPath.RightChop(ClassNameStart + 1);
+			CropClassPath += FString::Printf(TEXT(".%s_C"), *ClassName);
+		}
+
+		Log::Verbose(LogLactose,
+			TEXT("Attempting to load Crop Actor Class '%s' for Crop '%s'"),
+			*CropClassPath,
+			*Crop.Value->Id);
+		
+		TSoftClassPtr<ACropActor> CropActorSoftClass(CropClassPath);
+		if (CropActorSoftClass.IsNull())
+		{
+			Log::Warning(LogLactose,
+				TEXT("Crop Subsystem: Could not find a Crop Actor Class for '%s' (%s)"),
+				*Crop.Value->Id,
+				*Crop.Value->Name);
 			
 			continue;
 		}
 
-		CropIdToCropActorMap.Add(CropIdToCropActorMapping.Key, CropActorClass);
+		TSubclassOf<ACropActor> CropActorClass = CropActorSoftClass.LoadSynchronous();
+		if (!CropActorClass)
+		{
+			Log::Error(LogLactose,
+				TEXT("Crop Subsystem: Could not load Actor Class with path '%s'"),
+				*CropActorSoftClass.ToString());
+			
+			continue;
+		}
+
+		CropIdToCropActorMap.Add(Crop.Value->Id, CropActorClass);
 	}
 	
 	bWaitingForCropActorClassMap = false;

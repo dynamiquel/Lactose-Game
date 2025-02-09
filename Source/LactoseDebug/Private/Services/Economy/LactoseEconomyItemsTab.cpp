@@ -85,6 +85,8 @@ void ULactoseEconomyItemsTab::Render()
 			ImGui::TextWrapped("%s", STR_TO_ANSI(EconomyItem.Value->Description));
 			ImGui::Unindent();
 
+			ImGui::Text("Image: %s", STR_TO_ANSI(EconomyItem.Value->GameImage));
+
 			ImGui::Unindent();
 		}
 	}

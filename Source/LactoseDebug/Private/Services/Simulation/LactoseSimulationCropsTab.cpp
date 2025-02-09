@@ -137,6 +137,8 @@ void ULactoseSimulationCropsTab::Render()
 
 			ImGui::Text("Fertiliser Item: %s", STR_TO_ANSI(SimulationCrop.Value->FertiliserItemId));
 
+			ImGui::Text("Crop Actor Class: %s", STR_TO_ANSI(SimulationCrop.Value->GameCrop));
+			
 			ImGui::Unindent();
 		}
 	}

@@ -45,6 +45,9 @@ struct FLactoseEconomyItem
 
 	UPROPERTY(BlueprintReadOnly)
 	FString Description;
+	
+	UPROPERTY(BlueprintReadOnly)
+	FString GameImage;
 };
 
 USTRUCT()

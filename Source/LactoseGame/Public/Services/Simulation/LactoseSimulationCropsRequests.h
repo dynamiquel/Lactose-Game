@@ -56,6 +56,9 @@ struct FLactoseSimulationCrop
 
 	UPROPERTY(BlueprintReadOnly)
 	FString FertiliserItemId;
+
+	UPROPERTY(BlueprintReadOnly)
+	FString GameCrop;
 };
 
 USTRUCT()
