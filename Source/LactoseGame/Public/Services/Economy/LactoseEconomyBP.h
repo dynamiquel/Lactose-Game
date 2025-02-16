@@ -49,6 +49,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Lactose Economy")
 	static void PerformShopItemTrade(ULactoseEconomyServiceSubsystem* Economy, const FString& ShopItemId, int32 Quantity = 1);
+
+	UFUNCTION(BlueprintPure, Category = "Lactose Economy")
+	static TSoftObjectPtr<UTexture2D> GetItemImage(const FString& ItemImageId);
+
 };
 
 UCLASS()

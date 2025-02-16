@@ -2,8 +2,9 @@
 
 #include "HAL/IConsoleManager.h"
 #include "CropActor.h"
+#include "PlotCropActor.h"
 #include "LactoseGame/LactoseGame.h"
-#include "Services/ConfigCloud/LactoseConfigCloudServiceSubsystem.h"
+#include "LactoseGame/LactosePathUtils.h"
 #include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
 
 TAutoConsoleVariable CVarEnableCropWorldSubsystem
@@ -12,6 +13,12 @@ TAutoConsoleVariable CVarEnableCropWorldSubsystem
 	true,
 	TEXT("")
 );
+
+ULactoseCropWorldSubsystem::ULactoseCropWorldSubsystem()
+{
+	static ConstructorHelpers::FClassFinder<APlotCropActor> DefaultEmptyPlotCropActor(TEXT("/Game/Crops/BP_Crop_EmptyPlot"));
+	EmptyPlotCropActor = DefaultEmptyPlotCropActor.Class;
+}
 
 bool ULactoseCropWorldSubsystem::CanCreateCrops() const
 {
@@ -233,20 +240,7 @@ void ULactoseCropWorldSubsystem::LoadCropActorClasses()
 	const TMap<FString, Sr<FLactoseSimulationCrop>>& AllCrops = SimulationSubsystem.GetAllCrops();
 	for (auto& Crop : AllCrops)
 	{
-		FString CropClassPath = Crop.Value->GameCrop;
-		if (!CropClassPath.EndsWith(TEXT("_C")))
-		{
-			// If the object doesn't end with _C, then it is a 'short' path that doesn't actually
-			// reference the class but we want the class, so fix here.
-			// "/Game/Crops/BP_Crop_Carrot" ->"/Game/Crops/BP_Crop_Carrot.BP_Crop_Carrot_C" 
-			
-			int32 ClassNameStart = INDEX_NONE;
-			if (!CropClassPath.FindLastChar(TEXT('/'), OUT ClassNameStart))
-				continue;
-
-			const FString ClassName = CropClassPath.RightChop(ClassNameStart + 1);
-			CropClassPath += FString::Printf(TEXT(".%s_C"), *ClassName);
-		}
+		const FString CropClassPath = Lactose::Paths::GetClassPackagePath(Crop.Value->GameCrop);
 
 		Log::Verbose(LogLactose,
 			TEXT("Attempting to load Crop Actor Class '%s' for Crop '%s'"),
@@ -275,6 +269,17 @@ void ULactoseCropWorldSubsystem::LoadCropActorClasses()
 		}
 
 		CropIdToCropActorMap.Add(Crop.Value->Id, CropActorClass);
+	}
+
+	if (TSubclassOf<ACropActor> EmptyPlotActorClass = EmptyPlotCropActor.LoadSynchronous())
+	{
+		CropIdToCropActorMap.Add(FString(), EmptyPlotActorClass);
+	}
+	else
+	{
+		Log::Error(LogLactose,
+			TEXT("Crop Subsystem: Could not load the Empty Crop Actor Class with path '%s'"),
+			*EmptyPlotCropActor.ToString());
 	}
 	
 	bWaitingForCropActorClassMap = false;

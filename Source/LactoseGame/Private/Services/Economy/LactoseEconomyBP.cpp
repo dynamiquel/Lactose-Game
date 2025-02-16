@@ -3,6 +3,7 @@
 
 #include "Services/Economy/LactoseEconomyBP.h"
 
+#include "LactoseGame/LactosePathUtils.h"
 #include "Services/Economy/LactoseEconomyServiceSubsystem.h"
 
 TMap<FString, FLactoseEconomyItem> ULactoseEconomyBP::GetItems(const ULactoseEconomyServiceSubsystem* Economy)
@@ -78,6 +79,14 @@ void ULactoseEconomyBP::PerformShopItemTrade(
 	Economy->PerformShopItemTrade(ShopItemId, Quantity);
 }
 
+TSoftObjectPtr<UTexture2D> ULactoseEconomyBP::GetItemImage(const FString& ItemImageId)
+{
+	FString SoftPathStr = ItemImageId;
+		SoftPathStr = Lactose::Paths::GetObjectPackagePathWithSelf(SoftPathStr);
+	
+	return TSoftObjectPtr<UTexture2D>(SoftPathStr);
+}
+
 void ULactoseEconomyCurrentUserItemsLoadedDelegateWrapper::OnSubscribed()
 {
 	NativeDelegateHandle = Lactose::Economy::Events::OnCurrentUserItemsLoaded.AddUObject(this, &ThisClass::HandleNativeEvent);
@@ -137,4 +146,3 @@ void ULactoseEconomyGetUserShopItemsAsyncNode::Activate()
 		ThisPinned->SetReadyToDestroy();
 	});
 }
-

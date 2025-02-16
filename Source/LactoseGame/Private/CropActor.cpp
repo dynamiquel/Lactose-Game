@@ -14,6 +14,7 @@
 ACropActor::ACropActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.TickInterval = 1.f / 10.f;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	
@@ -48,13 +49,6 @@ ACropActor::ACropActor()
 		
 		if (This->CropInstance->State == Lactose::Simulation::States::Empty)
 		{
-			for (const auto& CostItem : This->Crop->CostItems)
-			{
-				Sp<const FLactoseEconomyUserItem> FoundUserItem = Economy.FindCurrentUserItem(CostItem.ItemId);
-				if (!FoundUserItem || FoundUserItem->Quantity < CostItem.Quantity)
-					return false;
-			}
-
 			return true;
 		}
 		if (This->CropInstance->State == Lactose::Simulation::States::Harvestable)

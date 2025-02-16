@@ -7,6 +7,7 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "LactoseCropWorldSubsystem.generated.h"
 
+class APlotCropActor;
 class FLactoseConfigCloudConfig;
 class ULactoseConfigCloudServiceSubsystem;
 struct FLactoseSimulationCrop;
@@ -24,6 +25,8 @@ class LACTOSEGAME_API ULactoseCropWorldSubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 
 public:
+	ULactoseCropWorldSubsystem();
+	
 	bool CanCreateCrops() const;
 	void RegisterCropActor(ACropActor& CropActor);
 	void DeregisterCropActor(const ACropActor& CropActor);
@@ -55,6 +58,9 @@ protected:
 private:
 	UPROPERTY(EditAnywhere, Config)
 	FString CropIdToCropActorMapEntryId = TEXT("CropActorClassesMap");
+
+	UPROPERTY(EditAnywhere, Config)
+	TSoftClassPtr<APlotCropActor> EmptyPlotCropActor;
 	
 	bool bWaitingForCrops = true;
 	bool bWaitingForUserCrops = true;
