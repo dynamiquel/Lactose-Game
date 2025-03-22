@@ -176,7 +176,6 @@ void ALactoseGameCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	}
 }
 
-
 ULactoseInteractionComponent* ALactoseGameCharacter::FindInteractionForAction(const UInputAction& InputAction) const
 {
 	return ClosestInteractions.FindRef(&InputAction);

@@ -13,59 +13,120 @@ void ULactoseIdentityServiceSubsystem::Initialize(FSubsystemCollectionBase& Coll
 
 	if (bAutoLogin)
 		LoginUsingRefreshToken([]{});
+
+	/*Lactose::Identity::Events::OnUserLoginFailed.AddLambda([WeakThis = MakeWeakObjectPtr(this)](const ULactoseIdentityServiceSubsystem& Sender)
+	{
+		if (auto* RestSubsystem = Subsystems::Get<ULactoseRestSubsystem>(WeakThis.Get()))
+		{
+			RestSubsystem->RemoveAuthorization();
+		}
+	});*/
+}
+
+void ULactoseIdentityServiceSubsystem::SignupUsingBasicAuth(
+	const FString& DisplayName,
+	const FString& Email,
+	const FString& Password,
+	TFunction<void()>&& SignupFailed)
+{
+	if (GetLoginStatus() != ELactoseIdentityUserLoginStatus::NotLoggedIn)
+	{
+		UE_LOG(LogLactoseIdentityService, Error, TEXT("Cannot register as the User is already logged in or logging in"));
+		return;
+	}
+
+	auto SignupRequest = CreateSr(FLactoseIdentitySignupRequest
+	{
+		.DisplayName = DisplayName,
+		.Email = Email,
+		.Password = Password
+	});
+
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	RestSubsystem.RemoveAuthorization();
+	
+	auto RestRequest = FSignupRequest::Create(RestSubsystem);
+	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
+	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("auth/signup"));
+		
+	SignupBasicAuthFuture = RestRequest->SetContentAsJsonAndSendAsync(SignupRequest);
+	SignupBasicAuthFuture.Next([WeakThis = MakeWeakObjectPtr(this), SignupFailed = MoveTemp(SignupFailed)]
+		(Sp<FSignupRequest::FResponseContext> Context)
+	{
+		auto* ThisPinned = WeakThis.Get();
+		if (!ThisPinned)
+			return;
+
+		ThisPinned->SignupBasicAuthFuture.Reset();
+
+		if (!Context.IsValid() || !Context->ResponseContent.IsValid())
+		{
+			Lactose::Identity::Events::OnUserLoginFailed.Broadcast(*ThisPinned);
+			SignupFailed();
+			return;
+		}
+
+		UE_LOG(LogLactoseIdentityService, Log,
+			TEXT("Registered as '%s'. Access Token: %s\n"),
+			*Context->ResponseContent->Id,
+			*Context->ResponseContent->AccessToken);
+
+		auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(*ThisPinned);
+		RestSubsystem.AddAuthorization(
+			Context->ResponseContent->AccessToken,
+			Context->ResponseContent->RefreshToken.IsEmpty() ? nullptr : &Context->ResponseContent->RefreshToken);
+		
+		ThisPinned->LoadCurrentUser(Context->ResponseContent->Id);
+	});
 }
 
 void ULactoseIdentityServiceSubsystem::LoginUsingBasicAuth(const FString& Username, const FString& Password)
 {
 	if (GetLoginStatus() != ELactoseIdentityUserLoginStatus::NotLoggedIn)
 	{
-		Log::Error(LogLactoseIdentityService, TEXT("Cannot log in as the User is already logged in"));
+		Log::Error(LogLactoseIdentityService, TEXT("Cannot log in as the User is already logged in or logging in"));
 		return;
 	}
-
-	if (LoginUsingBasicAuthFuture.IsValid() || LoginUsingRefreshFuture.IsValid())
-	{
-		Log::Error(LogLactoseIdentityService, TEXT("Cannot log in as the User is already logging in"));
-		return;
-	}
-
+	
 	auto LoginRequest = CreateSr(FLactoseIdentityLoginRequest
-		{
-			.Email = Username,
-			.Password = Password
-		});
-
-	LoginUsingRefreshToken([this, LoginRequest]()
 	{
-		auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
-		auto RestRequest = FLoginRequest::Create(RestSubsystem);
-		RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
-		RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("auth/login"));
+		.Email = Username,
+		.Password = Password
+	});
+
+	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+	RestSubsystem.RemoveAuthorization();
+
+	auto RestRequest = FLoginRequest::Create(RestSubsystem);
+	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
+	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("auth/login"));
 		
-		LoginUsingBasicAuthFuture = RestRequest->SetContentAsJsonAndSendAsync(LoginRequest);
-		LoginUsingBasicAuthFuture.Next([WeakThis = MakeWeakObjectPtr(this)](TSharedPtr<FLoginRequest::FResponseContext> Context)
+	LoginUsingBasicAuthFuture = RestRequest->SetContentAsJsonAndSendAsync(LoginRequest);
+	LoginUsingBasicAuthFuture.Next([WeakThis = MakeWeakObjectPtr(this)](Sp<FLoginRequest::FResponseContext> Context)
+	{
+		auto* ThisPinned = WeakThis.Get();
+		if (!ThisPinned)
+			return;
+
+		ThisPinned->LoginUsingBasicAuthFuture.Reset();
+
+		if (!Context.IsValid() || !Context->ResponseContent.IsValid())
 		{
-			auto* ThisPinned = WeakThis.Get();
-			if (!ThisPinned)
-				return;
+			Lactose::Identity::Events::OnUserLoginFailed.Broadcast(*ThisPinned);
+			return;
+		}
 
-			ThisPinned->LoginUsingBasicAuthFuture.Reset();
-
-			if (!Context.IsValid() || !Context->ResponseContent.IsValid())
-				return;
-
-			Log::Log(LogLactoseIdentityService,
+		UE_LOG(LogLactoseIdentityService, Log,
 			TEXT("Logged in as '%s'. Access Token: %s\n"),
 			*Context->ResponseContent->Id,
 			*Context->ResponseContent->AccessToken);
-
-			auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(*ThisPinned);
-			RestSubsystem.AddAuthorization(
-				Context->ResponseContent->AccessToken,
-				Context->ResponseContent->RefreshToken.IsEmpty() ? nullptr : &Context->ResponseContent->RefreshToken);
 			
-			ThisPinned->LoadCurrentUser(Context->ResponseContent->Id);
-		});
+		auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(*ThisPinned);
+		RestSubsystem.AddAuthorization(
+			Context->ResponseContent->AccessToken,
+			Context->ResponseContent->RefreshToken.IsEmpty() ? nullptr : &Context->ResponseContent->RefreshToken);
+			
+		ThisPinned->LoadCurrentUser(Context->ResponseContent->Id);
 	});
 }
 
@@ -73,7 +134,7 @@ void ULactoseIdentityServiceSubsystem::LoginUsingRefreshToken(TFunction<void()>&
 {
 	if (GetLoginStatus() != ELactoseIdentityUserLoginStatus::NotLoggedIn)
 	{
-		Log::Error(LogLactoseIdentityService, TEXT("Cannot log in as the User is already logging in"));
+		Log::Error(LogLactoseIdentityService, TEXT("Cannot log in as the User is already logging in or logging in"));
 		return;
 	}
 
@@ -85,9 +146,9 @@ void ULactoseIdentityServiceSubsystem::LoginUsingRefreshToken(TFunction<void()>&
 	const TOptional<FString>& RefreshToken = RestSubsystem.GetRefreshToken();
 
 	auto Request = CreateSr(FLactoseIdentityRefreshTokenRequest
-		{
-			.RefreshToken = RefreshToken.IsSet() ? *RefreshToken : FString()
-		});
+	{
+		.RefreshToken = RefreshToken.IsSet() ? *RefreshToken : FString()
+	});
 	
 	LoginUsingRefreshFuture = RestRequest->SetContentAsJsonAndSendAsync(Request);
 
@@ -98,19 +159,21 @@ void ULactoseIdentityServiceSubsystem::LoginUsingRefreshToken(TFunction<void()>&
 			return;
 
 		ThisPinned->LoginUsingRefreshFuture.Reset();
+		
+		auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(ThisPinned);
 
 		if (!Context.IsValid() || !Context->ResponseContent.IsValid())
 		{
+			Lactose::Identity::Events::OnUserLoginFailed.Broadcast(*ThisPinned);
 			LoginFailed();
 			return;
 		}
 
-		Log::Log(LogLactoseIdentityService,
+		UE_LOG(LogLactoseIdentityService, Log,
 			TEXT("Logged in as '%s'. Access Token: %s\n"),
 			*Context->ResponseContent->Id,
 			*Context->ResponseContent->AccessToken);
 
-		auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(ThisPinned);
 		RestSubsystem.AddAuthorization(
 			Context->ResponseContent->AccessToken,
 			Context->ResponseContent->RefreshToken.IsEmpty() ? nullptr : &Context->ResponseContent->RefreshToken);
@@ -143,7 +206,7 @@ void ULactoseIdentityServiceSubsystem::LoadCurrentUser(const FString& UserId)
 	
 	CurrentUserInfoFuture = RestRequest->SetContentAsJsonAndSendAsync(GetUserRequest);
 
-	Log::Verbose(LogLactoseIdentityService,
+	UE_LOG(LogLactoseIdentityService, Log,
 		TEXT("Sent a User Login Request for User ID '%s'"),
 		*GetUserRequest->UserId);
 }
@@ -152,7 +215,8 @@ void ULactoseIdentityServiceSubsystem::Logout()
 {
 	if (!GetLoggedInUserInfo().IsValid())
 	{
-		Log::Error(LogLactoseIdentityService, TEXT("Cannot log out the User as no User is logged in"));
+		UE_LOG(LogLactoseIdentityService, Error,
+			TEXT("Cannot log out the User as no User is logged in"));
 		return;
 	}
 
@@ -169,7 +233,7 @@ ELactoseIdentityUserLoginStatus ULactoseIdentityServiceSubsystem::GetLoginStatus
 	if (LoggedInUserInfo.IsValid())
 		return ELactoseIdentityUserLoginStatus::LoggedIn;
 	
-	if (LoginUsingRefreshFuture.IsValid() || LoginUsingBasicAuthFuture.IsValid())
+	if (LoginUsingRefreshFuture.IsValid() || LoginUsingBasicAuthFuture.IsValid() || SignupBasicAuthFuture.IsValid())
 		return ELactoseIdentityUserLoginStatus::LoggingIn;
 
 	if (CurrentUserInfoFuture.IsValid())
@@ -195,13 +259,16 @@ void ULactoseIdentityServiceSubsystem::OnUserLoggedIn(Sr<FGetUserRequest::FRespo
 			!Context->RequestContent, LogLactoseIdentityService, Error,
 			TEXT("Failed to log in User"));
 
+		auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+		RestSubsystem.RemoveAuthorization();
+
 		Lactose::Identity::Events::OnUserLoginFailed.Broadcast(self);
 		return;
 	}
 	
 	LoggedInUserInfo = Context->ResponseContent;
 
-	Log::Log(LogLactoseIdentityService,
+	UE_LOG(LogLactoseIdentityService, Log,
 		TEXT("User Logged In: ID '%s'; Name '%s'"),
 		*Context->ResponseContent->Id,
 		*Context->ResponseContent->DisplayName);

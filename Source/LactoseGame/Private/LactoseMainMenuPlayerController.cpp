@@ -60,9 +60,9 @@ void ALactoseMainMenuPlayerController::TryLogin()
 {
 	auto& Identity = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
 	Identity.LoginUsingRefreshToken([WeakThis = MakeWeakObjectPtr(this)]
-		{
-			WeakThis->OnLoginUsingRefreshTokenFailed.Broadcast();
-		});
+	{
+		WeakThis->OnLoginUsingRefreshTokenFailed.Broadcast();
+	});
 }
 
 void ALactoseMainMenuPlayerController::TryLogout()
@@ -75,6 +75,18 @@ void ALactoseMainMenuPlayerController::LoginUsingBasicAuth(const FString& Email,
 {
 	auto& Identity = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
 	Identity.LoginUsingBasicAuth(Email, Password);
+}
+
+void ALactoseMainMenuPlayerController::Register(
+	const FString& DisplayName,
+	const FString& Email,
+	const FString& Password)
+{
+	auto& Identity = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
+	Identity.SignupUsingBasicAuth(DisplayName, Email, Password, [WeakThis = MakeWeakObjectPtr(this)]
+	{
+		WeakThis->OnSignUpFailed.Broadcast();
+	});
 }
 
 bool ALactoseMainMenuPlayerController::CanStart(TArray<FString>& PendingConditions) const

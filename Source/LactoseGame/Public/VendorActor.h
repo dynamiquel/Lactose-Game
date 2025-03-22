@@ -24,6 +24,10 @@ protected:
 	void OnInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* Instigator);
 
 	void UpdateBillboard();
+
+public:
+	UPROPERTY(EditAnywhere)
+	FString VendorId;
 	
 protected:
 	UPROPERTY(EditAnywhere)
@@ -38,10 +42,6 @@ protected:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UTextRenderComponent> VendorIdTextComponent;
 
-	UPROPERTY(EditAnywhere)
-	FString VendorId;
-
-	// TODO: Move to cloud.
 	UPROPERTY(EditAnywhere)
 	FString VendorName;
 };

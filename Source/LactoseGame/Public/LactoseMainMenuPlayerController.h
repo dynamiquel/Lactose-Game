@@ -31,6 +31,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Lactose")
 	void LoginUsingBasicAuth(const FString& Email, const FString& Password);
+
+	UFUNCTION(BlueprintCallable, Category="Lactose")
+	void Register(const FString& DisplayName, const FString& Email, const FString& Password);
 	
 	UFUNCTION(BlueprintPure, Category="Lactose")
 	bool CanStart(UPARAM() TArray<FString>& PendingConditions) const;
@@ -44,4 +47,7 @@ protected:
 
 	UPROPERTY(BlueprintAssignable)
 	FSimpDynamicMCDelegate OnLoginUsingRefreshTokenFailed;
+
+	UPROPERTY(BlueprintAssignable)
+	FSimpDynamicMCDelegate OnSignUpFailed;
 };

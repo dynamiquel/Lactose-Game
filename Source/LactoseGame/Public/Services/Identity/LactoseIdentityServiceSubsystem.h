@@ -116,6 +116,7 @@ public:
 	void Initialize(FSubsystemCollectionBase& Collection) override;
 	// End override ULactoseServiceSubsystem
 
+	void SignupUsingBasicAuth(const FString& DisplayName, const FString& Email, const FString& Password, TFunction<void()>&& SignupFailed);
 	void LoginUsingBasicAuth(const FString& Username, const FString& Password);
 	void LoginUsingRefreshToken(TFunction<void()>&& LoginFailed);
 	void LoadCurrentUser(const FString& UserId);
@@ -133,6 +134,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Config)
 	bool bAutoLogin = true;
 
+	TFuture<Sp<FSignupRequest::FResponseContext>> SignupBasicAuthFuture;
 	TFuture<Sp<FLoginRequest::FResponseContext>> LoginUsingBasicAuthFuture;
 	TFuture<Sp<FRefreshTokenRequest::FResponseContext>> LoginUsingRefreshFuture;
 	TFuture<Sp<FGetUserRequest::FResponseContext>> CurrentUserInfoFuture;
