@@ -312,6 +312,10 @@
 		{
 			"Name": "StructUtils",
 			"Enabled": true
+		},
+		{
+			"Name": "Mqttify",
+			"Enabled": true
 		}
 	]
 }
