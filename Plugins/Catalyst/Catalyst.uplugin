@@ -1,0 +1,23 @@
+﻿{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "Catalyst",
+	"Description": "Support code needed for running Catalyst code generated for Unreal",
+	"Category": "Other",
+	"CreatedBy": "dynamiquel",
+	"CreatedByURL": "https://github.com/dynamiquel/Catalyst",
+	"DocsURL": "https://github.com/dynamiquel/Catalyst",
+	"MarketplaceURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "Catalyst",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}

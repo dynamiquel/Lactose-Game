@@ -316,6 +316,10 @@
 		{
 			"Name": "Mqttify",
 			"Enabled": true
+		},
+		{
+			"Name": "Catalyst",
+			"Enabled": true
 		}
 	]
 }
