@@ -23,7 +23,7 @@ enum class ECallbackOn
  *
  * This is an abstract class and intended to be specialised using TCatalystOperation.
  */
-class FCatalystOperation : public TSharedFromThis<FCatalystOperation>
+class CATALYST_API FCatalystOperation : public TSharedFromThis<FCatalystOperation>
 {
 public:
 	explicit FCatalystOperation(const TSharedRef<IHttpRequest>& InHttpRequest);

@@ -4,7 +4,7 @@
 
 #include "Modules/ModuleManager.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogCatalyst, Log, All);
+CATALYST_API DECLARE_LOG_CATEGORY_EXTERN(LogCatalyst, Log, All);
 
 class FCatalystModule : public IModuleInterface
 {

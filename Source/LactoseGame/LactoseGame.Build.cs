@@ -21,7 +21,8 @@ public class LactoseGame : ModuleRules
 			"StructUtils",
 			"GameplayTags",
 			"SimpLibrary",
-			"Mqttify"
+			"Mqttify",
+			"Catalyst"
         }
         );
 		
