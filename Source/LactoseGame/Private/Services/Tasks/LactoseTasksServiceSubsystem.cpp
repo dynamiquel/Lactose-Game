@@ -181,4 +181,5 @@ void ULactoseTasksServiceSubsystem::OnUserLoggedIn(
 
 void ULactoseTasksServiceSubsystem::OnUserLoggedOut(const ULactoseIdentityServiceSubsystem& Sender)
 {
+	CurrentUserTasks.Reset();
 }
