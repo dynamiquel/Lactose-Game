@@ -1,7 +1,7 @@
-#include "LactoseMqttSubsystem.h"
+#include "Mqtt/LactoseMqttSubsystem.h"
 #include "Simp.h"
 #include "IMqttifyModule.h"
-#include "LactoseMqttLog.h"
+#include "Mqtt/LactoseMqttLog.h"
 #include "Mqtt/Interface/IMqttifyClient.h"
 
 void ULactoseMqttSubsystem::Initialize(FSubsystemCollectionBase& Collection)
