@@ -1,0 +1,184 @@
+#include "Services/Tasks/LactoseTasksServiceSubsystem.h"
+
+#include "Api/Tasks/LactoseTasksClient.h"
+#include "Api/Tasks/LactoseTasksUserTasksClient.h"
+#include "Services/LactoseServicesLog.h"
+#include "Services/Identity/LactoseIdentityServiceSubsystem.h"
+
+void ULactoseTasksServiceSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+	SetServiceBaseUrl(TEXT("https://lactose.mookrata.ovh/tasks"));
+
+	TasksClient = NewObject<ULactoseTasksTasksClient>(this);
+	UserTasksClient = NewObject<ULactoseTasksUserTasksClient>(this);
+
+	Lactose::Identity::Events::OnUserLoggedIn.AddUObject(this, &ThisClass::OnUserLoggedIn);
+	Lactose::Identity::Events::OnUserLoggedOut.AddUObject(this, &ThisClass::OnUserLoggedOut);
+}
+
+Sp<const FLactoseTasksGetTaskResponse> ULactoseTasksServiceSubsystem::FindTask(const FString& TaskId) const
+{
+	const Sr<FLactoseTasksGetTaskResponse>* FoundTask = GetAllTasks().Find(TaskId);
+	return FoundTask ? Sp<const FLactoseTasksGetTaskResponse>(*FoundTask) : nullptr;
+}
+
+Sp<const FLactoseTasksUserTaskDto> ULactoseTasksServiceSubsystem::FindCurrentUserTask(const FString& UserTaskId) const
+{
+	const Sr<FLactoseTasksUserTaskDto>* FoundUserTask = GetCurrentUserTasks().Find(UserTaskId);
+	return FoundUserTask ? Sp<const FLactoseTasksUserTaskDto>(*FoundUserTask) : nullptr;
+}
+
+Sp<const FLactoseTasksUserTaskDto> ULactoseTasksServiceSubsystem::FindCurrentUserTaskWithTaskId(const FString& TaskId) const
+{
+	for (const TPair<FString, Sr<FLactoseTasksUserTaskDto>>& CurrentUserTask : GetCurrentUserTasks())
+	{
+		if (CurrentUserTask.Value->TaskId == TaskId)
+			return CurrentUserTask.Value;
+	}
+
+	return nullptr;
+}
+
+void ULactoseTasksServiceSubsystem::LoadTasks()
+{
+	check(TasksClient);
+
+	if (TasksStatus == ELactoseTasksTasksStatus::Querying || TasksStatus == ELactoseTasksTasksStatus::Retrieving)
+	{
+		UE_LOG(LogLactoseTasksService, Warning, TEXT("Requested to load Tasks but they are already being queried or retrieved"));
+		return;
+	}
+	
+	TasksStatus = ELactoseTasksTasksStatus::Querying;
+	
+	TSharedRef<Lactose::Tasks::FQuery> QueryOp = TasksClient->Query({});
+	QueryOp->Then([WeakThis = MakeWeakObjectPtr(this)](TSharedRef<Lactose::Tasks::FQuery> Operation)
+	{
+		auto* This = WeakThis.Get();
+		if (!This)
+			return;
+
+		if (Operation->IsError())
+		{
+			This->TasksStatus = ELactoseTasksTasksStatus::None;
+			return;
+		}
+
+		UE_LOG(LogLactoseTasksService, Log, TEXT("Queried %d Tasks"), Operation->GetResponse()->TaskIds.Num());
+
+		This->TasksStatus = ELactoseTasksTasksStatus::Retrieving;
+		
+		TSharedRef<Lactose::Tasks::FGet> GetOp = This->TasksClient->Get({.TaskIds = Operation->GetResponse()->TaskIds});
+		GetOp->Then([WeakThis = MakeWeakObjectPtr(This)](TSharedRef<Lactose::Tasks::FGet> Operation)
+		{
+			auto* This = WeakThis.Get();
+			if (!This)
+				return;
+
+			if (Operation->IsError())
+			{
+				This->TasksStatus = ELactoseTasksTasksStatus::None;
+				return;
+			}
+			
+			for (const FLactoseTasksGetTaskResponse& Task : Operation->GetResponse()->Tasks)
+			{
+				if (auto* ExistingTask = This->AllTasks.Find(Task.Id))
+				{
+					ExistingTask->Get() = Task;
+					UE_LOG(LogLactoseTasksService, Log, TEXT("Updated Task with ID: %s"), *Task.Id);
+				}
+				else
+				{
+					This->AllTasks.Emplace(Task.Id, CreateSr(Task));
+					UE_LOG(LogLactoseTasksService, Log, TEXT("Added Task with ID: %s"), *Task.Id);
+				}
+			}
+
+			This->TasksStatus = ELactoseTasksTasksStatus::Loaded;
+		});
+	});
+}
+
+void ULactoseTasksServiceSubsystem::LoadCurrentUserTasks()
+{
+	check(TasksClient);
+
+	if (UserTasksStatus == ELactoseTasksUserTasksStatus::Querying || UserTasksStatus == ELactoseTasksUserTasksStatus::Retrieving)
+	{
+		UE_LOG(LogLactoseTasksService, Warning, TEXT("Requested to load Current User Tasks but they are already being queried or retrieved"));
+		return;
+	}
+
+	auto& IdentitySubsystem = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
+	if (IdentitySubsystem.GetLoginStatus() != ELactoseIdentityUserLoginStatus::LoggedIn)
+	{
+		UE_LOG(LogLactoseTasksService, Error, TEXT("Cannot load Current User Tasks as user not logged in"));
+		return;
+	}
+	
+	UserTasksStatus = ELactoseTasksUserTasksStatus::Querying;
+
+	TSharedRef<Lactose::Tasks::UserTasks::FQuery> QueryOp = UserTasksClient->Query({
+		.UserId = IdentitySubsystem.GetLoggedInUserInfo()->Id
+	});
+	QueryOp->Then([WeakThis = MakeWeakObjectPtr(this)](TSharedRef<Lactose::Tasks::UserTasks::FQuery> Operation)
+	{
+		auto* This = WeakThis.Get();
+		if (!This)
+			return;
+
+		if (Operation->IsError())
+		{
+			This->UserTasksStatus = ELactoseTasksUserTasksStatus::None;
+			return;
+		}
+
+		This->UserTasksStatus = ELactoseTasksUserTasksStatus::Retrieving;
+		
+		TSharedRef<Lactose::Tasks::UserTasks::FGet> GetOp = This->UserTasksClient->Get({
+			.UserTaskIds = Operation->GetResponse()->UserTaskIds
+		});
+		GetOp->Then([WeakThis = MakeWeakObjectPtr(This)](TSharedRef<Lactose::Tasks::UserTasks::FGet> Operation)
+		{
+			auto* This = WeakThis.Get();
+			if (!This)
+				return;
+
+			if (Operation->IsError())
+			{
+				This->UserTasksStatus = ELactoseTasksUserTasksStatus::None;
+				return;
+			}
+			
+			for (const FLactoseTasksUserTaskDto& Task : Operation->GetResponse()->UserTasks)
+			{
+				if (auto* ExistingTask = This->CurrentUserTasks.Find(Task.Id))
+				{
+					ExistingTask->Get() = Task;
+					UE_LOG(LogLactoseTasksService, Log, TEXT("Updated User Task with ID: %s"), *Task.Id);
+				}
+				else
+				{
+					This->CurrentUserTasks.Emplace(Task.Id, CreateSr(Task));
+					UE_LOG(LogLactoseTasksService, Log, TEXT("Added User Task with ID: %s"), *Task.Id);
+				}
+			}
+
+			This->UserTasksStatus = ELactoseTasksUserTasksStatus::Loaded;
+		});
+	});
+}
+
+void ULactoseTasksServiceSubsystem::OnUserLoggedIn(
+	const ULactoseIdentityServiceSubsystem& Sender,
+	const Sr<FLactoseIdentityGetUserResponse>& User)
+{
+	LoadTasks();
+	LoadCurrentUserTasks();
+}
+
+void ULactoseTasksServiceSubsystem::OnUserLoggedOut(const ULactoseIdentityServiceSubsystem& Sender)
+{
+}

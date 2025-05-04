@@ -28,6 +28,7 @@ class CATALYST_API FCatalystOperation : public TSharedFromThis<FCatalystOperatio
 public:
 	explicit FCatalystOperation(const TSharedRef<IHttpRequest>& InHttpRequest);
 	virtual ~FCatalystOperation();
+	
 	void Init();
 
 	/**
@@ -61,7 +62,8 @@ public:
 	 * Cancels the pending operation.
 	 */
 	bool Cancel();
-	
+
+protected:
 	virtual void OnHttpResponse(
 		FHttpRequestPtr HttpRequest,
 		FHttpResponsePtr HttpResponse,
@@ -141,13 +143,21 @@ public:
 	{
 		Then(Condition, FCallback::CreateUObject(Object, InFunc));
 	}
-	
+
+protected:
 	void OnHttpResponse(
 		FHttpRequestPtr HttpRequest,
 		FHttpResponsePtr HttpResponse,
 		bool bProcessedSuccessfully) override
 	{
-		if (!HttpResponse.IsValid() || HttpResponse->GetResponseCode() != 200)
+		if (!HttpResponse.IsValid())
+		{
+			UE_LOG(LogCatalyst, Error, TEXT("Received Unknown Error for Operation %s"), *ToString());
+			
+			if (CallbackCondition == ECallbackOn::Always || CallbackCondition == ECallbackOn::Error)
+				ResponseCallback.ExecuteIfBound(SharedThis(this));
+		}
+		else if (HttpResponse->GetResponseCode() != 200)
 		{
 			UE_LOG(LogCatalyst, Warning, TEXT("Received Error for Operation %s: Code: %d - Content: %s"),
 				*ToString(),

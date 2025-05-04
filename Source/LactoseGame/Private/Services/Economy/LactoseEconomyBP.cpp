@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Services/Economy/LactoseEconomyBP.h"
 
 #include "LactoseGame/LactosePathUtils.h"
@@ -84,7 +81,7 @@ TSoftObjectPtr<UTexture2D> ULactoseEconomyBP::GetItemImage(const FString& ItemIm
 	FString SoftPathStr = ItemImageId;
 		SoftPathStr = Lactose::Paths::GetObjectPackagePathWithSelf(SoftPathStr);
 	
-	return TSoftObjectPtr<UTexture2D>(SoftPathStr);
+	return TSoftObjectPtr<UTexture2D>(FSoftObjectPath(SoftPathStr));
 }
 
 void ULactoseEconomyCurrentUserItemsLoadedDelegateWrapper::OnSubscribed()
