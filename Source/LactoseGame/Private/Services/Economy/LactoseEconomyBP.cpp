@@ -8,15 +8,7 @@ TMap<FString, FLactoseEconomyItem> ULactoseEconomyBP::GetItems(const ULactoseEco
 	if (!Economy)
 		return {};
 
-	TMap<FString, Sr<FLactoseEconomyItem>> FoundItems = Economy->GetAllItems();
-
-	TMap<FString, FLactoseEconomyItem> CopiedItems;
-	CopiedItems.Reserve(FoundItems.Num());
-
-	for (const auto& FoundItem : FoundItems)
-		CopiedItems.Add(FoundItem.Key, *FoundItem.Value);
-	
-	return CopiedItems;
+	return Economy ? Lactose::ExtractSpMap(Economy->GetAllItems()) : TMap<FString, FLactoseEconomyItem>();
 }
 
 FLactoseEconomyItem ULactoseEconomyBP::GetItem(const ULactoseEconomyServiceSubsystem* Economy, const FString& ItemId)

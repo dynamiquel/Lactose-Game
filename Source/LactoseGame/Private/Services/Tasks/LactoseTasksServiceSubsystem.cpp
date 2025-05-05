@@ -97,6 +97,7 @@ void ULactoseTasksServiceSubsystem::LoadTasks()
 			}
 
 			This->TasksStatus = ELactoseTasksTasksStatus::Loaded;
+			Lactose::Tasks::Events::OnAllTasksLoaded.Broadcast(*This);
 		});
 	});
 }
@@ -151,22 +152,35 @@ void ULactoseTasksServiceSubsystem::LoadCurrentUserTasks()
 				This->UserTasksStatus = ELactoseTasksUserTasksStatus::None;
 				return;
 			}
-			
-			for (const FLactoseTasksUserTaskDto& Task : Operation->GetResponse()->UserTasks)
+
+			bool bAnyChanged = false;
+			for (const FLactoseTasksUserTaskDto& UserTask : Operation->GetResponse()->UserTasks)
 			{
-				if (auto* ExistingTask = This->CurrentUserTasks.Find(Task.Id))
+				if (auto* ExistingTask = This->CurrentUserTasks.Find(UserTask.Id))
 				{
-					ExistingTask->Get() = Task;
-					UE_LOG(LogLactoseTasksService, Log, TEXT("Updated User Task with ID: %s"), *Task.Id);
+					const bool bChanged = ExistingTask->Get().Completed != UserTask.Completed || !FMath::IsNearlyEqual(ExistingTask->Get().Progress, UserTask.Progress);
+					if (bChanged)
+					{
+						bAnyChanged = true;
+						ExistingTask->Get() = UserTask;
+						UE_LOG(LogLactoseTasksService, Log, TEXT("Updated User Task with ID: %s"), *UserTask.Id);
+						Lactose::Tasks::Events::OnCurrentUserTaskUpdated.Broadcast(*This, *ExistingTask);
+					}
 				}
 				else
 				{
-					This->CurrentUserTasks.Emplace(Task.Id, CreateSr(Task));
-					UE_LOG(LogLactoseTasksService, Log, TEXT("Added User Task with ID: %s"), *Task.Id);
+					bAnyChanged = true;
+					Sr<FLactoseTasksUserTaskDto> NewUserTask = CreateSr(UserTask);
+					This->CurrentUserTasks.Emplace(UserTask.Id, NewUserTask);
+					UE_LOG(LogLactoseTasksService, Log, TEXT("Added User Task with ID: %s"), *UserTask.Id);
+					Lactose::Tasks::Events::OnCurrentUserTaskUpdated.Broadcast(*This, NewUserTask);
 				}
 			}
 
 			This->UserTasksStatus = ELactoseTasksUserTasksStatus::Loaded;
+
+			if (bAnyChanged)
+				Lactose::Tasks::Events::OnCurrentUserTasksLoaded.Broadcast(*This);
 		});
 	});
 }
@@ -177,9 +191,34 @@ void ULactoseTasksServiceSubsystem::OnUserLoggedIn(
 {
 	LoadTasks();
 	LoadCurrentUserTasks();
+	EnableGetUserTasksTicker();
 }
 
 void ULactoseTasksServiceSubsystem::OnUserLoggedOut(const ULactoseIdentityServiceSubsystem& Sender)
 {
 	CurrentUserTasks.Reset();
+}
+
+void ULactoseTasksServiceSubsystem::EnableGetUserTasksTicker()
+{
+	GetGameInstance()->GetTimerManager().SetTimer(
+		GetUserTasksTicker,
+		this,
+		&ThisClass::OnGetUserTasksTick,
+		GetUserTasksTickInterval,
+		/* bLoop */ true);
+}
+
+void ULactoseTasksServiceSubsystem::DisableGetUserTasksTicker()
+{
+	GetGameInstance()->GetTimerManager().ClearTimer(GetUserTasksTicker);
+	GetUserTasksTicker.Invalidate();
+}
+
+void ULactoseTasksServiceSubsystem::OnGetUserTasksTick()
+{
+	if (GetCurrentUserTasksStatus() == ELactoseTasksUserTasksStatus::Querying || GetCurrentUserTasksStatus() == ELactoseTasksUserTasksStatus::Retrieving)
+		return;
+
+	LoadCurrentUserTasks();
 }

@@ -82,4 +82,23 @@ namespace Lactose
 	{
 		return Subsystems::GetRef<TLactoseService>(Context);
 	}
+
+	/**
+	 * Converts a map with Shared Pointer/Ref values into a map with the pointer's
+	 * type. This is useful for temporarily passing Shared Pointer data to Blueprint.
+	 */
+	template<
+		typename TMapKey,
+		typename TMapValue,
+		typename TMapValueRaw = typename TMapValue::ElementType>
+	TMap<TMapKey, TMapValueRaw> ExtractSpMap(const TMap<TMapKey, TMapValue>& Map)
+	{
+		TMap<TMapKey, TMapValueRaw> CopiedItems;
+		CopiedItems.Reserve(Map.Num());
+
+		for (const auto& Item : Map)
+			CopiedItems.Add(Item.Key, *Item.Value);
+	
+		return CopiedItems;
+	}
 }
