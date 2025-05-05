@@ -14,9 +14,9 @@ void ULactoseMotdsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void ULactoseMotdsSubsystem::OnConfigCloudLoaded(
 	const ULactoseConfigCloudServiceSubsystem& Sender,
-	Sr<FLactoseConfigCloudConfig> Config)
+	Sr<const FLactoseConfigCloudConfig> Config)
 {
-	Sp<FLactoseConfigCloudEntry> FoundMotds = Config->FindEntry(TEXT("motds"));
+	Sp<const FLactoseConfigCloudEntry> FoundMotds = Config->FindEntry(TEXT("motds"));
 	if (!FoundMotds)
 	{
 		return Log::Error(LogLactose, TEXT("Couldn't find Message of the Days (motds) in the Config Cloud"));

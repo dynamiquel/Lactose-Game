@@ -8,6 +8,8 @@
 
 #include "LactoseInteractionComponent.h"
 #include "LactoseMenuTags.h"
+#include "LactoseVendorSubsystem.h"
+#include "SimpSubsystems.h"
 #include "LactoseGame/LactoseGamePlayerController.h"
 
 
@@ -29,8 +31,7 @@ AVendorActor::AVendorActor()
 		Interaction->InteractionText = TEXT("Browse Vendor");
 	else
 		Interaction->InteractionText = FString::Printf(TEXT("Browse Vendor (%s)"), *VendorName);
-
-
+	
 	BillboardComponent = CreateDefaultSubobject<USceneComponent>("Billboard");
 	BillboardComponent->SetupAttachment(GetRootComponent());
 	VendorIdTextComponent = CreateDefaultSubobject<UTextRenderComponent>("VendorIdText");
@@ -41,7 +42,11 @@ void AVendorActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	VendorIdTextComponent->SetText(FText::FromString(VendorId));
+	const auto& VendorSubsystem = Subsystems::GetRef<ULactoseVendorSubsystem>(self);
+	if (const FLactoseVendorConfig* VendorConfig = VendorSubsystem.FindVendorConfig(VendorId))
+		VendorName = VendorConfig->VendorName;
+	
+	VendorIdTextComponent->SetText(FText::FromString(!VendorName.IsEmpty() ? VendorName : VendorId));
 }
 
 void AVendorActor::Tick(float DeltaSeconds)

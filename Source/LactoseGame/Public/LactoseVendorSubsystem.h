@@ -5,6 +5,13 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "LactoseVendorSubsystem.generated.h"
 
+class FLactoseConfigCloudEntry;
+class ULactoseConfigCloudServiceSubsystem;
+class FLactoseConfigCloudConfig;
+struct FLactoseVendorConfigs;
+struct FLactoseVendorConfig;
+class ULactoseTasksServiceSubsystem;
+struct FLactoseTasksUserTaskDto;
 class AVendorActor;
 class ULactoseSimulationServiceSubsystem;
 struct FLactoseSimulationUserCropInstance;
@@ -18,13 +25,20 @@ public:
 	void OnWorldBeginPlay(UWorld& InWorld) override;
 
 	AVendorActor* FindVendorById(const FString& VendorId) const;
+
+	const FLactoseVendorConfigs* FindVendorConfigs() const;
+	const FLactoseVendorConfig* FindVendorConfig(const FString& VendorId) const;
 	
 protected:
-	void OnUserCropsHarvested(
-		const ULactoseSimulationServiceSubsystem& Sender,
-		const TArray<Sr<const FLactoseSimulationUserCropInstance>>& ModifiedUserCrops);
-
-	void SpawnBasicVendor();
+	void OnConfigLoaded(
+		const ULactoseConfigCloudServiceSubsystem& Sender,
+		Sr<const FLactoseConfigCloudConfig> Config);
+	
+	void OnUserTaskUpdated(
+		const ULactoseTasksServiceSubsystem& Sender,
+		const Sr<const FLactoseTasksUserTaskDto>& UserTask);
+	
+	void SpawnVendor(const FString& VendorId);
 
 protected:
 	UPROPERTY(Transient)
@@ -46,4 +60,30 @@ protected:
 	static constexpr auto* WarmVendorId = TEXT("vendor-warm");
 	static constexpr auto* AnimalsVendorId = TEXT("vendor-animals");
 	static constexpr auto* MiscVendorId = TEXT("vendor-misc");
+
+	Sp<const FLactoseConfigCloudEntry> VendorConfigEntry;
+};
+
+USTRUCT()
+struct FLactoseVendorConfig
+{
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	FString VendorId;
+
+	UPROPERTY()
+	FString VendorName;
+
+	UPROPERTY()
+	FString UnlockTask;
+};
+
+USTRUCT()
+struct FLactoseVendorConfigs
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<FLactoseVendorConfig> Config;
 };

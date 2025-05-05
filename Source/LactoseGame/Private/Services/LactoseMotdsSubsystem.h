@@ -38,7 +38,7 @@ class ULactoseMotdsSubsystem : public UGameInstanceSubsystem
 
 	void OnConfigCloudLoaded(
 		const ULactoseConfigCloudServiceSubsystem& Sender,
-		Sr<FLactoseConfigCloudConfig> Config);
+		Sr<const FLactoseConfigCloudConfig> Config);
 
 public:
 	Sp<const FLactoseMotds> GetMotds() const { return Motds; }

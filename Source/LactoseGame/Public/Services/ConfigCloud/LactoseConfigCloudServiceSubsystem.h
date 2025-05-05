@@ -113,7 +113,7 @@ namespace Lactose::Config::Events
 {
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FConfigLoaded,
 		const ULactoseConfigCloudServiceSubsystem& /* Sender */,
-		Sr<FLactoseConfigCloudConfig> /* Config */);
+		Sr<const FLactoseConfigCloudConfig> /* Config */);
 
 	inline FConfigLoaded OnConfigLoaded;
 }
