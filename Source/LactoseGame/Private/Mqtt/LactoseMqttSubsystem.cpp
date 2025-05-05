@@ -1,5 +1,4 @@
 #include "Mqtt/LactoseMqttSubsystem.h"
-#include "Simp.h"
 #include "IMqttifyModule.h"
 #include "Mqtt/LactoseMqttLog.h"
 #include "Mqtt/Interface/IMqttifyClient.h"
@@ -64,6 +63,15 @@ void ULactoseMqttSubsystem::OnDisconnected(bool bDisconnected)
 
 void ULactoseMqttSubsystem::OnMessageReceived(const FMqttifyMessage& Message)
 {
+	for (const TPair<FString, TArray<FMqttDelegate>>& RoutedSubscription : RoutedSubscriptions)
+	{
+		FMqttifyTopicFilter TopicFilter(RoutedSubscription.Key);
+		if (!TopicFilter.MatchesWildcard(Message.Topic))
+			continue;
+		
+		for (const FMqttDelegate& Delegate : RoutedSubscription.Value)
+			Delegate.ExecuteIfBound(Message);
+	}
 }
 
 void ULactoseMqttSubsystem::OnPublished(bool bPublished)
@@ -72,8 +80,51 @@ void ULactoseMqttSubsystem::OnPublished(bool bPublished)
 
 void ULactoseMqttSubsystem::OnSubscribed(const TSharedPtr<TArray<FMqttifySubscribeResult>>& Subscriptions)
 {
+	if (!Subscriptions)
+		return;
+	
+	for (const FMqttifySubscribeResult& Subscription : *Subscriptions)
+		UE_LOG(LogLactoseMqtt, Log, TEXT("Subscribed to topic '%s'"), *Subscription.GetFilter().GetFilter());
 }
 
 void ULactoseMqttSubsystem::OnUnsubscribed(const TSharedPtr<TArray<FMqttifyUnsubscribeResult>>& Unsubscriptions)
 {
+	if (!Unsubscriptions)
+		return;
+	
+	for (const FMqttifyUnsubscribeResult& Unsubscription : *Unsubscriptions)
+		UE_LOG(LogLactoseMqtt, Log, TEXT("Ubsubscribed from topic '%s'"), *Unsubscription.GetFilter().GetFilter());
+}
+
+FRoutedSubscriptionHandle ULactoseMqttSubsystem::RouteSubscription(const FString& Topic, FMqttDelegate&& Delegate)
+{
+	TArray<FMqttDelegate>* ExistingTopicRoutes = RoutedSubscriptions.Find(Topic);
+	if (!ExistingTopicRoutes)
+	{
+		// First time we are routing this topic; subscribe to the topic.
+		ExistingTopicRoutes = &RoutedSubscriptions.Add(Topic);
+		MqttClient->SubscribeAsync(FMqttifyTopicFilter(Topic)).Next([Topic, WeakThis = MakeWeakObjectPtr(this)]
+			(const TMqttifyResult<FMqttifySubscribeResult>& Result)
+		{
+			if (!Result.HasSucceeded())
+				UE_LOG(LogLactoseMqtt, Error, TEXT("Failed to subscribe to topic '%s'"), *Topic);
+		});
+	}
+	
+	ExistingTopicRoutes->Add(MoveTemp(Delegate));
+	return FRoutedSubscriptionHandle(Topic, ExistingTopicRoutes->Num() - 1);
+}
+
+void ULactoseMqttSubsystem::UnrouteSubscription(const FRoutedSubscriptionHandle& Handle)
+{
+	if (TArray<FMqttDelegate>* TopicRoutes = RoutedSubscriptions.Find(Handle.Key))
+		if (TopicRoutes->IsValidIndex(Handle.Value))
+			(*TopicRoutes)[Handle.Value].Unbind();
+}
+
+void ULactoseMqttSubsystem::UnrouteAllSubscriptions(const FString& Topic)
+{
+	if (TArray<FMqttDelegate>* TopicRoutes = RoutedSubscriptions.Find(Topic))
+		for (FMqttDelegate& TopicRoute : *TopicRoutes)
+			TopicRoute.Unbind();
 }

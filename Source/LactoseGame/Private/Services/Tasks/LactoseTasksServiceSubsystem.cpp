@@ -2,6 +2,8 @@
 
 #include "Api/Tasks/LactoseTasksClient.h"
 #include "Api/Tasks/LactoseTasksUserTasksClient.h"
+#include "Mqtt/LactoseMqttSubsystem.h"
+#include "Mqtt/MqttifyMessage.h"
 #include "Services/LactoseServicesLog.h"
 #include "Services/Identity/LactoseIdentityServiceSubsystem.h"
 
@@ -192,6 +194,10 @@ void ULactoseTasksServiceSubsystem::OnUserLoggedIn(
 	LoadTasks();
 	LoadCurrentUserTasks();
 	EnableGetUserTasksTicker();
+
+	const FString& UserTaskUpdateTopic = FString::Printf(TEXT("/tasks/usertasks/%s/updated"), *User->Id);
+	auto& Mqtt = Subsystems::GetRef<ULactoseMqttSubsystem>(self);
+	Mqtt.RouteSubscription(UserTaskUpdateTopic, FMqttDelegate::CreateUObject(this, &ThisClass::OnCurrentUserTaskUpdated));
 }
 
 void ULactoseTasksServiceSubsystem::OnUserLoggedOut(const ULactoseIdentityServiceSubsystem& Sender)
@@ -221,4 +227,62 @@ void ULactoseTasksServiceSubsystem::OnGetUserTasksTick()
 		return;
 
 	LoadCurrentUserTasks();
+}
+
+void ULactoseTasksServiceSubsystem::OnCurrentUserTaskUpdated(const FMqttifyMessage& Message)
+{
+	TOptional<FLactoseTasksUserTaskUpdatedEvent> Event = FLactoseTasksUserTaskUpdatedEvent::FromBytes(Message.Payload);
+	if (!Event)
+	{
+		UE_LOG(LogLactoseTasksService, Error, TEXT("Received incorrect event type for message. Topic: %s"), *Message.Topic);
+		return;
+	}
+
+	if (UserTasksStatus == ELactoseTasksUserTasksStatus::Querying || UserTasksStatus == ELactoseTasksUserTasksStatus::Retrieving)
+	{
+		// Already doing a full load, no point.
+		return;
+	}
+
+	UE_LOG(LogLactoseTasksService, Log, TEXT("Received User Task Update Event for User Task '%s'. Grabbing latest"), *Event->UserTaskId);
+
+	check(UserTasksClient);
+
+	TSharedRef<Lactose::Tasks::UserTasks::FGet> Operation = UserTasksClient->Get({
+		.UserTaskIds = { Event->UserTaskId }
+	});
+	
+	Operation->Then(ECallbackOn::Success, [WeakThis = MakeWeakObjectPtr(this)]
+		(TSharedRef<Lactose::Tasks::UserTasks::FGet> Operation)
+	{
+		auto* This = WeakThis.Get();
+		if (!This)
+			return;
+
+		// Bit copy and pasty but whatever.
+
+		// Should only ever be one but jic.
+		for (const FLactoseTasksUserTaskDto& UserTask : Operation->GetResponse()->UserTasks)
+		{
+			if (auto* ExistingTask = This->CurrentUserTasks.Find(UserTask.Id))
+			{
+				const bool bChanged = ExistingTask->Get().Completed != UserTask.Completed || !FMath::IsNearlyEqual(ExistingTask->Get().Progress, UserTask.Progress);
+				if (bChanged)
+				{
+					ExistingTask->Get() = UserTask;
+					UE_LOG(LogLactoseTasksService, Log, TEXT("Updated User Task with ID: %s"), *UserTask.Id);
+					Lactose::Tasks::Events::OnCurrentUserTaskUpdated.Broadcast(*This, *ExistingTask);
+				}
+			}
+			else
+			{
+				Sr<FLactoseTasksUserTaskDto> NewUserTask = CreateSr(UserTask);
+				This->CurrentUserTasks.Emplace(UserTask.Id, NewUserTask);
+				UE_LOG(LogLactoseTasksService, Log, TEXT("Added User Task with ID: %s"), *UserTask.Id);
+				Lactose::Tasks::Events::OnCurrentUserTaskUpdated.Broadcast(*This, NewUserTask);
+			}
+		}
+
+		Lactose::Tasks::Events::OnCurrentUserTasksLoaded.Broadcast(*This);
+	});
 }

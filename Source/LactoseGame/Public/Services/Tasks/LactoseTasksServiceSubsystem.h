@@ -4,6 +4,7 @@
 #include "Services/LactoseServiceSubsystem.h"
 #include "LactoseTasksServiceSubsystem.generated.h"
 
+struct FMqttifyMessage;
 struct FLactoseTasksGetTaskResponse;
 struct FLactoseTasksUserTaskDto;
 struct FLactoseIdentityGetUserResponse;
@@ -64,9 +65,13 @@ protected:
 	bool IsAutoGetUserTasksTicking() const { return GetUserTasksTicker.IsValid(); }
 	void OnGetUserTasksTick();
 
+	void OnCurrentUserTaskUpdated(const FMqttifyMessage& Message);
+
 protected:
+	// Very low since it uses events to update.
+	// Poll all user tasks every so often for sanity.
 	UPROPERTY(EditDefaultsOnly, Config)
-	float GetUserTasksTickInterval = 5.f;
+	float GetUserTasksTickInterval = 60.f;
 	
 	UPROPERTY(Transient)
 	TObjectPtr<ULactoseTasksTasksClient> TasksClient;
@@ -82,7 +87,6 @@ protected:
 
 	FTimerHandle GetUserTasksTicker;
 };
-
 
 namespace Lactose::Tasks::Events
 {

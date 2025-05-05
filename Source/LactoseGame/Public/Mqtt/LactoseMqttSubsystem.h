@@ -7,6 +7,9 @@ struct FMqttifySubscribeResult;
 struct FMqttifyMessage;
 class IMqttifyClient;
 
+using FMqttDelegate = TDelegate<void(const FMqttifyMessage&)>;
+using FRoutedSubscriptionHandle = TTuple<FString, int32>;
+
 UCLASS()
 class ULactoseMqttSubsystem : public UGameInstanceSubsystem
 {
@@ -25,5 +28,14 @@ public:
 	void OnSubscribed(const TSharedPtr<TArray<FMqttifySubscribeResult>>& Subscriptions);
 	void OnUnsubscribed(const TSharedPtr<TArray<FMqttifyUnsubscribeResult>>& Unsubscriptions);
 
+	// I came aware that Mqttify already kinda has its own routing mechanism after
+	// I already implemented this. I'm not switching over because I don't entirely
+	// know how it works internally and don't wanna waste time looking.
+	FRoutedSubscriptionHandle RouteSubscription(const FString& Topic, FMqttDelegate&& Delegate);
+	void UnrouteSubscription(const FRoutedSubscriptionHandle& Handle);
+	void UnrouteAllSubscriptions(const FString& Topic);
+
+	TMap<FString, TArray<FMqttDelegate>> RoutedSubscriptions;
+	
 	TSharedPtr<IMqttifyClient> MqttClient;
 };
