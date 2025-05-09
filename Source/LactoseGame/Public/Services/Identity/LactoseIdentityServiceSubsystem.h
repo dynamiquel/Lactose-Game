@@ -129,16 +129,25 @@ public:
 
 protected:
 	void OnUserLoggedIn(Sr<FGetUserRequest::FResponseContext> Context);
+
+	void StartRefreshTokenTimer();
+	void StopRefreshTokenTimer();
+	void OnRefreshTokenTimer();
 	
-private:
+protected:
 	UPROPERTY(EditDefaultsOnly, Config)
 	bool bAutoLogin = true;
+
+	UPROPERTY(EditDefaultsOnly, Config)
+	float RefreshTokenInterval = 60.f * 5.f;
 
 	TFuture<Sp<FSignupRequest::FResponseContext>> SignupBasicAuthFuture;
 	TFuture<Sp<FLoginRequest::FResponseContext>> LoginUsingBasicAuthFuture;
 	TFuture<Sp<FRefreshTokenRequest::FResponseContext>> LoginUsingRefreshFuture;
 	TFuture<Sp<FGetUserRequest::FResponseContext>> CurrentUserInfoFuture;
 	Sp<FLactoseIdentityGetUserResponse> LoggedInUserInfo;
+	
+	FTimerHandle RefreshTokenTimer;
 };
 
 namespace Lactose::Identity::Events
