@@ -13,7 +13,7 @@ using FMqttifyConnectionSettingsRef = TSharedRef<class FMqttifyConnectionSetting
  */
 class MQTTIFY_API FMqttifyConnectionSettings final
 {
-private:
+public:
 	/// @brief Max Packet Size
 	uint32 MaxPacketSize = 1 * 1024 * 1024; // 1MB
 

@@ -19,6 +19,7 @@ public:
 	// End override UGameInstanceSubsystem
 
 	const TOptional<FString>& GetRefreshToken() const { return RefreshToken; }
+	const TOptional<FString>& GetAccessToken() const { return AccessToken; }
 
 	template<typename TRequest> requires (std::is_base_of_v<Lactose::Rest::IRequest, TRequest>)
 	Sr<TRequest> CreateRequest()
@@ -52,4 +53,5 @@ private:
 	FCriticalSection PendingRequestsLock;
 
 	TOptional<FString> RefreshToken;
+	TOptional<FString> AccessToken;
 };

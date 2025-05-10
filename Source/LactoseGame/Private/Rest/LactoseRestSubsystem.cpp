@@ -37,6 +37,8 @@ void ULactoseRestSubsystem::RemoveRequest(const Sr<Lactose::Rest::IRequest>& Req
 void ULactoseRestSubsystem::AddAuthorization(const FString& InAccessToken, const FString* InRefreshToken)
 {
 	FHttpModule& HttpModule = FHttpModule::Get();
+
+	AccessToken = InAccessToken;
 	
 	HttpModule.AddDefaultHeader(
 		TEXT("Authorization"),

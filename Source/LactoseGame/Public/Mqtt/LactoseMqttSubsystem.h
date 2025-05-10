@@ -1,4 +1,5 @@
 #pragma once
+#include "Mqtt/Interface/IMqttifyCredentialsProvider.h"
 
 #include "LactoseMqttSubsystem.generated.h"
 
@@ -9,6 +10,17 @@ class IMqttifyClient;
 
 using FMqttDelegate = TDelegate<void(const FMqttifyMessage&)>;
 using FRoutedSubscriptionHandle = TTuple<FString, int32>;
+
+class FLactoseMqttifyCredentialsProvider : public IMqttifyCredentialsProvider
+{
+public:
+	FLactoseMqttifyCredentialsProvider(class ULactoseMqttSubsystem& InMqttSubsystem);
+	
+	FMqttifyCredentials GetCredentials() override;
+
+private:
+	TWeakObjectPtr<ULactoseMqttSubsystem> MqttSubsystem;
+};
 
 UCLASS()
 class ULactoseMqttSubsystem : public UGameInstanceSubsystem

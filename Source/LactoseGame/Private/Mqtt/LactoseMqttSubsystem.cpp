@@ -2,6 +2,27 @@
 #include "IMqttifyModule.h"
 #include "Mqtt/LactoseMqttLog.h"
 #include "Mqtt/Interface/IMqttifyClient.h"
+#include "Simp.h"
+#include "Rest/LactoseRestSubsystem.h"
+#include "Services/Identity/LactoseIdentityServiceSubsystem.h"
+
+
+FLactoseMqttifyCredentialsProvider::FLactoseMqttifyCredentialsProvider(class ULactoseMqttSubsystem& InMqttSubsystem)
+	: MqttSubsystem(&InMqttSubsystem)
+{ }
+
+FMqttifyCredentials FLactoseMqttifyCredentialsProvider::GetCredentials()
+{
+	ULactoseMqttSubsystem* Subsystem = MqttSubsystem.Get();
+	if (!Subsystem)
+		return FMqttifyCredentials();
+
+	TOptional<FString> AccessToken = Subsystems::GetRef<ULactoseRestSubsystem>(Subsystem).GetAccessToken();
+	if (!AccessToken.IsSet())
+		return FMqttifyCredentials();
+
+	return FMqttifyCredentials(AccessToken.GetValue(), TEXT("69"));
+}
 
 void ULactoseMqttSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -22,8 +43,24 @@ void ULactoseMqttSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	MqttClient->OnPublish().AddUObject(this, &ThisClass::OnPublished);
 	MqttClient->OnSubscribe().AddUObject(this, &ThisClass::OnSubscribed);
 	MqttClient->OnUnsubscribe().AddUObject(this, &ThisClass::OnUnsubscribed);
+
+	MqttClient->GetConnectionSettings()->InitialRetryConnectionIntervalSeconds = 1;
+	MqttClient->GetConnectionSettings()->CredentialsProvider = MakeShared<FLactoseMqttifyCredentialsProvider>(self);
 	
-	MqttClient->ConnectAsync(false);
+	UE_LOG(LogLactoseMqtt, Log, TEXT("Waiting for user log in before connecting to MQTT"));
+
+	Lactose::Identity::Events::OnUserLoggedIn.AddLambda([WeakThis = MakeWeakObjectPtr(this)]
+		(const ULactoseIdentityServiceSubsystem& Sender, const Sr<FLactoseIdentityGetUserResponse>& User)
+	{
+		auto* This = WeakThis.Get();
+		if (!This)
+			return;
+
+		UE_LOG(LogLactoseMqtt, Log, TEXT("Connecting to MQTT"));
+
+		// TODO: Wait until Identity has logged in.
+		This->MqttClient->ConnectAsync(false);
+	});
 }
 
 void ULactoseMqttSubsystem::Deinitialize()
