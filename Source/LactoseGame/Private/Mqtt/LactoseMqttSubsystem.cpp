@@ -46,7 +46,7 @@ void ULactoseMqttSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 	MqttClient->GetConnectionSettings()->InitialRetryConnectionIntervalSeconds = 1;
 	MqttClient->GetConnectionSettings()->CredentialsProvider = MakeShared<FLactoseMqttifyCredentialsProvider>(self);
-	
+
 	UE_LOG(LogLactoseMqtt, Log, TEXT("Waiting for user log in before connecting to MQTT"));
 
 	Lactose::Identity::Events::OnUserLoggedIn.AddLambda([WeakThis = MakeWeakObjectPtr(this)]
@@ -57,8 +57,6 @@ void ULactoseMqttSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 			return;
 
 		UE_LOG(LogLactoseMqtt, Log, TEXT("Connecting to MQTT"));
-
-		// TODO: Wait until Identity has logged in.
 		This->MqttClient->ConnectAsync(false);
 	});
 }
@@ -67,8 +65,11 @@ void ULactoseMqttSubsystem::Deinitialize()
 {
 	if (MqttClient.IsValid() && MqttClient->IsConnected())
 	{
+		auto& IdentitySubsystem = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
+		const FString UserId = IdentitySubsystem.GetLoggedInUserInfo() ? IdentitySubsystem.GetLoggedInUserInfo()->Id : TEXT("unknown");
+
 		MqttClient->PublishAsync({
-			.Topic = TEXT("players/unknown/disconnected")
+			.Topic = FString::Printf(TEXT("players/%s/diconnected"), *UserId)
 		});
 
 		// Little delay to ensure everything gets sent before closing the game.
@@ -85,17 +86,60 @@ void ULactoseMqttSubsystem::OnConnected(bool bConnected)
 		UE_LOG(LogLactoseMqtt, Log, TEXT("Failed to connect"));
 		return;
 	}
+
+	this->bConnected = true;
 	
 	UE_LOG(LogLactoseMqtt, Log, TEXT("Connected"));
-	
+
+	auto& IdentitySubsystem = Subsystems::GetRef<ULactoseIdentityServiceSubsystem>(self);
+
+	const FString UserId = IdentitySubsystem.GetLoggedInUserInfo() ? IdentitySubsystem.GetLoggedInUserInfo()->Id : TEXT("unknown");
 	MqttClient->PublishAsync({
-		.Topic = TEXT("players/unknown/connected")
+		.Topic = FString::Printf(TEXT("players/%s/connected"), *UserId)
+	});
+
+	TArray<FMqttifyTopicFilter> TopicFilters;
+	TopicFilters.Reserve(RoutedSubscriptions.Num());
+
+	// Subscriptions don't seem to persist with this client so resubscribe.
+	for (TPair<FString, TArray<FMqttDelegate>>& RoutedSubscription : RoutedSubscriptions)
+	{
+		FMqttifyTopicFilter TopicFilter(RoutedSubscription.Key);
+		TopicFilters.Emplace(FMqttifyTopicFilter(RoutedSubscription.Key));
+		UE_LOG(LogLactoseMqtt, Log, TEXT("Subscribing to topic '%s'"), *TopicFilter.GetFilter());
+	}
+	
+	MqttClient->SubscribeAsync(TopicFilters).Next([WeakThis = MakeWeakObjectPtr(this)]
+		(const TMqttifyResult<TArray<FMqttifySubscribeResult>>& Result)
+	{
+		if (!Result.HasSucceeded())
+		{
+			UE_LOG(LogLactoseMqtt, Error, TEXT("Failed to subscribe to topics"));
+		}
+		else
+		{
+			if (Result.GetResult().IsValid())
+			{
+				for (const FMqttifySubscribeResult& Topic : *Result.GetResult())
+				{
+					if (!Topic.WasSuccessful())
+					{
+						UE_LOG(LogLactoseMqtt, Error, TEXT("Failed to subscribe to topic '%s'"), *Topic.GetFilter().GetFilter());
+					}
+					else
+					{
+						UE_LOG(LogLactoseMqtt, Log, TEXT("Subscribed to topic '%s'"), *Topic.GetFilter().GetFilter());
+					}
+				}
+			}
+		}
 	});
 }
 
 void ULactoseMqttSubsystem::OnDisconnected(bool bDisconnected)
 {
 	UE_LOG(LogLactoseMqtt, Log, TEXT("Disconnected"));
+	bConnected = false;
 }
 
 void ULactoseMqttSubsystem::OnMessageReceived(const FMqttifyMessage& Message)
@@ -140,12 +184,16 @@ FRoutedSubscriptionHandle ULactoseMqttSubsystem::RouteSubscription(const FString
 	{
 		// First time we are routing this topic; subscribe to the topic.
 		ExistingTopicRoutes = &RoutedSubscriptions.Add(Topic);
-		MqttClient->SubscribeAsync(FMqttifyTopicFilter(Topic)).Next([Topic, WeakThis = MakeWeakObjectPtr(this)]
-			(const TMqttifyResult<FMqttifySubscribeResult>& Result)
+
+		if (MqttClient.IsValid() && bConnected)
 		{
-			if (!Result.HasSucceeded())
-				UE_LOG(LogLactoseMqtt, Error, TEXT("Failed to subscribe to topic '%s'"), *Topic);
-		});
+			MqttClient->SubscribeAsync(FMqttifyTopicFilter(Topic)).Next([Topic, WeakThis = MakeWeakObjectPtr(this)]
+				(const TMqttifyResult<FMqttifySubscribeResult>& Result)
+			{
+				if (!Result.HasSucceeded())
+					UE_LOG(LogLactoseMqtt, Error, TEXT("Failed to subscribe to topic '%s'"), *Topic);
+			});
+		}
 	}
 	
 	ExistingTopicRoutes->Add(MoveTemp(Delegate));

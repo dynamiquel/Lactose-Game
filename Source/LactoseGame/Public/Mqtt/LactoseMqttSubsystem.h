@@ -50,4 +50,6 @@ public:
 	TMap<FString, TArray<FMqttDelegate>> RoutedSubscriptions;
 	
 	TSharedPtr<IMqttifyClient> MqttClient;
+	// Using our own connected var since IMqttifyClient::IsConnected crashes for some reason.
+	bool bConnected = false;
 };
