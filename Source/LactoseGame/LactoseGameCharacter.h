@@ -8,6 +8,7 @@
 #include "Logging/LogMacros.h"
 #include "LactoseGameCharacter.generated.h"
 
+class USphereComponent;
 class ACropActor;
 class UInputComponent;
 class USkeletalMeshComponent;
@@ -81,8 +82,6 @@ public:
 protected:
 	virtual void BeginPlay();
 	virtual void Tick(float DeltaSeconds) override;
-	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
-	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
 
 public:
 		
@@ -124,6 +123,38 @@ protected:
 
 	TOptional<FHitResult> PerformPlotToolTrace() const;
 
+	UFUNCTION()
+	void OnCropCullColliderOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnCropCullColliderOverlapEnd(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex);
+
+	UFUNCTION()
+	void OnCapsuleOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnCapsuleOverlapEnd(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex);
+
 protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
@@ -139,6 +170,9 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, meta=(Units="cm"))
 	float PlotToolMaxDistance = 100.f * 5.f; // 5m
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<USphereComponent> CropCullCollider;
 	
 private:
 	UPROPERTY(Transient)

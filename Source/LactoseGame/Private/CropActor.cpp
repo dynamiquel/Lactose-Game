@@ -14,12 +14,24 @@
 ACropActor::ACropActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.TickInterval = 1.f / 10.f;
+	PrimaryActorTick.bStartWithTickEnabled = false;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+
+	CullCollider = CreateDefaultSubobject<UBoxComponent>("CullCollider");
+	CullCollider->SetupAttachment(GetRootComponent());
+	CullCollider->SetCollisionResponseToAllChannels(ECR_Ignore);
+	CullCollider->SetCollisionResponseToChannel(ECC_Vehicle, ECR_Overlap);
+	CullCollider->SetCollisionObjectType(ECC_Vehicle);
+
+	if (auto* CullColliderBox = Cast<UBoxComponent>(CullCollider))
+		CullColliderBox->InitBoxExtent(FVector(75., 75., 75.));
 	
 	InteractionCollision = CreateDefaultSubobject<UBoxComponent>("InteractionCollision");
 	InteractionCollision->SetupAttachment(GetRootComponent());
+	InteractionCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+	InteractionCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	
 	Interaction = CreateDefaultSubobject<ULactoseInteractionComponent>(TEXT("Interaction"));
 	Interaction->OnInteractionComplete.AddUObject(this, &ThisClass::OnInteracted);
 	Interaction->InteractionTextFunc = [WeakThis = MakeWeakObjectPtr(this)]
@@ -66,6 +78,8 @@ ACropActor::ACropActor()
 	};
 
 	DestroyInteraction = CreateDefaultSubobject<ULactoseInteractionComponent>(TEXT("DestroyInteraction"));
+	InteractionCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+	InteractionCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	DestroyInteraction->InteractionText = TEXT("Destroy");
 	DestroyInteraction->OnInteractionComplete.AddUObject(this, &ThisClass::OnDestroyInteracted);
 
@@ -118,13 +132,15 @@ void ACropActor::PostInitializeComponents()
 
 		CropSubsystem->RegisterCropActor(self);
 		UpdateBillboardText();
+
+		BillboardComponent->SetHiddenInGame(true, true);
 	}
 }
 
 void ACropActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 }
 
 void ACropActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -244,6 +260,8 @@ void ACropActor::UpdateBillboard()
 	if (!BillboardComponent)
 		return;
 
+	BillboardComponent->SetHiddenInGame(false);
+
 	const APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
 	if (!PlayerController)
 		return;
@@ -276,5 +294,17 @@ void ACropActor::UpdateBillboardText()
 	CropFertiliseTimeTextComponent->SetText(CropInstance->RemainingFertiliserSeconds > 0
 		? FText::AsTimespan(FTimespan::FromSeconds(CropInstance->RemainingFertiliserSeconds))
 		: FText());
+}
+
+void ACropActor::TurnOnRendering()
+{
+	SetActorTickEnabled(true);
+	BillboardComponent->SetHiddenInGame(false, true);
+}
+
+void ACropActor::TurnOffRendering()
+{
+	SetActorTickEnabled(false);
+	BillboardComponent->SetHiddenInGame(true, true);
 }
 

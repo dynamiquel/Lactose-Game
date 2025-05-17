@@ -3,13 +3,11 @@
 #include "LactoseGameCharacter.h"
 
 #include "CropActor.h"
-#include "LactoseGameProjectile.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "LactoseGame.h"
 #include "LactoseGamePlayerController.h"
@@ -17,8 +15,8 @@
 #include "LactoseMenuTags.h"
 #include "Landscape.h"
 #include "Engine/LocalPlayer.h"
-#include "Kismet/GameplayStatics.h"
 #include "LandscapeProxy.h"
+#include "Components/SphereComponent.h"
 #include "Services/Economy/LactoseEconomyServiceSubsystem.h"
 #include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
 
@@ -62,12 +60,26 @@ ALactoseGameCharacter::ALactoseGameCharacter()
 	TreeToolItemAction = DefaultTreeToolInputAction.Object;
 	UseItemAction = DefaultUseItemInputAction.Object;
 	ChangeCropAction = DefaultChangeCropInputAction.Object;
+
+	CropCullCollider = CreateDefaultSubobject<USphereComponent>("CropCullCollider");
+	CropCullCollider->SetupAttachment(GetCapsuleComponent());
+	CropCullCollider->SetSphereRadius(450.f, /* bUpdateOverlaps */ false);
+	CropCullCollider->SetCollisionResponseToAllChannels(ECR_Ignore);
+	// Using Vehicle channel coz cba messing around making my own.
+	CropCullCollider->SetCollisionResponseToChannel(ECC_Vehicle, ECR_Overlap);
+	CropCullCollider->SetCollisionObjectType(ECC_Vehicle);
 }
 
 void ALactoseGameCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
+
+	CropCullCollider->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnCropCullColliderOverlap);
+	CropCullCollider->OnComponentEndOverlap.AddUniqueDynamic(this, &ThisClass::OnCropCullColliderOverlapEnd);
+
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnCapsuleOverlap);
+	GetCapsuleComponent()->OnComponentEndOverlap.AddUniqueDynamic(this, &ThisClass::OnCapsuleOverlapEnd);
 }
 
 void ALactoseGameCharacter::Tick(float DeltaSeconds)
@@ -100,46 +112,6 @@ void ALactoseGameCharacter::Tick(float DeltaSeconds)
 			20.f,
 			FColor::Blue);
 	}
-}
-
-void ALactoseGameCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
-{
-	Super::NotifyActorBeginOverlap(OtherActor);
-
-	if (!OtherActor)
-		return;
-
-	TInlineComponentArray<ULactoseInteractionComponent*> FoundInteractionComps;
-	OtherActor->GetComponents<ULactoseInteractionComponent>(OUT FoundInteractionComps);
-	
-	for (ULactoseInteractionComponent* FoundInteractionComp : FoundInteractionComps)
-	{
-		OverlappedInteractions.AddUnique(FoundInteractionComp);
-
-		Log::Verbose(LogLactose,
-			TEXT("Player is overlapping with Interaction for Actor '%s'"),
-			*FoundInteractionComp->GetOwner()->GetActorNameOrLabel());
-	}
-}
-
-void ALactoseGameCharacter::NotifyActorEndOverlap(AActor* OtherActor)
-{
-	if (OtherActor)
-	{
-		TInlineComponentArray<ULactoseInteractionComponent*> FoundInteractionComps;
-		OtherActor->GetComponents<ULactoseInteractionComponent>(OUT FoundInteractionComps);
-	
-		for (ULactoseInteractionComponent* FoundInteractionComp : FoundInteractionComps)
-		{
-			OverlappedInteractions.Remove(FoundInteractionComp);
-
-			Log::Verbose(LogLactose,
-				TEXT("Player is no longer overlapping with Interaction for Actor '%s'"),
-				*FoundInteractionComp->GetOwner()->GetActorNameOrLabel());
-		}
-	}
-	
-	Super::NotifyActorEndOverlap(OtherActor);
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
@@ -465,4 +437,76 @@ TOptional<FHitResult> ALactoseGameCharacter::PerformPlotToolTrace() const
 	);
 
 	return bHit ? HitResult : TOptional<FHitResult>();
+}
+
+void ALactoseGameCharacter::OnCropCullColliderOverlap(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult)
+{
+	if (auto* CropActor = Cast<ACropActor>(OtherActor))
+	{
+		CropActor->TurnOnRendering();
+	}
+}
+
+void ALactoseGameCharacter::OnCropCullColliderOverlapEnd(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex)
+{
+	if (auto* CropActor = Cast<ACropActor>(OtherActor))
+	{
+		CropActor->TurnOffRendering();
+	}
+}
+
+void ALactoseGameCharacter::OnCapsuleOverlap(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult)
+{
+	if (!OtherActor)
+		return;
+	
+	TInlineComponentArray<ULactoseInteractionComponent*> FoundInteractionComps;
+	OtherActor->GetComponents<ULactoseInteractionComponent>(OUT FoundInteractionComps);
+	
+	for (ULactoseInteractionComponent* FoundInteractionComp : FoundInteractionComps)
+	{
+		OverlappedInteractions.AddUnique(FoundInteractionComp);
+
+		Log::Verbose(LogLactose,
+			TEXT("Player is overlapping with Interaction for Actor '%s'"),
+			*FoundInteractionComp->GetOwner()->GetActorNameOrLabel());
+	}
+}
+
+void ALactoseGameCharacter::OnCapsuleOverlapEnd(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex)
+{
+	if (OtherActor)
+	{
+		TInlineComponentArray<ULactoseInteractionComponent*> FoundInteractionComps;
+		OtherActor->GetComponents<ULactoseInteractionComponent>(OUT FoundInteractionComps);
+	
+		for (ULactoseInteractionComponent* FoundInteractionComp : FoundInteractionComps)
+		{
+			OverlappedInteractions.Remove(FoundInteractionComp);
+
+			Log::Verbose(LogLactose,
+				TEXT("Player is no longer overlapping with Interaction for Actor '%s'"),
+				*FoundInteractionComp->GetOwner()->GetActorNameOrLabel());
+		}
+	}
 }

@@ -39,6 +39,9 @@ public:
 	Sp<const FLactoseSimulationCrop> GetCrop() const { return Crop; };
 	Sp<const FLactoseSimulationUserCropInstance> GetCropInstance() const { return CropInstance; };
 
+	void TurnOnRendering();
+	void TurnOffRendering();
+
 protected:
 	virtual void OnLoaded(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance);
 	virtual void OnHarvested(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance);
@@ -61,6 +64,9 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<ULactoseInteractionComponent> DestroyInteraction;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UPrimitiveComponent> CullCollider;
 	
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UMeshComponent> PlantMesh;
