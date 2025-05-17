@@ -107,7 +107,7 @@ void ULactoseVendorSubsystem::OnUserTaskUpdated(
 
 void ULactoseVendorSubsystem::SpawnVendor(const FString& VendorId)
 {
-	if (FindVendorById(BasicVendorId))
+	if (FindVendorById(VendorId))
 		return;
 
 	TArray<AActor*> FoundActors;
