@@ -41,6 +41,7 @@ namespace Mqttify
 	{
 		if (!Socket->IsConnected())
 		{
+			LOG_MQTTIFY(Warning, TEXT("[FMqttifyClientConnectedState::Tick] Socket is not connected"));
 			TransitionTo(MakeShared<FMqttifyClientConnectingState>(OnStateChanged, Context, Socket));
 			return;
 		}

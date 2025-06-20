@@ -96,7 +96,7 @@ TPlayerController* GetPlayerController(const TPlayerContext& PlayerContext)
 	}
 }
 
-#define self *this
+#define self (*this)
 
 /**
  * This struct simply exists so UHT can make a generated.h file for this file.

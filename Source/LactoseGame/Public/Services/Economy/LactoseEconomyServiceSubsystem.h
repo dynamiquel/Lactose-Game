@@ -7,6 +7,7 @@
 #include "LactoseEconomyUserItemsRequests.h"
 #include "LactoseEconomyServiceSubsystem.generated.h"
 
+struct FMqttifyMessage;
 class ULactoseIdentityServiceSubsystem;
 struct FLactoseIdentityGetUserResponse;
 
@@ -77,12 +78,16 @@ protected:
 
 	void OnGetCurrentUserItemsTick();
 
+	void OnUserTransaction(const FMqttifyMessage& Message);
+
 private:
 	UPROPERTY(EditDefaultsOnly, Config)
 	bool bAutoRetrieveItems = true;
 
+	// Very low since it uses events to update.
+	// Poll all user items every so often for sanity.
 	UPROPERTY(EditDefaultsOnly, Config)
-	float GetUserItemsTickInterval = 2.f;
+	float GetUserItemsTickInterval = 60.f;
 	
 	TFuture<Sp<FQueryEconomyItemsRequest::FResponseContext>> QueryAllItemsFuture;
 	TFuture<Sp<FGetEconomyItemsRequest::FResponseContext>> GetAllItemsFuture;

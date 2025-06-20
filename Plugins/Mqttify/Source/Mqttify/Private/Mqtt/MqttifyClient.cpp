@@ -28,11 +28,17 @@ namespace Mqttify
 		FScopeLock Lock{&StateLock};
 		if (!CurrentState.IsValid())
 		{
+			LOG_MQTTIFY(VeryVerbose, TEXT("[FMqttifyClient::Tick] Current State is invalid"));
 			return;
 		}
 		if (IMqttifySocketTickable* Tickable = CurrentState->AsSocketTickable())
 		{
+			LOG_MQTTIFY(VeryVerbose, TEXT("[FMqttifyClient::Tick]"));
 			Tickable->Tick();
+		}
+		else
+		{
+			LOG_MQTTIFY(Warning, TEXT("[FMqttifyClient::Tick] No Socket Tickable found"));
 		}
 	}
 
@@ -281,7 +287,7 @@ namespace Mqttify
 	bool FMqttifyClient::IsConnected() const
 	{
 		FScopeLock Lock{&StateLock};
-		return CurrentState->GetState() == EMqttifyState::Connected;
+		return CurrentState.IsValid() && CurrentState->GetState() == EMqttifyState::Connected;
 	}
 
 	void FMqttifyClient::TransitionTo(

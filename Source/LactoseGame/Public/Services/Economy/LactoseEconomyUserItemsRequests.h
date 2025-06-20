@@ -25,14 +25,13 @@ struct FLactoseEconomyUserItem
 	int32 Quantity = 0;
 };
 
-
 USTRUCT()
 struct FLactoseEconomyGetUserItemsResponse
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
-	TArray<FLactoseEconomyUserItem> Items;
+	TArray<FLactoseEconomyUserItem> UserItems;
 };
 
 using FGetEconomyUserItemsRequest = Lactose::Rest::TRequest<FLactoseEconomyGetUserItemsRequest, FLactoseEconomyGetUserItemsResponse>;

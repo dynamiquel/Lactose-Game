@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Mqtt/Interface/IMqttifyCredentialsProvider.h"
 
 #include "LactoseMqttSubsystem.generated.h"

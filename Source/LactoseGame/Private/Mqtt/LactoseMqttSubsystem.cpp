@@ -6,7 +6,6 @@
 #include "Rest/LactoseRestSubsystem.h"
 #include "Services/Identity/LactoseIdentityServiceSubsystem.h"
 
-
 FLactoseMqttifyCredentialsProvider::FLactoseMqttifyCredentialsProvider(class ULactoseMqttSubsystem& InMqttSubsystem)
 	: MqttSubsystem(&InMqttSubsystem)
 { }
@@ -45,8 +44,9 @@ void ULactoseMqttSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	MqttClient->OnUnsubscribe().AddUObject(this, &ThisClass::OnUnsubscribed);
 
 	MqttClient->GetConnectionSettings()->InitialRetryConnectionIntervalSeconds = 1;
+	MqttClient->GetConnectionSettings()->KeepAliveIntervalSeconds = 10;
 	MqttClient->GetConnectionSettings()->CredentialsProvider = MakeShared<FLactoseMqttifyCredentialsProvider>(self);
-
+	
 	UE_LOG(LogLactoseMqtt, Log, TEXT("Waiting for user log in before connecting to MQTT"));
 
 	Lactose::Identity::Events::OnUserLoggedIn.AddLambda([WeakThis = MakeWeakObjectPtr(this)]
@@ -86,8 +86,8 @@ void ULactoseMqttSubsystem::OnConnected(bool bConnected)
 		UE_LOG(LogLactoseMqtt, Log, TEXT("Failed to connect"));
 		return;
 	}
-
-	this->bConnected = true;
+	
+	self.bConnected = true;
 	
 	UE_LOG(LogLactoseMqtt, Log, TEXT("Connected"));
 
@@ -116,22 +116,23 @@ void ULactoseMqttSubsystem::OnConnected(bool bConnected)
 		{
 			UE_LOG(LogLactoseMqtt, Error, TEXT("Failed to subscribe to topics"));
 		}
-		else
+		else if (Result.GetResult().IsValid() && !Result.GetResult()->IsEmpty())
 		{
-			if (Result.GetResult().IsValid())
+			for (const FMqttifySubscribeResult& Topic : *Result.GetResult())
 			{
-				for (const FMqttifySubscribeResult& Topic : *Result.GetResult())
+				if (!Topic.WasSuccessful())
 				{
-					if (!Topic.WasSuccessful())
-					{
-						UE_LOG(LogLactoseMqtt, Error, TEXT("Failed to subscribe to topic '%s'"), *Topic.GetFilter().GetFilter());
-					}
-					else
-					{
-						UE_LOG(LogLactoseMqtt, Log, TEXT("Subscribed to topic '%s'"), *Topic.GetFilter().GetFilter());
-					}
+					UE_LOG(LogLactoseMqtt, Error, TEXT("Failed to subscribe to topic '%s'"), *Topic.GetFilter().GetFilter());
+				}
+				else
+				{
+					UE_LOG(LogLactoseMqtt, Log, TEXT("Subscribed to topic '%s'"), *Topic.GetFilter().GetFilter());
 				}
 			}
+		}
+		else
+		{
+			UE_LOG(LogLactoseMqtt, Error, TEXT("Subscribe suceeded but no results were returned?"));
 		}
 	});
 }
@@ -146,6 +147,8 @@ void ULactoseMqttSubsystem::OnMessageReceived(const FMqttifyMessage& Message)
 {
 	for (const TPair<FString, TArray<FMqttDelegate>>& RoutedSubscription : RoutedSubscriptions)
 	{
+		UE_LOG(LogLactoseMqtt, Verbose, TEXT("Received Message with Topic: '%s'"), *Message.Topic);
+		
 		FMqttifyTopicFilter TopicFilter(RoutedSubscription.Key);
 		if (!TopicFilter.MatchesWildcard(Message.Topic))
 			continue;

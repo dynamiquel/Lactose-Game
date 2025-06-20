@@ -3,6 +3,9 @@
 
 #include "Services/Economy/LactoseEconomyServiceSubsystem.h"
 #include "Simp.h"
+#include "Api/Economy/LactoseEconomyTransactions.h"
+#include "Mqtt/LactoseMqttSubsystem.h"
+#include "Mqtt/MqttifyMessage.h"
 #include "Services/LactoseServicesLog.h"
 #include "Services/Identity/LactoseIdentityServiceSubsystem.h"
 
@@ -69,7 +72,7 @@ TFuture<Sp<FGetEconomyUserItemsRequest::FResponseContext>> ULactoseEconomyServic
 	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
 	auto RestRequest = FGetEconomyUserItemsRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
-	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("useritems"));
+	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("useritems/get"));
 
 	auto GetUserItemsRequest = CreateSr<FLactoseEconomyGetUserItemsRequest>();
 	GetUserItemsRequest->UserId = UserId;
@@ -141,9 +144,9 @@ void ULactoseEconomyServiceSubsystem::LoadCurrentUserItems()
 
 		{
 			TRACE_CPUPROFILER_EVENT_SCOPE_STR("Update User Items");
-			ThisPinned->CurrentUserItems.Reserve(Context->ResponseContent->Items.Num());
+			ThisPinned->CurrentUserItems.Reserve(Context->ResponseContent->UserItems.Num());
 
-			for (const FLactoseEconomyUserItem& UserItem : Context->ResponseContent->Items)
+			for (const FLactoseEconomyUserItem& UserItem : Context->ResponseContent->UserItems)
 			{
 				ExistingUserItemsIds.Remove(UserItem.ItemId);
 
@@ -224,7 +227,7 @@ TFuture<Sp<FGetEconomyUserShopItemsRequest::FResponseContext>> ULactoseEconomySe
 	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
 	auto RestRequest = FGetEconomyUserShopItemsRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
-	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("shopitems/usershop"));
+	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("shopitems/getusershop"));
 
 	auto GetUserShopItemsRequest = CreateSr(Request);
 	auto Future = RestRequest->SetContentAsJsonAndSendAsync(GetUserShopItemsRequest);
@@ -283,7 +286,7 @@ void ULactoseEconomyServiceSubsystem::OnAllItemsQueries(Sr<FQueryEconomyItemsReq
 	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
 	auto RestRequest = FGetEconomyItemsRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
-	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("items"));
+	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("items/get"));
 	RestRequest->GetOnResponseReceived2().AddUObject(this, &ThisClass::OnAllItemsRetrieved);
 
 	auto GetAllItemsRequest = CreateSr<FLactoseEconomyGetItemsRequest>();
@@ -325,6 +328,12 @@ void ULactoseEconomyServiceSubsystem::OnUserLoggedIn(
 		LoadAllItems();
 
 	LoadCurrentUserItems();
+
+	const FString& UserTransactionATopic = FString::Printf(TEXT("/economy/transactions/%s/+"), *User->Id);
+	const FString& UserTransactionBTopic = FString::Printf(TEXT("/economy/transactions/+/%s"), *User->Id);
+	auto& Mqtt = Subsystems::GetRef<ULactoseMqttSubsystem>(self);
+	Mqtt.RouteSubscription(UserTransactionATopic, FMqttDelegate::CreateUObject(this, &ThisClass::OnUserTransaction));
+	Mqtt.RouteSubscription(UserTransactionBTopic, FMqttDelegate::CreateUObject(this, &ThisClass::OnUserTransaction));
 }
 
 void ULactoseEconomyServiceSubsystem::OnUserLoggedOut(const ULactoseIdentityServiceSubsystem& Sender)
@@ -334,5 +343,24 @@ void ULactoseEconomyServiceSubsystem::OnUserLoggedOut(const ULactoseIdentityServ
 
 void ULactoseEconomyServiceSubsystem::OnGetCurrentUserItemsTick()
 {
+	LoadCurrentUserItems();
+}
+
+void ULactoseEconomyServiceSubsystem::OnUserTransaction(const FMqttifyMessage& Message)
+{
+	TOptional<FLactoseEconomyTransactionsTradeEvent> Event = FLactoseEconomyTransactionsTradeEvent::FromBytes(Message.Payload);
+	if (!Event)
+	{
+		UE_LOG(LogLactoseEconomyService, Error, TEXT("Received incorrect event type for message. Topic: %s"), *Message.Topic);
+		return;
+	}
+
+	if (GetCurrentUserItemsStatus() == ELactoseEconomyUserItemsStatus::Retrieving)
+	{
+		// Already doing a full load, no point.
+		return;
+	}
+	
+	UE_LOG(LogLactoseEconomyService, Log, TEXT("Received User Transaction Event. Grabbing latest"));
 	LoadCurrentUserItems();
 }

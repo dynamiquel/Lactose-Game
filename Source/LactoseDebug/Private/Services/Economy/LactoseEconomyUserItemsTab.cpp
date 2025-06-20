@@ -142,7 +142,7 @@ void ULactoseEconomyUserItemsTab::Render()
 				}
 				else
 				{
-					if (Response->Items.IsEmpty())
+					if (Response->UserItems.IsEmpty())
 					{
 						ImGui::Text("User has no items");
 					}
@@ -152,7 +152,7 @@ void ULactoseEconomyUserItemsTab::Render()
 
 						ImGui::Spacing();
 
-						for (const FLactoseEconomyUserItem& CurrentUserItem : Response->Items)
+						for (const FLactoseEconomyUserItem& CurrentUserItem : Response->UserItems)
 						{
 							FString ItemLabel = CurrentUserItem.ItemId;
 							if (Sp<const FLactoseEconomyItem> FoundItem = EconomySubsystem->GetItem(CurrentUserItem.ItemId))
