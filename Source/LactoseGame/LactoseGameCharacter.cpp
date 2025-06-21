@@ -87,10 +87,10 @@ void ALactoseGameCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	UpdateClosestInteractions();
-
 	if (GetCurrentItemState() == ELactoseCharacterItemState::PlotTool || GetCurrentItemState() == ELactoseCharacterItemState::TreeTool)
 	{
+		ResetAllInteractions();
+
 		if (GetCurrentItemState() == ELactoseCharacterItemState::TreeTool)
 		{
 			auto* PC = Cast<ALactoseGamePlayerController>(GetController());
@@ -133,6 +133,10 @@ void ALactoseGameCharacter::Tick(float DeltaSeconds)
 				0,
 				1);
 		}
+	}
+	else
+	{
+		UpdateClosestInteractions();
 	}
 }
 
