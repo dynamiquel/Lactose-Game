@@ -30,7 +30,6 @@ public:
 
 protected:
 	void BeginPlay() override;
-	void Init(const Sr<const FLactoseSimulationCrop>& InCrop, const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance) override;
 	void OnLoaded(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance) override;
 
 	float GetCropGrowthProgress() const;
