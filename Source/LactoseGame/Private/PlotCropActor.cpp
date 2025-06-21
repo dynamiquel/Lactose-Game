@@ -28,15 +28,13 @@ void APlotCropActor::OnConstruction(const FTransform& Transform)
 	SpawnPlantMeshes();
 }
 
-void APlotCropActor::Init(const Sr<const FLactoseSimulationCrop>& InCrop,
-	const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance)
+void APlotCropActor::BeginPlay()
 {
-	Super::Init(InCrop, InCropInstance);
+	Super::BeginPlay();
 
 	if (bUsePlantGrowthScale)
 		SetPlantScaleBasedOnGrowth();
 }
-
 
 void APlotCropActor::OnLoaded(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance)
 {
@@ -75,6 +73,7 @@ void APlotCropActor::SpawnPlantMeshes()
 				GeneratedPlantMesh->DestroyComponent();
 	
 		GeneratedPlantMeshes.Reset();
+		InitialInstanceTransforms.SetNum(PlantMeshDefinitions.Num());
 	}
 	
 	if (PlantMeshDefinitions.IsEmpty())
@@ -131,6 +130,7 @@ void APlotCropActor::SpawnPlantMeshes()
 			const FTransform PlantRelativeTransform = PlantMeshDefinition.RelativeTransform * PlantPaddingTransform;
 			
 			PlantInstancedMeshComp->AddInstance(PlantRelativeTransform);
+			InitialInstanceTransforms[RandomPlantMeshDefinitionIdx].Add(PlantRelativeTransform);
 		}
 	}
 }
@@ -141,8 +141,37 @@ void APlotCropActor::SetPlantScaleBasedOnGrowth()
 	{
 		return;
 	}
-	
-	PlantsComponent->SetRelativeScale3D(FVector(GetCropGrowthProgress()));
+
+	const float CurrentGrowthScale = GetCropGrowthProgress();
+
+	for (int PlantInstancedMeshIdx = 0; PlantInstancedMeshIdx < GeneratedPlantMeshes.Num(); PlantInstancedMeshIdx++)
+    {
+		UInstancedStaticMeshComponent* PlantInstancedMeshComp = GeneratedPlantMeshes[PlantInstancedMeshIdx];
+		TArray<FTransform>& StoredInitialTransforms = InitialInstanceTransforms[PlantInstancedMeshIdx];
+		const FTransform& PlantDefinitionTransform = PlantMeshDefinitions[PlantInstancedMeshIdx].RelativeTransform;
+
+        if (!IsValid(PlantInstancedMeshComp) || StoredInitialTransforms.IsEmpty())
+            continue;
+
+        TArray<FTransform> UpdatedTransformsBatch;
+        UpdatedTransformsBatch.Reserve(StoredInitialTransforms.Num()); 
+
+        for (const FTransform& InitialTransform : StoredInitialTransforms)
+        {
+            FTransform CurrentInstanceTransform = InitialTransform;
+            CurrentInstanceTransform.SetScale3D(PlantDefinitionTransform.GetScale3D() * CurrentGrowthScale);
+            UpdatedTransformsBatch.Emplace(CurrentInstanceTransform);
+        }
+		
+        PlantInstancedMeshComp->BatchUpdateInstancesTransforms(
+            0,
+            UpdatedTransformsBatch,
+            false,
+            true,
+            false 
+        );
+    }
+
 }
 
 void APlotCropActor::SetShadowBasedOnGrowth()

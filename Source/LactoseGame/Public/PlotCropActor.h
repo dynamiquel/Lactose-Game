@@ -29,6 +29,7 @@ public:
 	void OnConstruction(const FTransform& Transform) override;
 
 protected:
+	void BeginPlay() override;
 	void Init(const Sr<const FLactoseSimulationCrop>& InCrop, const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance) override;
 	void OnLoaded(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance) override;
 
@@ -65,4 +66,6 @@ public:
 	
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UInstancedStaticMeshComponent>> GeneratedPlantMeshes;
+
+	TArray<TArray<FTransform>> InitialInstanceTransforms;
 };
