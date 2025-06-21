@@ -33,7 +33,9 @@ public class LactoseGame : ModuleRules
 			"JsonUtilities",
 			"Landscape",
 			"UMG", 
-			"SimpLibrary"
+			"SimpLibrary",
+			"PlatformCrypto",
+			"PlatformCryptoOpenSSL"
 		});
 	}
 }
