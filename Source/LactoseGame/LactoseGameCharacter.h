@@ -121,7 +121,7 @@ protected:
 
 	void SetHoldableItemState(ELactoseCharacterItemState NewState);
 
-	TOptional<FHitResult> PerformPlotToolTrace() const;
+	TOptional<TTuple<FHitResult, bool>> PerformPlotToolTrace() const;
 
 	UFUNCTION()
 	void OnCropCullColliderOverlap(

@@ -3,6 +3,7 @@
 #include "HAL/IConsoleManager.h"
 #include "CropActor.h"
 #include "PlotCropActor.h"
+#include "Engine/OverlapResult.h"
 #include "LactoseGame/LactoseGame.h"
 #include "LactoseGame/LactosePathUtils.h"
 #include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
@@ -18,6 +19,38 @@ ULactoseCropWorldSubsystem::ULactoseCropWorldSubsystem()
 {
 	static ConstructorHelpers::FClassFinder<APlotCropActor> DefaultEmptyPlotCropActor(TEXT("/Game/Crops/BP_Crop_EmptyPlot"));
 	EmptyPlotCropActor = DefaultEmptyPlotCropActor.Class;
+}
+
+
+bool ULactoseCropWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
+{
+	return Super::ShouldCreateSubsystem(Outer) && CVarEnableCropWorldSubsystem.GetValueOnGameThread() == true;
+}
+
+void ULactoseCropWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
+{
+	Super::OnWorldBeginPlay(InWorld);
+
+	Lactose::Simulation::Events::OnCurrentUserCropsLoaded.AddUObject(this, &ULactoseCropWorldSubsystem::OnUserCropsLoaded);
+
+	auto& Simulation = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(self);
+	
+	if (Simulation.GetAllCropsStatus() == ELactoseSimulationCropsStatus::Loaded)
+	{
+		bWaitingForCrops = false;
+		LoadCropActorClasses();
+	}
+	else
+	{
+		// Be notified once all crops are loaded.
+		Lactose::Simulation::Events::OnAllCropsLoaded.AddUObject(this, &ThisClass::OnAllCropsLoaded);
+	}
+
+	if (Simulation.GetCurrentUserCropsStatus() == ELactoseSimulationUserCropsStatus::Loaded)
+		bWaitingForUserCrops = false;
+
+	if (CanCreateCrops())
+		CreateRequiredUserCrops();
 }
 
 bool ULactoseCropWorldSubsystem::CanCreateCrops() const
@@ -75,35 +108,119 @@ ACropActor* ULactoseCropWorldSubsystem::ResetCropActor(ACropActor& CropActor)
 	return NewCropActor;
 }
 
-bool ULactoseCropWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
+bool ULactoseCropWorldSubsystem::IsLocationObstructed(const FVector& ProposedLocation, const AActor* ActorToIgnore) const
 {
-	return Super::ShouldCreateSubsystem(Outer) && CVarEnableCropWorldSubsystem.GetValueOnGameThread() == true;
+	// Reduce the extents in a tiny bit to allow 'perfect fits' to pass.
+    FCollisionShape BoxShape = FCollisionShape::MakeBox(FVector(Crops::PlotHalfExtentCm - .1, Crops::PlotHalfExtentCm - .1, 10.0)); 
+	
+    TArray<FOverlapResult> OverlapResults;
+    FCollisionQueryParams QueryParams;
+    QueryParams.bTraceComplex = false;
+	
+	if (ActorToIgnore)
+		QueryParams.AddIgnoredActor(ActorToIgnore);
+	
+    bool bOverlap = GetWorld()->OverlapMultiByChannel(
+        OverlapResults,
+        ProposedLocation,
+        FQuat::Identity,
+        Crops::CropTraceChannel,
+        BoxShape
+    );
+
+    if (bOverlap)
+    {
+        for (const FOverlapResult& Overlap : OverlapResults)
+        {
+            if (auto* Actor = Cast<APlotCropActor>(Overlap.GetActor()))
+            {
+            	UE_LOG(LogLactose, Log, TEXT("Location '%s' is obstructed by Actor '%s'"),
+            		*ProposedLocation.ToCompactString(), *Actor->GetActorNameOrLabel());
+	            return true;
+            }
+        }
+    }
+	
+    return false;
 }
 
-void ULactoseCropWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
+FVector ULactoseCropWorldSubsystem::GetMagnetizedPlotLocation(const FVector& ProposedLocation) const
 {
-	Super::OnWorldBeginPlay(InWorld);
-
-	Lactose::Simulation::Events::OnCurrentUserCropsLoaded.AddUObject(this, &ULactoseCropWorldSubsystem::OnUserCropsLoaded);
-
-	auto& Simulation = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(self);
+	if (MagnetType == ECropMagnetType::None)
+		return ProposedLocation;
 	
-	if (Simulation.GetAllCropsStatus() == ELactoseSimulationCropsStatus::Loaded)
-	{
-		bWaitingForCrops = false;
-		LoadCropActorClasses();
-	}
-	else
-	{
-		// Be notified once all crops are loaded.
-		Lactose::Simulation::Events::OnAllCropsLoaded.AddUObject(this, &ThisClass::OnAllCropsLoaded);
-	}
+    FVector BestSnapLocation = ProposedLocation;
+    float ClosestSnapDistanceSq = FMath::Square(Crops::MagnetiseSearchRadiusCm + Crops::MagnetiseToleranceCm + 1.0f); 
 
-	if (Simulation.GetCurrentUserCropsStatus() == ELactoseSimulationUserCropsStatus::Loaded)
-		bWaitingForUserCrops = false;
+    TArray<FOverlapResult> NearbyOverlapResults;
+    FCollisionShape SearchShape = FCollisionShape::MakeSphere(Crops::MagnetiseSearchRadiusCm); 
+    FCollisionQueryParams SearchQueryParams;
+    SearchQueryParams.bTraceComplex = false;
+	
+    GetWorld()->OverlapMultiByChannel(
+        NearbyOverlapResults,
+        ProposedLocation,
+        FQuat::Identity,
+        Crops::CropTraceChannel,
+        SearchShape,
+        SearchQueryParams
+    );
 
-	if (CanCreateCrops())
-		CreateRequiredUserCrops();
+    TArray<ACropActor*> NearbyCrops;
+    NearbyCrops.Reserve(NearbyOverlapResults.Num());
+    for (const FOverlapResult& Overlap : NearbyOverlapResults)
+        if (ACropActor* PlotActor = Cast<ACropActor>(Overlap.GetActor()))
+            NearbyCrops.Add(PlotActor);
+
+    // Define potential snap offsets from an EXISTING plot's center to get to an ADJACENT plot's center
+    // These cover cardinal and diagonal neighbors around an existing 2x2m plot.
+    const std::array SnapOffsets = {
+        FVector(Crops::PlotSizeCm,  0., 0.),  // Right
+        FVector(-Crops::PlotSizeCm,  0., 0.),  // Left
+        FVector(0.,  Crops::PlotSizeCm, 0.),  // Forward
+        FVector(0., -Crops::PlotSizeCm, 0.),  // Back
+        FVector(Crops::PlotSizeCm,  Crops::PlotSizeCm, 0.),   // Right-Forward (Diagonal)
+        FVector(Crops::PlotSizeCm, -Crops::PlotSizeCm, 0.),   // Right-Back (Diagonal)
+        FVector(-Crops::PlotSizeCm,  Crops::PlotSizeCm, 0.),   // Left-Forward (Diagonal)
+        FVector(-Crops::PlotSizeCm, -Crops::PlotSizeCm, 0.)    // Left-Back (Diagonal)
+    };
+
+    // Iterate only through the efficiently found nearby plots (much fewer than all plots)
+    for (ACropActor* NearbyCrop : NearbyCrops) 
+    {
+        for (const FVector& Offset : SnapOffsets)
+        {
+            FVector PotentialSnapLocation = NearbyCrop->GetActorLocation() + Offset;
+        	
+            // Check if this potential snap location is "close enough" to where the player is trying to plant
+            if (FVector::DistSquaredXY(ProposedLocation, PotentialSnapLocation) < FMath::Square(Crops::MagnetiseToleranceCm))
+            {
+                // Check if this PotentialSnapLocation is NOT OBSTRUCTED by any other plot.
+                // We pass the 'ExistingPlot' as ActorToIgnore so that IsLocationObstructed doesn't
+                // count the plot we are trying to snap *adjacent* to as an obstruction.
+                if (!IsLocationObstructed(PotentialSnapLocation, NearbyCrop))
+                {
+                    // If it's a valid, non-obstructed snap point, see if it's the closest one found so far
+                    float CurrentSnapDistanceSq = FVector::DistSquaredXY(ProposedLocation, PotentialSnapLocation);
+                    if (CurrentSnapDistanceSq < ClosestSnapDistanceSq)
+                    {
+                        ClosestSnapDistanceSq = CurrentSnapDistanceSq;
+                        BestSnapLocation = PotentialSnapLocation;
+                    }
+                }
+            }
+        }
+    }
+	
+    // Fallback: If no adjacent plot was found to magnetize to, snap the initial proposed location
+    // to the nearest 2m grid point. This ensures all plots are aligned on a consistent grid.
+    if (MagnetType == ECropMagnetType::Grid && BestSnapLocation == ProposedLocation)
+    {
+        BestSnapLocation.X = FMath::RoundToFloat(BestSnapLocation.X / Crops::PlotSizeCm) * Crops::PlotSizeCm;
+        BestSnapLocation.Y = FMath::RoundToFloat(BestSnapLocation.Y / Crops::PlotSizeCm) * Crops::PlotSizeCm;
+    }
+    
+    return BestSnapLocation;
 }
 
 void ULactoseCropWorldSubsystem::OnAllCropsLoaded(const ULactoseSimulationServiceSubsystem& Sender)

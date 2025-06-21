@@ -151,7 +151,12 @@ void ULactoseMqttSubsystem::OnMessageReceived(const FMqttifyMessage& Message)
 		
 		FMqttifyTopicFilter TopicFilter(RoutedSubscription.Key);
 		if (!TopicFilter.MatchesWildcard(Message.Topic))
+		{
+			UE_LOG(LogLactoseMqtt, VeryVerbose, TEXT("Subscription '%s' does not match Topic '%s'"), *RoutedSubscription.Key, *Message.Topic);
 			continue;
+		}
+
+		UE_LOG(LogLactoseMqtt, Verbose, TEXT("Found Subscription '%s' for Topic '%s'"), *RoutedSubscription.Key, *Message.Topic);
 		
 		for (const FMqttDelegate& Delegate : RoutedSubscription.Value)
 			Delegate.ExecuteIfBound(Message);

@@ -3,6 +3,7 @@
 
 #include "PlotCropActor.h"
 
+#include "LactoseCropWorldSubsystem.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
 #include "Services/Simulation/LactoseSimulationUserCropsRequests.h"
@@ -15,6 +16,7 @@ APlotCropActor::APlotCropActor()
 	SoilMeshComponent->SetCollisionObjectType(ECC_WorldStatic);
 	SoilMeshComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
 	SoilMeshComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	SoilMeshComponent->SetCollisionResponseToChannel(Crops::CropTraceChannel, ECR_Block);
 	SoilMeshComponent->SetCastShadow(false);
 	
 	PlantsComponent = CreateDefaultSubobject<USceneComponent>("Plants");

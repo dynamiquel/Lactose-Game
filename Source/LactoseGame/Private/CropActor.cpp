@@ -21,8 +21,8 @@ ACropActor::ACropActor()
 	CullCollider = CreateDefaultSubobject<UBoxComponent>("CullCollider");
 	CullCollider->SetupAttachment(GetRootComponent());
 	CullCollider->SetCollisionResponseToAllChannels(ECR_Ignore);
-	CullCollider->SetCollisionResponseToChannel(ECC_Vehicle, ECR_Overlap);
-	CullCollider->SetCollisionObjectType(ECC_Vehicle);
+	CullCollider->SetCollisionResponseToChannel(Crops::CropCullChannel, ECR_Overlap);
+	CullCollider->SetCollisionObjectType(Crops::CropCullChannel);
 
 	if (auto* CullColliderBox = Cast<UBoxComponent>(CullCollider))
 		CullColliderBox->InitBoxExtent(FVector(75., 75., 75.));
@@ -31,7 +31,8 @@ ACropActor::ACropActor()
 	InteractionCollision->SetupAttachment(GetRootComponent());
 	InteractionCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
 	InteractionCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	
+	InteractionCollision->SetCollisionResponseToChannel(Crops::CropTraceChannel, ECR_Overlap);
+
 	Interaction = CreateDefaultSubobject<ULactoseInteractionComponent>(TEXT("Interaction"));
 	Interaction->OnInteractionComplete.AddUObject(this, &ThisClass::OnInteracted);
 	Interaction->InteractionTextFunc = [WeakThis = MakeWeakObjectPtr(this)]

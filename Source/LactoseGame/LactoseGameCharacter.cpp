@@ -9,13 +9,14 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
+#include "LactoseCropWorldSubsystem.h"
 #include "LactoseGame.h"
 #include "LactoseGamePlayerController.h"
 #include "LactoseInteractionComponent.h"
 #include "LactoseMenuTags.h"
 #include "Landscape.h"
 #include "Engine/LocalPlayer.h"
-#include "LandscapeProxy.h"
+#include "LandscapeStreamingProxy.h"
 #include "Components/SphereComponent.h"
 #include "Services/Economy/LactoseEconomyServiceSubsystem.h"
 #include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
@@ -66,8 +67,8 @@ ALactoseGameCharacter::ALactoseGameCharacter()
 	CropCullCollider->SetSphereRadius(450.f, /* bUpdateOverlaps */ false);
 	CropCullCollider->SetCollisionResponseToAllChannels(ECR_Ignore);
 	// Using Vehicle channel coz cba messing around making my own.
-	CropCullCollider->SetCollisionResponseToChannel(ECC_Vehicle, ECR_Overlap);
-	CropCullCollider->SetCollisionObjectType(ECC_Vehicle);
+	CropCullCollider->SetCollisionResponseToChannel(Crops::CropCullChannel, ECR_Overlap);
+	CropCullCollider->SetCollisionObjectType(Crops::CropCullChannel);
 }
 
 void ALactoseGameCharacter::BeginPlay()
@@ -102,15 +103,36 @@ void ALactoseGameCharacter::Tick(float DeltaSeconds)
 				return;
 		}
 		
-		TOptional<FHitResult> HitResult = PerformPlotToolTrace();
+		TOptional<TTuple<FHitResult, bool>> HitResult = PerformPlotToolTrace();
 		if (!HitResult)
 			return;
 
-		DrawDebugPoint(
-			GetWorld(),
-			HitResult->Location,
-			20.f,
-			FColor::Blue);
+		constexpr double HalfHeight = 5.f;
+
+		if (HitResult->Value)
+		{
+			DrawDebugBox(
+				GetWorld(),
+				HitResult->Key.Location + FVector(0, 0, HalfHeight - .5f),
+				FVector(Crops::PlotHalfExtentCm, Crops::PlotHalfExtentCm, HalfHeight),
+				FColor::Red,
+				false,
+				-1,
+				0,
+				1);
+		}
+		else
+		{
+			DrawDebugBox(
+				GetWorld(),
+				HitResult->Key.Location + FVector(0, 0, HalfHeight - .5f),
+				FVector(Crops::PlotHalfExtentCm, Crops::PlotHalfExtentCm, HalfHeight),
+				FColor::Blue,
+				false,
+				-1,
+				0,
+				1);
+		}
 	}
 }
 
@@ -338,24 +360,14 @@ void ALactoseGameCharacter::RequestChangeCrop()
 
 void ALactoseGameCharacter::TryUsePlotTool()
 {
-	TOptional<FHitResult> HitResult = PerformPlotToolTrace();
-	
-	if (!HitResult)
+	TOptional<TTuple<FHitResult, bool>> HitResult = PerformPlotToolTrace();
+	if (!HitResult || HitResult->Value)
 		return;
-
-	AActor* HitActor = HitResult->GetActor();
-
-	// If anything but the ground was hit, don't plant.
-	if (!(HitActor && (HitActor->IsA(ALandscapeProxy::StaticClass()) || HitActor->IsA(ALandscape::StaticClass()))))
-		return;
-
-	// TODO: Perform box trace to ensure the plot isn't blocking anything.
-	// TODO: If near an existing crop, lock on to it.
 
 	auto& SimulationSubsystem = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(self);
 
-	const FRotator SpawnRotation = FRotationMatrix::MakeFromZ(HitResult->Normal).Rotator();
-	SimulationSubsystem.CreateEmptyPlot(HitResult->Location, SpawnRotation);
+	const FRotator SpawnRotation = FRotationMatrix::MakeFromZ(HitResult->Key.Normal).Rotator();
+	SimulationSubsystem.CreateEmptyPlot(HitResult->Key.Location, SpawnRotation);
 }
 
 void ALactoseGameCharacter::TryUseTreeTool()
@@ -375,22 +387,12 @@ void ALactoseGameCharacter::TryUseTreeTool()
 		return;
 	}
 	
-	TOptional<FHitResult> HitResult = PerformPlotToolTrace();
-	
-	if (!HitResult)
+	TOptional<TTuple<FHitResult, bool>> HitResult = PerformPlotToolTrace();
+	if (!HitResult || HitResult->Value)
 		return;
 
-	AActor* HitActor = HitResult->GetActor();
-
-	// If anything but the ground was hit, don't plant.
-	if (!(HitActor && (HitActor->IsA(ALandscapeProxy::StaticClass()) || HitActor->IsA(ALandscape::StaticClass()))))
-		return;
-
-	// TODO: Perform box trace to ensure the plot isn't blocking anything.
-	// TODO: If near an existing crop, lock on to it.
-
-	const FRotator SpawnRotation = FRotationMatrix::MakeFromZ(HitResult->Normal).Rotator();
-	Simulation.CreateCrop(*TreeCropToPlant, HitResult->Location, SpawnRotation);
+	const FRotator SpawnRotation = FRotationMatrix::MakeFromZ(HitResult->Key.Normal).Rotator();
+	Simulation.CreateCrop(*TreeCropToPlant, HitResult->Key.Location, SpawnRotation);
 }
 
 void ALactoseGameCharacter::SetHoldableItemState(ELactoseCharacterItemState NewState)
@@ -409,7 +411,7 @@ void ALactoseGameCharacter::SetHoldableItemState(ELactoseCharacterItemState NewS
 	ItemStateChanged.Broadcast(this, CurrentItemState, OldState);
 }
 
-TOptional<FHitResult> ALactoseGameCharacter::PerformPlotToolTrace() const
+TOptional<TTuple<FHitResult, bool>> ALactoseGameCharacter::PerformPlotToolTrace() const
 {
 	// Fire raycast from player screen centre to determine if can make a new
 	// plot at location.
@@ -436,7 +438,25 @@ TOptional<FHitResult> ALactoseGameCharacter::PerformPlotToolTrace() const
 		Params
 	);
 
-	return bHit ? HitResult : TOptional<FHitResult>();
+	if (!bHit)
+		return {};
+
+	AActor* HitActor = HitResult.GetActor();
+	bool bObstructed = !HitActor || !(HitActor->IsA(ALandscape::StaticClass()) || HitActor->IsA(ALandscapeStreamingProxy::StaticClass()));
+	if (bObstructed)
+	{
+		UE_LOG(LogLactose, Log, TEXT("Obstructed by actor '%s' of type '%s'"), *HitActor->GetActorNameOrLabel(), *HitActor->GetClass()->GetName())
+		return TTuple<FHitResult, bool>(HitResult, true);
+	}
+
+	auto& CropSubsystem = Subsystems::GetRef<ULactoseCropWorldSubsystem>(self);
+	HitResult.Location = CropSubsystem.GetMagnetizedPlotLocation(HitResult.Location);
+	
+	bObstructed = CropSubsystem.IsLocationObstructed(HitResult.Location);
+	if (bObstructed)
+		return TTuple<FHitResult, bool>(HitResult, true);
+
+	return TTuple<FHitResult, bool>(HitResult, false);
 }
 
 void ALactoseGameCharacter::OnCropCullColliderOverlap(

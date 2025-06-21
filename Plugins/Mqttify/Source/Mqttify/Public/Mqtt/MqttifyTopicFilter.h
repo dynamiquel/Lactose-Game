@@ -48,76 +48,102 @@ struct MQTTIFY_API FMqttifyTopicFilter final
 	*/
 	bool MatchesWildcard(const FString& InTopic) const
 	{
-		int FilterPos = 0;
-		int TopicPos  = 0;
+	    if (Filter == TEXT("#"))
+	    {
+	        return true;
+	    }
 
-		while (FilterPos < Filter.Len() && TopicPos < InTopic.Len())
-		{
-			switch (Filter[FilterPos])
-			{
-				case '+':
-					// Skip until the next level in the topic.
-					while (InTopic[TopicPos] != '/' && TopicPos < InTopic.Len())
-					{
-						++TopicPos;
-					}
-				// Advance FilterPos past the '+' character.
-					++FilterPos;
-					break;
+	    const int32 FilterLen = Filter.Len();
+	    const int32 TopicLen = InTopic.Len();
+	    int32 FilterPos = 0;
+	    int32 TopicPos = 0;
 
-				case '#':
-					// '#' must be the last character in the filter string, so if it matches, we have a successful topic-filter match.
-					return true;
+	    // Handle leading '/' for absolute paths
+	    const bool bFilterStartsWithSlash = FilterLen > 0 && Filter[0] == TEXT('/');
+	    const bool bTopicStartsWithSlash = TopicLen > 0 && InTopic[0] == TEXT('/');
+	    if (bFilterStartsWithSlash != bTopicStartsWithSlash)
+	        return false;
 
-				default:
-					// Normal character, check character by character
-					while (Filter[FilterPos] == InTopic[TopicPos])
-					{
-						++FilterPos;
-						++TopicPos;
-						if (FilterPos == Filter.Len() && TopicPos == InTopic.Len())
-						{
-							// Both strings ended at the same time, hence they match.
-							return true;
-						}
-						if (TopicPos == InTopic.Len() || FilterPos == Filter.Len())
-						{
-							// One string ended before the other, hence they do not match.
-							return false;
-						}
-					}
-				// If the unmatched character is '/', move to the next level. Otherwise, return false.
-					if (Filter[FilterPos] == '/' && InTopic[TopicPos] == '/')
-					{
-						++FilterPos;
-						++TopicPos;
-					}
-					else
-					{
-						return false;
-					}
-					break;
-			}
-		}
+	    // If both start with '/', effectively skip them as they represent an initial empty level.
+	    if (bFilterStartsWithSlash)
+	    {
+	        FilterPos = 1;
+	        TopicPos = 1;
 
-		// If either the filter or the topic have remaining characters, but not both, they do not match
-		if ((FilterPos < Filter.Len() && Filter[FilterPos] != '#') || TopicPos < InTopic.Len())
-		{
-			return false;
-		}
+	        // Special case: Filter is exactly "/" and Topic is exactly "/"
+	        if (FilterLen == 1 && TopicLen == 1)
+        		return true;
+    		
+	        // Special case: Filter/Topic is "/" but Topic/Filter is longer (e.g., "/a") -> No match
+	        if (FilterLen == 1 || TopicLen == 1)
+        		return false;
+	    }
 
-		// If both strings have ended simultaneously, or remaining filter characters are all '/', they match.
-		while (FilterPos < Filter.Len())
-		{
-			if (Filter[FilterPos] != '/')
-			{
-				// Any character remaining in filter other than '/' will break the match.
-				return false;
-			}
-			++FilterPos;
-		}
+	    while (FilterPos < FilterLen && TopicPos < TopicLen)
+	    {
+	        const TCHAR FilterChar = Filter[FilterPos];
+	        const TCHAR TopicChar = InTopic[TopicPos];
 
-		return true;
+	        if (FilterChar == TEXT('+'))
+	        {
+	            // '+' matches exactly one level.
+	            // Consume characters in the topic until the next '/' or end of topic.
+	            while (TopicPos < TopicLen && InTopic[TopicPos] != TEXT('/'))
+	                ++TopicPos;
+        		
+	            // Advance filter position past the '+'.
+	            ++FilterPos;
+	        }
+	        else if (FilterChar == TEXT('#'))
+	        {
+	            // '#' matches zero or more levels.
+	            // It must be the last character in the filter.
+	            if (FilterPos != FilterLen - 1)
+	            {
+	                UE_LOG(LogTemp, Warning, TEXT("MQTT Topic Filter Error: Multi-level wildcard '#' is not the last character in filter '%s'. Invalid filter syntax."), *Filter);
+	                return false;
+	            }
+        		
+	            // If '#' is the last character, it matches all remaining topic levels (including zero).
+	            return true;
+	        }
+	        else
+	        {
+	            if (FilterChar != TopicChar)
+	                return false;
+        		
+	            ++FilterPos;
+	            ++TopicPos;
+	        }
+	    }
+		
+	    if (FilterPos == FilterLen && TopicPos == TopicLen)
+	        return true;
+
+	    // Only the filter has remaining characters.
+	    // This is only a match if the remaining filter characters are all '/'s.
+	    // This handles cases like filter "a/b/" matching topic "a/b" (where "a/b/" implies an empty last level).
+	    if (FilterPos < FilterLen)
+	    {
+	        while (FilterPos < FilterLen)
+	        {
+	            if (Filter[FilterPos] != TEXT('/'))
+	                return false;
+        		
+	            ++FilterPos;
+	        }
+    		
+	        return true;
+	    }
+
+	    // Only the topic has remaining characters.
+	    // This means the filter was not specific enough to cover all topic levels.
+	    // (e.g., filter "a/b", topic "a/b/c").
+	    if (TopicPos < TopicLen)
+	        return false;
+
+	    // Fallback: This point should ideally not be reached if all conditions are covered.
+	    return false;
 	}
 
 private:

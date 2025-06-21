@@ -358,6 +358,7 @@ void ULactoseEconomyServiceSubsystem::OnUserTransaction(const FMqttifyMessage& M
 	if (GetCurrentUserItemsStatus() == ELactoseEconomyUserItemsStatus::Retrieving)
 	{
 		// Already doing a full load, no point.
+		UE_LOG(LogLactoseEconomyService, Log, TEXT("Received User Transaction Event but already Retrieving. Skipping..."));
 		return;
 	}
 	
