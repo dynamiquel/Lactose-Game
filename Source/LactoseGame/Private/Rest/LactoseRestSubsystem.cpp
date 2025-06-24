@@ -42,7 +42,7 @@ TArray<uint8> EncryptString(const FString& InString)
 	return EncryptedBytes;
 }
 
-FString DecryptString(const TArray<uint8>& InBytes)
+TOptional<FString> DecryptString(const TArray<uint8>& InBytes)
 {
 	EPlatformCryptoResult DecryptResult;
 	TArray<uint8> DecryptedBytes = EncryptionContext->Decrypt_AES_256_ECB(InBytes, GetEncryptionKey(), OUT DecryptResult);

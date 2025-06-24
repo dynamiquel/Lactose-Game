@@ -12,15 +12,15 @@ void ULactoseIdentityServiceSubsystem::Initialize(FSubsystemCollectionBase& Coll
 	Super::Initialize(Collection);
 
 	if (bAutoLogin)
-		LoginUsingRefreshToken([]{});
-
-	/*Lactose::Identity::Events::OnUserLoginFailed.AddLambda([WeakThis = MakeWeakObjectPtr(this)](const ULactoseIdentityServiceSubsystem& Sender)
 	{
-		if (auto* RestSubsystem = Subsystems::Get<ULactoseRestSubsystem>(WeakThis.Get()))
+		LoginUsingRefreshToken([WeakThis = MakeWeakObjectPtr(this)]
 		{
-			RestSubsystem->RemoveAuthorization();
-		}
-	});*/
+			UE_LOG(LogLactoseIdentityService, Error, TEXT("Failed to auto-login using Refresh Token. Returning to Main Menu..."));
+			
+			if (auto* This = WeakThis.Get())
+				This->GetGameInstance()->ReturnToMainMenu();
+		});
+	}
 }
 
 void ULactoseIdentityServiceSubsystem::SignupUsingBasicAuth(
@@ -141,15 +141,23 @@ void ULactoseIdentityServiceSubsystem::LoginUsingRefreshToken(TFunction<void()>&
 	}
 
 	auto& RestSubsystem = Subsystems::GetRef<ULactoseRestSubsystem>(self);
+
+	const TOptional<FString>& RefreshToken = RestSubsystem.GetRefreshToken();
+	if (!RefreshToken.IsSet())
+	{
+		Log::Error(LogLactoseIdentityService, TEXT("Cannot log in as no Refresh Token was found"));
+		Lactose::Identity::Events::OnUserLoginFailed.Broadcast(self);
+		Invoke(LoginFailed);
+		return;
+	}
+
 	auto RestRequest = FRefreshTokenRequest::Create(RestSubsystem);
 	RestRequest->SetVerb(Lactose::Rest::Verbs::POST);
 	RestRequest->SetUrl(GetServiceBaseUrl() / TEXT("auth/refresh"));
 
-	const TOptional<FString>& RefreshToken = RestSubsystem.GetRefreshToken();
-
 	auto Request = CreateSr(FLactoseIdentityRefreshTokenRequest
 	{
-		.RefreshToken = RefreshToken.IsSet() ? *RefreshToken : FString()
+		.RefreshToken = *RefreshToken
 	});
 	
 	LoginUsingRefreshFuture = RestRequest->SetContentAsJsonAndSendAsync(Request);
@@ -167,7 +175,7 @@ void ULactoseIdentityServiceSubsystem::LoginUsingRefreshToken(TFunction<void()>&
 		if (!Context.IsValid() || !Context->ResponseContent.IsValid())
 		{
 			Lactose::Identity::Events::OnUserLoginFailed.Broadcast(*ThisPinned);
-			LoginFailed();
+			Invoke(LoginFailed);
 			return;
 		}
 

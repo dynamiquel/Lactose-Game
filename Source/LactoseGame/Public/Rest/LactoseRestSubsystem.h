@@ -55,3 +55,11 @@ private:
 	TOptional<FString> RefreshToken;
 	TOptional<FString> AccessToken;
 };
+
+namespace Lactose::Rest
+{
+	DECLARE_MULTICAST_DELEGATE_OneParam(FRestRequestDelegate,
+		const Sr<Lactose::Rest::IRequest>& Request);
+
+	inline FRestRequestDelegate OnRequestFailed;
+}

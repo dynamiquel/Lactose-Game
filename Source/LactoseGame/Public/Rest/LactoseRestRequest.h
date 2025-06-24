@@ -123,6 +123,8 @@ namespace Lactose::Rest
 
 				GetOnResponseReceived().Broadcast(StaticCastSharedRef<IRequest::FResponseContext>(Context));
 				GetOnResponseReceived2().Broadcast(Context);
+
+				Lactose::Rest::OnRequestFailed.Broadcast(SharedThis(this));
 			}
 			else
 			{

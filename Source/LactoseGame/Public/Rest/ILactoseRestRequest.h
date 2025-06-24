@@ -2,6 +2,7 @@
 
 #include "Interfaces/IHttpRequest.h"
 #include "Simp.h"
+#include "Interfaces/IHttpResponse.h"
 
 class ULactoseRestSubsystem;
 
@@ -41,6 +42,7 @@ namespace Lactose::Rest
 		bool HasBeenSent() const { return TimeRequestSent > 0; }
 		FLactoseRestResponseReceivedDelegate& GetOnResponseReceived() { return ResponseReceived; }
 		FString GetContentString() const;
+		EHttpResponseCodes::Type GetResponseCode() const;
 		
 		IRequest& SetVerb(const FString& Verb);
 		IRequest& SetUrl(const FString& Url);

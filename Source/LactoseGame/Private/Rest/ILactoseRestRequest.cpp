@@ -42,6 +42,12 @@ FString Lactose::Rest::IRequest::GetContentString() const
 		GetInternal()->GetContent().Num()));
 }
 
+EHttpResponseCodes::Type Lactose::Rest::IRequest::GetResponseCode() const
+{
+	FHttpResponsePtr Response = GetInternal()->GetResponse();
+	return Response ? static_cast<EHttpResponseCodes::Type>(Response->GetResponseCode()) : EHttpResponseCodes::Unknown;
+}
+
 Lactose::Rest::IRequest& Lactose::Rest::IRequest::SetVerb(const FString& Verb)
 {
 	GetInternal()->SetVerb(Verb);
@@ -114,6 +120,8 @@ void Lactose::Rest::IRequest::OnResponseReceived(
 			*Response->GetURL(),
 			Response->GetResponseCode(),
 			Response->GetFailureReason());
+
+		Lactose::Rest::OnRequestFailed.Broadcast(SharedThis(this));
 	}
 	else
 	{
