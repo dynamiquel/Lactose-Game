@@ -23,13 +23,18 @@ FMqttifyCredentials FLactoseMqttifyCredentialsProvider::GetCredentials()
 	return FMqttifyCredentials(AccessToken.GetValue(), TEXT("69"));
 }
 
+ULactoseMqttSubsystem::ULactoseMqttSubsystem()
+{
+	MqttUrl = TEXT("wss://lactose.mookrata.ovh/mqtt");
+}
+
 void ULactoseMqttSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
 	IMqttifyModule& MqttifyModule = IMqttifyModule::Get();
 	
-	MqttClient = MqttifyModule.GetOrCreateClient(FString(TEXT("wss://lactose.mookrata.ovh/mqtt")));
+	MqttClient = MqttifyModule.GetOrCreateClient(MqttUrl);
 	if (!MqttClient)
 	{
 		UE_LOG(LogLactoseMqtt, Error, TEXT("Could not create MQTT client"));

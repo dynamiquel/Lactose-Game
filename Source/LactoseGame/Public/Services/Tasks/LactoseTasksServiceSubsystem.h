@@ -38,6 +38,8 @@ class LACTOSEGAME_API ULactoseTasksServiceSubsystem : public ULactoseServiceSubs
 {
 	GENERATED_BODY()
 
+	ULactoseTasksServiceSubsystem();
+	
 public:
 	void Initialize(FSubsystemCollectionBase& Collection) override;
 

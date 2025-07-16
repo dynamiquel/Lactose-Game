@@ -39,6 +39,9 @@ struct FLactoseServiceInfo
 	FString OperatingSystem;
 
 	UPROPERTY()
+	FString Hostname;
+
+	UPROPERTY()
 	FDateTime StartTime;
 
 	UPROPERTY()

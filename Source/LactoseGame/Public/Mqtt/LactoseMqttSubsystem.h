@@ -23,12 +23,14 @@ private:
 	TWeakObjectPtr<ULactoseMqttSubsystem> MqttSubsystem;
 };
 
-UCLASS()
+UCLASS(DefaultConfig, Config=Services)
 class ULactoseMqttSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
 public:
+	ULactoseMqttSubsystem();
+	
 	TSharedPtr<IMqttifyClient> GetMqttClient() const { return MqttClient; }
 	
 	void Initialize(FSubsystemCollectionBase& Collection) override;
@@ -48,6 +50,10 @@ public:
 	void UnrouteSubscription(const FRoutedSubscriptionHandle& Handle);
 	void UnrouteAllSubscriptions(const FString& Topic);
 
+protected:
+	UPROPERTY(EditDefaultsOnly, Config)
+	FString MqttUrl;
+	
 	TMap<FString, TArray<FMqttDelegate>> RoutedSubscriptions;
 	
 	TSharedPtr<IMqttifyClient> MqttClient;

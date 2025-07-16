@@ -7,13 +7,19 @@
 #include "Services/LactoseServicesLog.h"
 #include "Services/Identity/LactoseIdentityServiceSubsystem.h"
 
+ULactoseTasksServiceSubsystem::ULactoseTasksServiceSubsystem()
+{
+	SetServiceBaseUrl(TEXT("https://lactose.mookrata.ovh/tasks"));
+}
+
 void ULactoseTasksServiceSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	SetServiceBaseUrl(TEXT("https://lactose.mookrata.ovh/tasks"));
 
 	TasksClient = NewObject<ULactoseTasksTasksClient>(this);
+	TasksClient->BaseUrl = GetServiceBaseUrl();
 	UserTasksClient = NewObject<ULactoseTasksUserTasksClient>(this);
+	UserTasksClient->BaseUrl = GetServiceBaseUrl();
 
 	Lactose::Identity::Events::OnUserLoggedIn.AddUObject(this, &ThisClass::OnUserLoggedIn);
 	Lactose::Identity::Events::OnUserLoggedOut.AddUObject(this, &ThisClass::OnUserLoggedOut);

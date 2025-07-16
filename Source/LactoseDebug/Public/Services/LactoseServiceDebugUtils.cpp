@@ -87,6 +87,10 @@ bool Lactose::Debug::Services::FStatusSection::Render()
 			ImGui::TableNextColumn();
 			ImGui::Text("%s", STR_TO_ANSI(STR_TO_ANSI(ServiceStatus->OperatingSystem)));
 			ImGui::TableNextColumn();
+			ImGui::Text("Hostname");
+			ImGui::TableNextColumn();
+			ImGui::Text("%s", STR_TO_ANSI(STR_TO_ANSI(ServiceStatus->Hostname)));
+			ImGui::TableNextColumn();
 			ImGui::Text("Start Time");
 			ImGui::TableNextColumn();
 			ImGui::Text("%s", STR_TO_ANSI(ServiceStatus->StartTime.ToString()));
