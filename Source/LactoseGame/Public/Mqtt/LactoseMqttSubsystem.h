@@ -23,7 +23,7 @@ private:
 	TWeakObjectPtr<ULactoseMqttSubsystem> MqttSubsystem;
 };
 
-UCLASS(DefaultConfig, Config=Services)
+UCLASS(Config=Services)
 class ULactoseMqttSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()

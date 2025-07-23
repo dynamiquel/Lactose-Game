@@ -53,7 +53,7 @@ using FGetServiceStatusRequest = Lactose::Rest::TRequest<void, FLactoseServiceIn
 /**
  * 
  */
-UCLASS(Abstract, BlueprintType, Config=Services, DefaultConfig)
+UCLASS(Abstract, BlueprintType, Config=Services)
 class LACTOSEGAME_API ULactoseServiceSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
