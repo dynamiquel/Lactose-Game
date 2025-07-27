@@ -556,7 +556,7 @@ void ULactoseSimulationServiceSubsystem::OnCurrentUserCropsHarvested(Sr<FHarvest
 			else
 			{
 				HarvestedCropInstance->State = Lactose::Simulation::States::Growing;
-				HarvestedCropInstance->RemainingHarvestSeconds = FoundCrop->HarvestSeconds;
+				HarvestedCropInstance->RemainingHarvestSeconds = FoundCrop->HarvestSeconds / 2;
 			}
 
 			HarvestedCropInstance->OnLoaded.Broadcast(HarvestedCropInstance);
