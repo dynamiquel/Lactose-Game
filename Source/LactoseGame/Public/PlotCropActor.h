@@ -31,11 +31,9 @@ public:
 protected:
 	void BeginPlay() override;
 	void OnLoaded(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance) override;
+	void SetPlantScaleBasedOnGrowth_Implementation() override;
 
-	float GetCropGrowthProgress() const;
-	
 	void SpawnPlantMeshes();
-	void SetPlantScaleBasedOnGrowth();
 	void SetShadowBasedOnGrowth();
 
 public:
@@ -56,9 +54,6 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	TArray<FLactosePlantMeshDefinition> PlantMeshDefinitions;
-
-	UPROPERTY(EditAnywhere)
-	bool bUsePlantGrowthScale = true;
 
 	UPROPERTY(EditAnywhere, meta=(ClampMin=0, ClampMax=1))
 	float PlantGrowthEnableShadowThreshold = .5f;

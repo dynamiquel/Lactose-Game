@@ -54,6 +54,12 @@ protected:
 
 	void UpdateBillboard();
 	void UpdateBillboardText();
+
+	UFUNCTION(BlueprintPure)
+	float GetCropGrowthProgress() const;
+
+	UFUNCTION(BlueprintNativeEvent)
+	void SetPlantScaleBasedOnGrowth();
 	
 protected:
 	UPROPERTY(EditAnywhere)
@@ -103,6 +109,9 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	float DestroySeconds = .3f;
+
+	UPROPERTY(EditAnywhere)
+	bool bUsePlantGrowthScale = true;
 	
 private:
 	Sp<const FLactoseSimulationCrop> Crop;

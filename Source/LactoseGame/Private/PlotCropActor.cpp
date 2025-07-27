@@ -35,7 +35,7 @@ void APlotCropActor::BeginPlay()
 	Super::BeginPlay();
 
 	if (bUsePlantGrowthScale)
-		SetPlantScaleBasedOnGrowth();
+		SetShadowBasedOnGrowth();
 }
 
 void APlotCropActor::OnLoaded(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance)
@@ -43,27 +43,7 @@ void APlotCropActor::OnLoaded(const Sr<const FLactoseSimulationUserCropInstance>
 	Super::OnLoaded(InCropInstance);
 
 	if (bUsePlantGrowthScale)
-	{
-		SetPlantScaleBasedOnGrowth();
 		SetShadowBasedOnGrowth();
-	}
-}
-
-float APlotCropActor::GetCropGrowthProgress() const
-{
-	if (GetCropInstance()->State == Lactose::Simulation::States::Harvestable)
-		return 1.f;
-	
-	if (GetCropInstance()->State == Lactose::Simulation::States::Empty)
-		return 0.f;
-
-	if (!GetCrop())
-		return 0.f;
-
-	if (GetCrop()->HarvestSeconds <= 0.)
-		return 0.f;
-
-	return (GetCrop()->HarvestSeconds - GetCropInstance()->RemainingHarvestSeconds) / GetCrop()->HarvestSeconds;
 }
 
 void APlotCropActor::SpawnPlantMeshes()
@@ -137,7 +117,7 @@ void APlotCropActor::SpawnPlantMeshes()
 	}
 }
 
-void APlotCropActor::SetPlantScaleBasedOnGrowth()
+void APlotCropActor::SetPlantScaleBasedOnGrowth_Implementation()
 {
 	if (!ensure(PlantsComponent))
 	{
@@ -173,7 +153,6 @@ void APlotCropActor::SetPlantScaleBasedOnGrowth()
             false 
         );
     }
-
 }
 
 void APlotCropActor::SetShadowBasedOnGrowth()

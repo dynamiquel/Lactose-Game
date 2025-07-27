@@ -11,6 +11,7 @@
 #include "Services/Economy/LactoseEconomyServiceSubsystem.h"
 #include "Services/Identity/LactoseIdentityServiceSubsystem.h"
 #include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
+#include "Services/Tasks/LactoseTasksServiceSubsystem.h"
 
 ALactoseMainMenuPlayerController::ALactoseMainMenuPlayerController()
 {
@@ -172,6 +173,34 @@ bool ALactoseMainMenuPlayerController::CanStart(TArray<FString>& PendingConditio
 			break;
 		case ELactoseConfigCloudStatus::Retrieving:
 			PendingConditions.Emplace(TEXT("Config is being loaded"));
+			break;
+		default:
+	}
+
+	auto& Tasks = Subsystems::GetRef<ULactoseTasksServiceSubsystem>(self);
+
+	switch (Tasks.GetTasksStatus())
+	{
+		case ELactoseTasksTasksStatus::None:
+			PendingConditions.Emplace(TEXT("Tasks have not been loaded"));
+			break;
+		case ELactoseTasksTasksStatus::Querying:
+			PendingConditions.Emplace(TEXT("Tasks are being queried"));
+		case ELactoseTasksTasksStatus::Retrieving:
+			PendingConditions.Emplace(TEXT("Tasks are being loaded"));
+			break;
+		default:
+	}
+
+	switch (Tasks.GetCurrentUserTasksStatus())
+	{
+		case ELactoseTasksUserTasksStatus::None:
+			PendingConditions.Emplace(TEXT("User Tasks have not been loaded"));
+			break;
+		case ELactoseTasksUserTasksStatus::Querying:
+			PendingConditions.Emplace(TEXT("User Tasks are being queried"));
+		case ELactoseTasksUserTasksStatus::Retrieving:
+			PendingConditions.Emplace(TEXT("User Tasks are being loaded"));
 			break;
 		default:
 	}

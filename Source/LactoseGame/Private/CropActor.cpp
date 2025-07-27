@@ -141,7 +141,9 @@ void ACropActor::PostInitializeComponents()
 void ACropActor::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
+	if (bUsePlantGrowthScale)
+		SetPlantScaleBasedOnGrowth();
 }
 
 void ACropActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -187,6 +189,9 @@ void ACropActor::OnLoaded(const Sr<const FLactoseSimulationUserCropInstance>& In
 	}
 	
 	UpdateBillboardText();
+
+	if (bUsePlantGrowthScale)
+		SetPlantScaleBasedOnGrowth();
 }
 
 void ACropActor::OnHarvested(const Sr<const FLactoseSimulationUserCropInstance>& InCropInstance)
@@ -295,6 +300,30 @@ void ACropActor::UpdateBillboardText()
 	CropFertiliseTimeTextComponent->SetText(CropInstance->RemainingFertiliserSeconds > 0
 		? FText::AsTimespan(FTimespan::FromSeconds(CropInstance->RemainingFertiliserSeconds))
 		: FText());
+}
+
+float ACropActor::GetCropGrowthProgress() const
+{
+	if (!GetCropInstance().IsValid())
+		return 0.f;
+	
+	if (GetCropInstance()->State == Lactose::Simulation::States::Harvestable)
+		return 1.f;
+	
+	if (GetCropInstance()->State == Lactose::Simulation::States::Empty)
+		return 0.f;
+
+	if (!GetCrop())
+		return 0.f;
+
+	if (GetCrop()->HarvestSeconds <= 0.)
+		return 0.f;
+
+	return (GetCrop()->HarvestSeconds - GetCropInstance()->RemainingHarvestSeconds) / GetCrop()->HarvestSeconds;
+}
+
+void ACropActor::SetPlantScaleBasedOnGrowth_Implementation()
+{
 }
 
 void ACropActor::TurnOnRendering()

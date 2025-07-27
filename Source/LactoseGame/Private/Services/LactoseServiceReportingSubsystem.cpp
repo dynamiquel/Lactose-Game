@@ -1,7 +1,6 @@
 #include "Services/LactoseServiceReportingSubsystem.h"
 
 #include "Rest/LactoseRestSubsystem.h"
-#include "Services/LactoseServicesLog.h"
 
 void ULactoseServiceReportingSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {

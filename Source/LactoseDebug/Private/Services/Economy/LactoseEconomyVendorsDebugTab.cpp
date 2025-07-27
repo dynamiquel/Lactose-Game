@@ -151,12 +151,12 @@ void ULactoseEconomyVendorsDebugTab::DrawBuySection(
 			bool bTrySell = false;
 			if (bCanSell)
 			{
-				bTrySell = ImGui::Button("Sell");
+				bTrySell = ImGui::Button(STR_TO_ANSI(FString::Printf(TEXT("Sell###%s"), *ShopItem.Id)));
 			}
 			else
 			{
 				ImGui::Text("You are missing the Item");
-				bTrySell = ImGui::Button("Try Sell Anyways");
+				bTrySell = ImGui::Button(STR_TO_ANSI(FString::Printf(TEXT("Try Sell Anyways###%s"), *ShopItem.Id)));
 			}
 
 			if (bTrySell)
@@ -257,7 +257,7 @@ void ULactoseEconomyVendorsDebugTab::DrawSellSection(const FString& VendorId,
 			bool bTryBuy = false;
 			if (MissingItems.IsEmpty())
 			{
-				bTryBuy = ImGui::Button("Buy");
+				bTryBuy = ImGui::Button(STR_TO_ANSI(FString::Printf(TEXT("Buy###%s"), *ShopItem.Id)));
 			}
 			else
 			{
@@ -271,7 +271,7 @@ void ULactoseEconomyVendorsDebugTab::DrawSellSection(const FString& VendorId,
 					ImGui::BulletText("%d x %s", MissingItem.Quantity, STR_TO_ANSI(TransactionItemLabel));
 				}
 				
-				if (ImGui::Button("Try Buy Anyways"))
+				if (ImGui::Button(STR_TO_ANSI(FString::Printf(TEXT("Try Buy Anyways###%s"), *ShopItem.Id))))
 				{
 					bTryBuy = true;
 				}
