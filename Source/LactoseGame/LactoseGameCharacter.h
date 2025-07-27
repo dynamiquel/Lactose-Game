@@ -21,12 +21,13 @@ DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 class ULactoseInteractionComponent;
 
-UENUM()
-enum class ELactoseCharacterItemState
+UENUM(BlueprintType)
+enum class ELactoseCharacterItemState : uint8
 {
 	None,
 	PlotTool,
-	TreeTool
+	TreeTool,
+	AnimalTool
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FLactoseCharacterItemStateChangedDelegate,
@@ -91,7 +92,10 @@ public:
 
 public:
 	ULactoseInteractionComponent* FindInteractionForAction(const UInputAction& InputAction) const;
+
+	UFUNCTION(BlueprintPure)
 	ELactoseCharacterItemState GetCurrentItemState() const { return CurrentItemState; }
+	
 	FLactoseCharacterItemStateChangedDelegate& GetItemStateChanged() { return ItemStateChanged; }
 
 	UFUNCTION(BlueprintPure, Category="Lactose")

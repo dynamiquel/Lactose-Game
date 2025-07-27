@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "UI/LactoseHUD.h"
 
 #include "Core.h"
@@ -40,8 +37,13 @@ void ALactoseHUD::SetToolHUD(const FGameplayTag& ToolHUD)
 ALactoseHUD::ALactoseHUD()
 {
 	static ConstructorHelpers::FClassFinder<UUserWidget> OverlayWidgetClassFinder(TEXT("/Game/UI/HUD/WBP_Overlay"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> ItemBarWidgetClassFinder(TEXT("/Game/UI/HUD/WBP_ItemBar"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> NotificationToastWidgetClassFinder(TEXT("/Game/UI/HUD/WBP_Notifications"));
+
 	OverlayWidgetClass = OverlayWidgetClassFinder.Class;
-	
+	ItemBarWidgetClass = ItemBarWidgetClassFinder.Class;
+	NotificationToastWidgetClass = NotificationToastWidgetClassFinder.Class;
+
 	static ConstructorHelpers::FClassFinder<UUserWidget> PauseWidgetClassFinder(TEXT("/Game/UI/WBP_PlayerMenu"));
 	static ConstructorHelpers::FClassFinder<UUserWidget> PlantCropWidgetClassFinder(TEXT("/Game/UI/WBP_SeedTreeCrop"));
 	static ConstructorHelpers::FClassFinder<UUserWidget> SeedCropWidgetClassFinder(TEXT("/Game/UI/WBP_SeedPlotCrop"));
@@ -74,6 +76,16 @@ void ALactoseHUD::PostInitializeComponents()
 	}
 	else
 		Log::Error(LogLactose, TEXT("HUD Overlay Widget Class was not set"));
+
+	if (LIKELY(ItemBarWidgetClass))
+		ItemBarWidget = CreateWidget(GetOwningPlayerController(), ItemBarWidgetClass);
+	else
+		Log::Error(LogLactose, TEXT("HUD Item Bar Widget Class was not set"));
+
+	if (LIKELY(NotificationToastWidgetClass))
+		NotificationToastWidget = CreateWidget(GetOwningPlayerController(), NotificationToastWidgetClass);
+	else
+		Log::Error(LogLactose, TEXT("HUD Notification Toast Widget Class was not set"));
 
 	if (LIKELY(PlayerMenuWidgetClass))
 		PlayerMenuWidget = CreateWidget(GetOwningPlayerController(), PlayerMenuWidgetClass);
@@ -131,6 +143,12 @@ void ALactoseHUD::BeginPlay()
 
 	if (OverlayWidget)
 		OverlayWidget->AddToPlayerScreen(TNumericLimits<int32>::Max());
+
+	if (ItemBarWidget)
+		ItemBarWidget->AddToPlayerScreen();
+
+	if (NotificationToastWidgetClass)
+		NotificationToastWidget->AddToPlayerScreen(TNumericLimits<int32>::Max() / 2);
 	
 	auto* LactoseChar = Cast<ALactoseGameCharacter>(GetOwningPawn());
 	if (!ensure(LactoseChar))
@@ -147,6 +165,11 @@ void ALactoseHUD::BeginPlay()
 
 void ALactoseHUD::OnMenuOpened(const APlayerController* PlayerController, const FGameplayTag& MenuTag)
 {
+	if (LIKELY(ItemBarWidget))
+	{
+		ItemBarWidget->RemoveFromParent();
+	}
+	
 	if (MenuTag.MatchesTag(Lactose::Menus::Player))
 	{
 		if (LIKELY(PlayerMenuWidget))
@@ -214,6 +237,11 @@ void ALactoseHUD::OnMenuClosed(const APlayerController* PlayerController, const 
 			CallBPFunction(*UserShopWidget, BaseWidgetHideFunctionName);
 			UserShopWidget->RemoveFromParent();
 		}
+	}
+
+	if (LIKELY(ItemBarWidget))
+	{
+		ItemBarWidget->AddToPlayerScreen();
 	}
 }
 

@@ -170,7 +170,7 @@ namespace Subsystems
 		}
 		else
 		{
-			UE_LOG(LogSubsystemCollection, Warning, TEXT("A Context is required for retrieving a non-Engine Subsystem"));
+			UE_LOG(LogTemp, Error, TEXT("A Context is required for retrieving a non-Engine Subsystem"));
 			return nullptr;
 		}
 	}

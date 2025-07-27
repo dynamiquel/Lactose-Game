@@ -7,6 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "LactoseGamePlayerController.generated.h"
 
+class ULactoseEconomyServiceSubsystem;
 struct FGameplayTag;
 
 class UInputAction;
@@ -68,6 +69,7 @@ protected:
 	void SetupInputComponent() override;
 
 	void OnPlayerMenuActionPressed();
+	void OnUserItemsChanged(const ULactoseEconomyServiceSubsystem& Sender);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)

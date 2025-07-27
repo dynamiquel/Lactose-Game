@@ -90,6 +90,9 @@ struct FLactoseTasksUserTaskDto
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     bool Completed = false;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TOptional<FDateTime> CompleteTime;
+
     static TArray<uint8> ToBytes(const FLactoseTasksUserTaskDto& Object);
 
     TArray<uint8> ToBytes() const;

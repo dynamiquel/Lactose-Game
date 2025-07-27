@@ -48,6 +48,12 @@ protected:
 public:
 	UPROPERTY()
 	TSubclassOf<UUserWidget> OverlayWidgetClass;
+
+	UPROPERTY()
+	TSubclassOf<UUserWidget> ItemBarWidgetClass;
+
+	UPROPERTY()
+	TSubclassOf<UUserWidget> NotificationToastWidgetClass;
 	
 // Menu widgets
 	UPROPERTY()
@@ -81,6 +87,12 @@ public:
 protected:
 	UPROPERTY(Transient)
 	TObjectPtr<UUserWidget> OverlayWidget;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UUserWidget> ItemBarWidget;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UUserWidget> NotificationToastWidget;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UUserWidget> PlayerMenuWidget;

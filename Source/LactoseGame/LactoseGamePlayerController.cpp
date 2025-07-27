@@ -12,6 +12,8 @@
 
 #include "LactoseMenuTags.h"
 #include "SimpSubsystems.h"
+#include "Services/Economy/LactoseEconomyServiceSubsystem.h"
+#include "Services/Simulation/LactoseSimulationServiceSubsystem.h"
 
 void ALactoseGamePlayerController::SetupInputComponent()
 {
@@ -19,12 +21,6 @@ void ALactoseGamePlayerController::SetupInputComponent()
 
 	if (auto* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
 		EnhancedInputComponent->BindAction(PlayerMenuAction, ETriggerEvent::Completed, this, &ThisClass::OnPlayerMenuActionPressed);
-}
-
-void ALactoseGamePlayerController::OnPlayerMenuActionPressed()
-{
-	const bool bOpened = IsAnyMenuOpened();
-	bOpened ? CloseActiveMenu() : OpenMenu(Lactose::Menus::Player);
 }
 
 ALactoseGamePlayerController::ALactoseGamePlayerController()
@@ -36,6 +32,19 @@ ALactoseGamePlayerController::ALactoseGamePlayerController()
 	CharacterMappingContext = DefaultCharacterInputMapping.Object;
 	MenuMappingContext = DefaultMenuInputMapping.Object;
 	PlayerMenuAction = DefaultPlayerMenuAction.Object;
+}
+
+void ALactoseGamePlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (auto* InputSubsystem = Subsystems::Get<UEnhancedInputLocalPlayerSubsystem>(self))
+		InputSubsystem->AddMappingContext(CharacterMappingContext, 0);
+
+	SetInputMode(FInputModeGameOnly());
+	SetShowMouseCursor(false);
+
+	Lactose::Economy::Events::OnCurrentUserItemsLoaded.AddUObject(this, &ThisClass::OnUserItemsChanged);
 }
 
 bool ALactoseGamePlayerController::IsMenuOpened(const FGameplayTag& MenuTag, const bool bExactMenu) const
@@ -164,13 +173,22 @@ void ALactoseGamePlayerController::SetUserShopIdToBrowse(const FString& UserId)
 	UserShopIdToBrowse = UserId;
 }
 
-void ALactoseGamePlayerController::BeginPlay()
+void ALactoseGamePlayerController::OnPlayerMenuActionPressed()
 {
-	Super::BeginPlay();
+	const bool bOpened = IsAnyMenuOpened();
+	bOpened ? CloseActiveMenu() : OpenMenu(Lactose::Menus::Player);
+}
 
-	if (auto* InputSubsystem = Subsystems::Get<UEnhancedInputLocalPlayerSubsystem>(self))
-		InputSubsystem->AddMappingContext(CharacterMappingContext, 0);
-
-	SetInputMode(FInputModeGameOnly());
-	SetShowMouseCursor(false);
+void ALactoseGamePlayerController::OnUserItemsChanged(const ULactoseEconomyServiceSubsystem& Sender)
+{
+	if (TreeCropIdToPlant.IsSet())
+	{
+		auto& Simulation = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(this);
+		bool bCanAfford = Simulation.CanCurrentUserAffordCrop(TreeCropIdToPlant.GetValue());
+		if (!bCanAfford)
+		{
+			UE_LOG(LogLactose, Verbose, TEXT("Resetting User Tree Crop to Plant as can no longer afford"));
+			ResetTreeCropIdToPlant();
+		}
+	}
 }

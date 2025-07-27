@@ -1,6 +1,7 @@
 
 #include "Services/Tasks/LactoseTasksBP.h"
 
+#include "LactoseGame/LactoseGame.h"
 #include "Services/Tasks/LactoseTasksServiceSubsystem.h"
 
 TMap<FString, FLactoseTasksGetTaskResponse> ULactoseTasksBP::GetTasks(const ULactoseTasksServiceSubsystem* Tasks)
@@ -25,6 +26,11 @@ bool ULactoseTasksBP::IsValidTask(const FLactoseTasksGetTaskResponse& Task)
 FString ULactoseTasksBP::GetTaskDescription(const FLactoseTasksGetTaskResponse& Task)
 {
 	return Task.Description.Get({});
+}
+
+FDateTime ULactoseTasksBP::GetCompleteTime(const FLactoseTasksUserTaskDto& UserTask)
+{
+	return UserTask.CompleteTime.Get({});
 }
 
 TMap<FString, FLactoseTasksUserTaskDto> ULactoseTasksBP::GetCurrentUserTasks(const ULactoseTasksServiceSubsystem* Tasks)
@@ -68,4 +74,57 @@ void ULactoseTasksCurrentUserTasksLoadedDelegateWrapper::OnUnsubscribed()
 void ULactoseTasksCurrentUserTasksLoadedDelegateWrapper::HandleNativeEvent(const ULactoseTasksServiceSubsystem& Sender)
 {
 	OnExecuted();
+}
+
+void ULactoseTasksCurrentUserTaskUpdatedDelegateWrapper::OnSubscribed()
+{
+	NativeDelegateHandle = Lactose::Tasks::Events::OnCurrentUserTaskUpdated.AddUObject(this, &ThisClass::HandleNativeEvent);
+}
+
+void ULactoseTasksCurrentUserTaskUpdatedDelegateWrapper::OnUnsubscribed()
+{
+	Lactose::Tasks::Events::OnCurrentUserTaskUpdated.Remove(NativeDelegateHandle);
+	
+}
+
+FLactoseTasksUserTaskDto ULactoseTasksCurrentUserTaskUpdatedDelegateWrapper::GetUserTask() const
+{
+	if (!ensure(LastUserTask.IsValid()))
+	{
+		return {};
+	}
+
+	return *LastUserTask;
+}
+
+FLactoseTasksGetTaskResponse ULactoseTasksCurrentUserTaskUpdatedDelegateWrapper::GetTask() const
+{
+	if (!ensure(LastTask.IsValid()))
+	{
+		return {};
+	}
+
+	return *LastTask;
+}
+
+void ULactoseTasksCurrentUserTaskUpdatedDelegateWrapper::HandleNativeEvent(
+	const ULactoseTasksServiceSubsystem& Sender,
+	const Sr<const FLactoseTasksUserTaskDto>& UserTask)
+{
+	LastUserTask = UserTask;
+	LastTask = Sender.FindTask(LastUserTask->TaskId);
+	
+	if (LastTask.IsValid())
+	{
+		OnExecuted();
+	}
+	else
+	{
+		UE_LOG(LogLactose, Error,
+			TEXT("ULactoseTasksCurrentUserTaskUpdatedDelegateWrapper: Failed to find Task with ID: %s"),
+			*LastUserTask->TaskId);
+	}
+
+	LastUserTask.Reset();
+	LastTask.Reset();
 }

@@ -29,7 +29,7 @@ class LACTOSEGAME_API ULactoseTasksBP : public UBlueprintFunctionLibrary
 	// BP doesn't support optional, which is what Description is.
 	UFUNCTION(BlueprintPure, Category = "Lactose Tasks")
 	static FString GetTaskDescription(const FLactoseTasksGetTaskResponse& Task);
-
+	
 	UFUNCTION(BlueprintPure, Category = "Lactose Tasks", meta=(WorldContext="WorldContextObject"))
 	static TMap<FString, FLactoseTasksUserTaskDto> GetCurrentUserTasks(const ULactoseTasksServiceSubsystem* Tasks);
 
@@ -41,6 +41,10 @@ class LACTOSEGAME_API ULactoseTasksBP : public UBlueprintFunctionLibrary
 
 	UFUNCTION(BlueprintPure, Category = "Lactose Tasks")
 	static bool IsValidUserTask(const FLactoseTasksUserTaskDto& UserTask);
+
+	// BP doesn't support optional, which is what CompleteTime is.
+	UFUNCTION(BlueprintPure, Category = "Lactose Tasks")
+	static FDateTime GetCompleteTime(const FLactoseTasksUserTaskDto& UserTask);
 };
 
 
@@ -55,4 +59,28 @@ public:
 	
 private:
 	void HandleNativeEvent(const ULactoseTasksServiceSubsystem& Sender);
+};
+
+UCLASS()
+class ULactoseTasksCurrentUserTaskUpdatedDelegateWrapper : public ULactoseNativeDelegateWrapper
+{
+	GENERATED_BODY()
+
+public:
+	void OnSubscribed() override;
+	void OnUnsubscribed() override;
+
+	UFUNCTION(BlueprintPure)
+	FLactoseTasksUserTaskDto GetUserTask() const;
+
+	UFUNCTION(BlueprintPure)
+	FLactoseTasksGetTaskResponse GetTask() const;
+	
+private:
+	void HandleNativeEvent(
+		const ULactoseTasksServiceSubsystem& Sender,
+		const Sr<const FLactoseTasksUserTaskDto>& UserTask);
+
+	Sp<const FLactoseTasksUserTaskDto> LastUserTask;
+	Sp<const FLactoseTasksGetTaskResponse> LastTask;
 };

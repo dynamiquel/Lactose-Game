@@ -1,6 +1,6 @@
 #pragma once
-#include "LactoseGame/LactoseNativeDelegateWrapper.h"
 
+#include "LactoseGame/LactoseNativeDelegateWrapper.h"
 #include "LactoseIdentityBP.generated.h"
 
 class ULactoseIdentityServiceSubsystem;
