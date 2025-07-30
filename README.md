@@ -80,3 +80,8 @@ The frontend game client can be forked but it lacks any binary assets at this mo
 
 # Contributing
 Lactose is a personal portfolio project. While direct contributions are not actively sought, feel free to fork the repository, experiment, and use it as a reference for your own learning!
+
+# Dependent projects
+- [Mqttify](https://github.com/Naragato/Mqttify) (Apache License, Version 2.0): a very good MQTT client for Unreal Engine 5 - minor modifications.
+- [Unreal ImGui](https://github.com/segross/UnrealImGui) (MIT License): ImGui debug menu for Unreal Engine 5 - minor modifications.
+- [Catalyst-UEPlugin](https://github.com/dynamiquel/Catalyst-UEPlugin) (MIT License): Unreal Engine 5 compatability layer for the Catalyst IDL.
