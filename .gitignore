@@ -75,6 +75,3 @@ Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
-
-# Temp disable Content
-Content/
