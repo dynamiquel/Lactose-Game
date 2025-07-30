@@ -70,7 +70,7 @@ The backend has been adapted for deployment on [K3s](https://k3s.io/), a lightwe
 
 # Getting started
 ## Test server
-You can give Lactose a go by downloading the **game client** in the [Lactose-Game Repository](https://github.com/dynamiquel/Lactose-Game). This client will automatically connect to the **production** Lactose Kubernetes deployment.
+You can give Lactose a go by downloading the **game client** in the [Releases](https://github.com/dynamiquel/Lactose-Game/releases). This client will automatically connect to the **production** Lactose Kubernetes deployment.
 ### Verifying the server is live
 Sometimes the production server may not be live, but you can verify that it is by accessing this [link](https://lactose2.mookrata.ovh/).
 ## Self-host
