@@ -21,9 +21,11 @@ This project represents a **significant personal and professional growth** in my
 Lactose is split into two primary repositories, reflecting its clear frontend-backend separation:
 ## Lactose-Game
 The game client is developed using **Unreal Engine 5**, responsible for rendering the game world, handling player input, and visualizing game state. All critical game logic, data, and state management are offloaded to the backend. The Unreal client communicates with the backend via **RESTful APIs** and subscribes to real-time events via **MQTT** for dynamic updates.
+
 [Lactose-Game Repository](https://github.com/dynamiquel/Lactose-Game)
 ## Lactose-Server
 The heart of Lactose lies in its **ASP.NET Core microservices backend**. This highly **decoupled** architecture allows for independent development, deployment, and scaling of various game features.
+
 [Lactose-Server Repository](https://github.com/dynamiquel/Lactose-Server)
 
 ## Services
