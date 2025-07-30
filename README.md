@@ -3,6 +3,12 @@ Lactose is a **full-stack farm simulation game** project designed to explore and
 
 This project showcases a modern microservices architecture built with **ASP.NET Core**, providing a scalable and resilient foundation for a dynamic game experience where real-time updates and complex simulations are handled **server-side**.
 
+*Image doesn't represent final build*
+<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/e9aa524f-99ba-427c-ac5f-86cd97615f2f"/>
+
+### Download
+Go to [Releases](https://github.com/dynamiquel/Lactose-Game/releases) to download a free copy of the game to try it out.
+
 # The Journey
 Having spent a considerable amount of time in traditional game development focusing on client-side programming, Lactose was conceived as a deliberate and intensive deep dive into **modern backend** development. My primary goal was to gain hands-on expertise with technologies and paradigms that were largely new to me before this project.
 
