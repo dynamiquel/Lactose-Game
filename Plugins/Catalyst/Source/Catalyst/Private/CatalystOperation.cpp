@@ -70,8 +70,8 @@ bool FCatalystOperation::Cancel()
 }
 
 void FCatalystOperation::OnHttpResponse(
-	FHttpRequestPtr HttpRequest,
-	FHttpResponsePtr HttpResponse,
+	FHttpRequestPtr InHttpRequest,
+	FHttpResponsePtr InHttpResponse,
 	bool bProcessedSuccessfully)
 {
 	UCatalystSubsystem::Get().UnregisterOperation(SharedThis(this));

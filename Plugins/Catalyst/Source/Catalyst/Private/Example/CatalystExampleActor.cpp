@@ -58,7 +58,7 @@ void ACatalystExampleActor::OnRolesReceived(TSharedRef<Catalyst::Example::FGetRo
 	check(Response.IsValid());
 
 	UE_LOG(LogTemp, Log, TEXT("Received %d roles"), Response->Roles.Num());
-	for (const FCatalystExampleGetRoleResponse& Role : Response->Roles)
-		UE_LOG(LogTemp, Log, TEXT("Role: %s"), *Role.RoleName);
+	for (const FCatalystExampleGetRoleResponse& ResponseRole : Response->Roles)
+		UE_LOG(LogTemp, Log, TEXT("Role: %s"), *ResponseRole.RoleName);
 }
 

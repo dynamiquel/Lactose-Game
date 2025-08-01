@@ -84,15 +84,15 @@ void ULactoseMqttSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-void ULactoseMqttSubsystem::OnConnected(bool bConnected)
+void ULactoseMqttSubsystem::OnConnected(bool bInConnected)
 {
-	if (!bConnected)
+	if (!bInConnected)
 	{
 		UE_LOG(LogLactoseMqtt, Log, TEXT("Failed to connect"));
 		return;
 	}
 	
-	self.bConnected = true;
+	bConnected = true;
 	
 	UE_LOG(LogLactoseMqtt, Log, TEXT("Connected"));
 
@@ -142,7 +142,7 @@ void ULactoseMqttSubsystem::OnConnected(bool bConnected)
 	});
 }
 
-void ULactoseMqttSubsystem::OnDisconnected(bool bDisconnected)
+void ULactoseMqttSubsystem::OnDisconnected(bool bInDisconnected)
 {
 	UE_LOG(LogLactoseMqtt, Log, TEXT("Disconnected"));
 	bConnected = false;
@@ -168,7 +168,7 @@ void ULactoseMqttSubsystem::OnMessageReceived(const FMqttifyMessage& Message)
 	}
 }
 
-void ULactoseMqttSubsystem::OnPublished(bool bPublished)
+void ULactoseMqttSubsystem::OnPublished(bool bInPublished)
 {
 }
 

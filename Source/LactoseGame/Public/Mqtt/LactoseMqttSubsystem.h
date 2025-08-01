@@ -36,10 +36,10 @@ public:
 	void Initialize(FSubsystemCollectionBase& Collection) override;
 	void Deinitialize() override;
 
-	void OnConnected(bool bConnected);
-	void OnDisconnected(bool bDisconnected);
+	void OnConnected(bool bInConnected);
+	void OnDisconnected(bool bInDisconnected);
 	void OnMessageReceived(const FMqttifyMessage& Message);
-	void OnPublished(bool bPublished);
+	void OnPublished(bool bInPublished);
 	void OnSubscribed(const TSharedPtr<TArray<FMqttifySubscribeResult>>& Subscriptions);
 	void OnUnsubscribed(const TSharedPtr<TArray<FMqttifyUnsubscribeResult>>& Unsubscriptions);
 
