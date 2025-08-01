@@ -57,12 +57,12 @@ void AVendorActor::Tick(float DeltaSeconds)
 		UpdateBillboard();
 }
 
-void AVendorActor::OnInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* Instigator)
+void AVendorActor::OnInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* InInstigator)
 {
 	if (VendorId.IsEmpty())
 		return;
 	
-	if (auto* LactosePC = Cast<ALactoseGamePlayerController>(Instigator))
+	if (auto* LactosePC = Cast<ALactoseGamePlayerController>(InInstigator))
 	{
 		LactosePC->SetUserShopIdToBrowse(VendorId);
 		LactosePC->OpenMenu(Lactose::Menus::UserShop);

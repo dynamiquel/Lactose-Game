@@ -146,23 +146,23 @@ public:
 
 protected:
 	void OnHttpResponse(
-		FHttpRequestPtr HttpRequest,
-		FHttpResponsePtr HttpResponse,
+		FHttpRequestPtr InHttpRequest,
+		FHttpResponsePtr InHttpResponse,
 		bool bProcessedSuccessfully) override
 	{
-		if (!HttpResponse.IsValid())
+		if (!InHttpResponse.IsValid())
 		{
 			UE_LOG(LogCatalyst, Error, TEXT("Received Unknown Error for Operation %s"), *ToString());
 			
 			if (CallbackCondition == ECallbackOn::Always || CallbackCondition == ECallbackOn::Error)
 				ResponseCallback.ExecuteIfBound(SharedThis(this));
 		}
-		else if (HttpResponse->GetResponseCode() != 200)
+		else if (InHttpResponse->GetResponseCode() != 200)
 		{
 			UE_LOG(LogCatalyst, Warning, TEXT("Received Error for Operation %s: Code: %d - Content: %s"),
 				*ToString(),
-				HttpResponse->GetResponseCode(),
-				*HttpResponse->GetContentAsString());
+				InHttpResponse->GetResponseCode(),
+				*InHttpResponse->GetContentAsString());
 
 			if (CallbackCondition == ECallbackOn::Always || CallbackCondition == ECallbackOn::Error)
 				ResponseCallback.ExecuteIfBound(SharedThis(this));
@@ -170,7 +170,7 @@ protected:
 		else
 		{
 			// Convert content from JSON
-			const TArray<uint8>& Bytes = HttpResponse->GetContent();
+			const TArray<uint8>& Bytes = InHttpResponse->GetContent();
 			TOptional<TResponse> ResponseOptional = TResponse::FromBytes(Bytes);
 			if (!ResponseOptional.IsSet())
 			{
@@ -190,7 +190,7 @@ protected:
 			}
 		}
 
-		FCatalystOperation::OnHttpResponse(HttpRequest, HttpResponse, bProcessedSuccessfully);
+		FCatalystOperation::OnHttpResponse(InHttpRequest, InHttpResponse, bProcessedSuccessfully);
 	}
 
 protected:

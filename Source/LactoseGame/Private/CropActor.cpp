@@ -229,7 +229,7 @@ void ACropActor::OnDestroyed(const Sr<const FLactoseSimulationUserCropInstance>&
 		/* bLoop */ false);
 }
 
-void ACropActor::OnInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* Instigator)
+void ACropActor::OnInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* InInstigator)
 {
 	auto& SimulationSubsystem = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(self);
 	
@@ -242,7 +242,7 @@ void ACropActor::OnInteracted(const ULactoseInteractionComponent& InteractionCom
 		SimulationSubsystem.FertiliseCropInstances({ CropInstance->Id });
 	else if (CropInstance->State == Lactose::Simulation::States::Empty)
 	{
-		if (auto* LactosePC = Cast<ALactoseGamePlayerController>(Instigator))
+		if (auto* LactosePC = Cast<ALactoseGamePlayerController>(InInstigator))
 		{
 			LactosePC->GetCropInstanceIdsToSeed().Reset();
 			LactosePC->GetCropInstanceIdsToSeed().Add(CropInstance->Id);
@@ -251,7 +251,7 @@ void ACropActor::OnInteracted(const ULactoseInteractionComponent& InteractionCom
 	}
 }
 
-void ACropActor::OnDestroyInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* Instigator)
+void ACropActor::OnDestroyInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* InInstigator)
 {
 	auto& SimulationSubsystem = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(self);
 

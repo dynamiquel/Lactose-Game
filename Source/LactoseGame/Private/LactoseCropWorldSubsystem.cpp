@@ -1,5 +1,6 @@
 #include "LactoseCropWorldSubsystem.h"
 
+#include <array>
 #include "HAL/IConsoleManager.h"
 #include "CropActor.h"
 #include "PlotCropActor.h"
@@ -169,21 +170,23 @@ FVector ULactoseCropWorldSubsystem::GetMagnetizedPlotLocation(const FVector& Pro
     TArray<ACropActor*> NearbyCrops;
     NearbyCrops.Reserve(NearbyOverlapResults.Num());
     for (const FOverlapResult& Overlap : NearbyOverlapResults)
-        if (ACropActor* PlotActor = Cast<ACropActor>(Overlap.GetActor()))
-            NearbyCrops.Add(PlotActor);
+    {
+	    if (ACropActor* PlotActor = Cast<ACropActor>(Overlap.GetActor()))
+	    	NearbyCrops.Add(PlotActor);
+    }
 
     // Define potential snap offsets from an EXISTING plot's center to get to an ADJACENT plot's center
     // These cover cardinal and diagonal neighbors around an existing 2x2m plot.
-    const std::array SnapOffsets = {
-        FVector(Crops::PlotSizeCm,  0., 0.),  // Right
-        FVector(-Crops::PlotSizeCm,  0., 0.),  // Left
-        FVector(0.,  Crops::PlotSizeCm, 0.),  // Forward
-        FVector(0., -Crops::PlotSizeCm, 0.),  // Back
-        FVector(Crops::PlotSizeCm,  Crops::PlotSizeCm, 0.),   // Right-Forward (Diagonal)
-        FVector(Crops::PlotSizeCm, -Crops::PlotSizeCm, 0.),   // Right-Back (Diagonal)
-        FVector(-Crops::PlotSizeCm,  Crops::PlotSizeCm, 0.),   // Left-Forward (Diagonal)
-        FVector(-Crops::PlotSizeCm, -Crops::PlotSizeCm, 0.)    // Left-Back (Diagonal)
-    };
+	const std::array SnapOffsets = {
+		FVector(Crops::PlotSizeCm, 0., 0.), // Right
+		FVector(-Crops::PlotSizeCm, 0., 0.), // Left
+		FVector(0., Crops::PlotSizeCm, 0.), // Forward
+		FVector(0., -Crops::PlotSizeCm, 0.), // Back
+		FVector(Crops::PlotSizeCm, Crops::PlotSizeCm, 0.), // Right-Forward (Diagonal)
+		FVector(Crops::PlotSizeCm, -Crops::PlotSizeCm, 0.), // Right-Back (Diagonal)
+		FVector(-Crops::PlotSizeCm, Crops::PlotSizeCm, 0.), // Left-Forward (Diagonal)
+		FVector(-Crops::PlotSizeCm, -Crops::PlotSizeCm, 0.) // Left-Back (Diagonal)
+	};
 
     // Iterate only through the efficiently found nearby plots (much fewer than all plots)
     for (ACropActor* NearbyCrop : NearbyCrops) 

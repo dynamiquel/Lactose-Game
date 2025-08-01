@@ -1,5 +1,6 @@
 #pragma once
 
+#include <variant>
 #include "Simp.h"
 #include "CoreMinimal.h"
 #include "Interfaces/IHttpResponse.h"

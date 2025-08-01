@@ -2,4 +2,4 @@
 
 #include "SimpLog.h"
 
-LACTOSEGAME_API CREATE_BASIC_LOG(LogLactoseRest);
+LACTOSEGAME_API DECLARE_BASIC_LOG(LogLactoseRest);

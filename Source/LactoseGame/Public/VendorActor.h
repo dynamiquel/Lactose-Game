@@ -21,7 +21,7 @@ protected:
 	void BeginPlay() override;
 	void Tick(float DeltaSeconds) override;
 
-	void OnInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* Instigator);
+	void OnInteracted(const ULactoseInteractionComponent& InteractionComponent, AController* InInstigator);
 
 	void UpdateBillboard();
 

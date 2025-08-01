@@ -108,6 +108,7 @@ bool ALactoseMainMenuPlayerController::CanStart(TArray<FString>& PendingConditio
 		case ELactoseIdentityUserLoginStatus::GettingUserInfo:
 			PendingConditions.Emplace(TEXT("Your user info is being retrieved"));
 		default:
+			break;
 	}
 
 	auto& Economy = Subsystems::GetRef<ULactoseEconomyServiceSubsystem>(self);
@@ -124,6 +125,7 @@ bool ALactoseMainMenuPlayerController::CanStart(TArray<FString>& PendingConditio
 			PendingConditions.Emplace(TEXT("Economy items are being loaded"));
 			break;
 		default:
+			break;
 	}
 
 	switch (Economy.GetCurrentUserItemsStatus())
@@ -135,6 +137,7 @@ bool ALactoseMainMenuPlayerController::CanStart(TArray<FString>& PendingConditio
 			PendingConditions.Emplace(TEXT("Your items are being loaded"));
 			break;
 		default:
+			break;
 	}
 
 	auto& Simulation = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(self);
@@ -151,6 +154,7 @@ bool ALactoseMainMenuPlayerController::CanStart(TArray<FString>& PendingConditio
 			PendingConditions.Emplace(TEXT("Crops are being loaded"));
 			break;
 		default:
+			break;
 	}
 
 	switch (Simulation.GetCurrentUserCropsStatus())
@@ -162,6 +166,7 @@ bool ALactoseMainMenuPlayerController::CanStart(TArray<FString>& PendingConditio
 			PendingConditions.Emplace(TEXT("Your crops are being loaded"));
 			break;
 		default:
+			break;
 	}
 
 	auto& ConfigCloud = Subsystems::GetRef<ULactoseConfigCloudServiceSubsystem>(self);
@@ -175,6 +180,7 @@ bool ALactoseMainMenuPlayerController::CanStart(TArray<FString>& PendingConditio
 			PendingConditions.Emplace(TEXT("Config is being loaded"));
 			break;
 		default:
+			break;
 	}
 
 	auto& Tasks = Subsystems::GetRef<ULactoseTasksServiceSubsystem>(self);
@@ -190,6 +196,7 @@ bool ALactoseMainMenuPlayerController::CanStart(TArray<FString>& PendingConditio
 			PendingConditions.Emplace(TEXT("Tasks are being loaded"));
 			break;
 		default:
+			break;
 	}
 
 	switch (Tasks.GetCurrentUserTasksStatus())
@@ -203,6 +210,7 @@ bool ALactoseMainMenuPlayerController::CanStart(TArray<FString>& PendingConditio
 			PendingConditions.Emplace(TEXT("User Tasks are being loaded"));
 			break;
 		default:
+			break;
 	}
 
 	return PendingConditions.IsEmpty();

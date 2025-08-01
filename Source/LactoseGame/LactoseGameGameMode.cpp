@@ -52,6 +52,7 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 		case ELactoseIdentityUserLoginStatus::GettingUserInfo:
 			PendingConditions.Emplace(TEXT("Your user info is being retrieved"));
 		default:
+			break;
 	}
 
 	auto& Economy = Subsystems::GetRef<ULactoseEconomyServiceSubsystem>(self);
@@ -68,6 +69,7 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 			PendingConditions.Emplace(TEXT("Economy items are being loaded"));
 			break;
 		default:
+			break;
 	}
 
 	switch (Economy.GetCurrentUserItemsStatus())
@@ -79,6 +81,7 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 			PendingConditions.Emplace(TEXT("Your items are being loaded"));
 			break;
 		default:
+			break;
 	}
 
 	auto& Simulation = Subsystems::GetRef<ULactoseSimulationServiceSubsystem>(self);
@@ -95,6 +98,7 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 			PendingConditions.Emplace(TEXT("Crops are being loaded"));
 			break;
 		default:
+			break;
 	}
 
 	switch (Simulation.GetCurrentUserCropsStatus())
@@ -106,6 +110,7 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 			PendingConditions.Emplace(TEXT("Your crops are being loaded"));
 			break;
 		default:
+			break;
 	}
 
 	auto& ConfigCloud = Subsystems::GetRef<ULactoseConfigCloudServiceSubsystem>(self);
@@ -119,6 +124,7 @@ void ALactoseGameGameMode::ProcessBeginPlayConditions()
 			PendingConditions.Emplace(TEXT("Config is being loaded"));
 			break;
 		default:
+			break;
 	}
 	
 	if (PendingConditions.IsEmpty())

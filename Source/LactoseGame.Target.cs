@@ -10,12 +10,15 @@ public class LactoseGameTarget : TargetRules
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V5;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_4;
-		ExtraModuleNames.Add("LactoseGame");
-		RegisterModulesCreatedByRider();
-	}
-
-	void RegisterModulesCreatedByRider()
-	{
-		ExtraModuleNames.AddRange(new string[] { "LactoseDebug" });
+		
+		// Built for C++23, which isn't officially supported by Unreal yet.
+		CppStandard = CppStandardVersion.Latest;
+		CStandard = CStandardVersion.Latest;
+		
+		ExtraModuleNames.AddRange([
+			"LactoseGame",
+			"LactoseDebug"
+		]);
+		
 	}
 }
